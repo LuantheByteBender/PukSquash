@@ -1,0 +1,61 @@
+query GetCurrentUser
+@auth(level: USER_EMAIL_VERIFIED) {
+  user(key: { id_expr: "auth.uid" }) {
+    id
+    studentNumber
+    name
+    email
+    role
+    status
+    createdAt
+  }
+}
+
+query ListCourts
+@auth(
+  level: USER_EMAIL_VERIFIED
+  insecureReason: "Verified users may view available squash courts."
+) {
+  courts {
+    id
+    name
+    status
+    createdAt
+  }
+}
+
+query GetCourt($id: UUID!)
+@auth(
+  level: USER_EMAIL_VERIFIED
+  insecureReason: "Verified users may view squash court information."
+) {
+  court(key: { id: $id }) {
+    id
+    name
+    status
+    createdAt
+  }
+}
+
+query MyBookings
+@auth(level: USER_EMAIL_VERIFIED) {
+  bookings(
+    where: {
+      userId: {
+        eq_expr: "auth.uid"
+      }
+    }
+  ) {
+    id
+    startTime
+    endTime
+    status
+    createdAt
+
+    court {
+      id
+      name
+      status
+    }
+  }
+}

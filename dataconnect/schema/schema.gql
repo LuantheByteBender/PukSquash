@@ -1,0 +1,103 @@
+# ============================================================
+# PukSquash - Initial Database Schema
+# ============================================================
+
+
+# ------------------------------------------------------------
+# User
+# ------------------------------------------------------------
+# Stores application-specific information for an authenticated
+# Firebase user.
+#
+# Firebase Authentication remains responsible for identity.
+# This table stores the PukSquash profile and application role.
+# ------------------------------------------------------------
+
+type User @table {
+
+  # Firebase Authentication UID.
+  # This becomes the primary key for the User table.
+  id: String! @default(expr: "auth.uid")
+
+  # University student number.
+  studentNumber: String! @unique
+
+  # User's display/full name.
+  name: String!
+
+  # Email address associated with the user.
+  email: String! @unique
+
+  # Initial values:
+  # STUDENT
+  # COACH
+  # ADMIN
+  role: String! @default(value: "STUDENT")
+
+  # Initial values:
+  # ACTIVE
+  # INACTIVE
+  # SUSPENDED
+  status: String! @default(value: "ACTIVE")
+
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+
+# ------------------------------------------------------------
+# Court
+# ------------------------------------------------------------
+# Represents a squash court that can be booked.
+# ------------------------------------------------------------
+
+type Court @table {
+
+  # SQL Connect automatically creates:
+  #
+  # id: UUID! @default(expr: "uuidV4()")
+
+  name: String! @unique
+
+  # Initial values:
+  # AVAILABLE
+  # UNAVAILABLE
+  # MAINTENANCE
+  status: String! @default(value: "AVAILABLE")
+
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+
+# ------------------------------------------------------------
+# Booking
+# ------------------------------------------------------------
+# Represents a student's reservation for a specific court
+# during a defined time period.
+# ------------------------------------------------------------
+
+type Booking @table {
+
+  # SQL Connect automatically creates:
+  #
+  # id: UUID! @default(expr: "uuidV4()")
+
+  # Relationship:
+  # One User can have many Bookings.
+  user: User!
+
+  # Relationship:
+  # One Court can have many Bookings.
+  court: Court!
+
+  startTime: Timestamp!
+
+  endTime: Timestamp!
+
+  # Initial values:
+  # CONFIRMED
+  # CANCELLED
+  # COMPLETED
+  status: String! @default(value: "CONFIRMED")
+
+  createdAt: Timestamp! @default(expr: "request.time")
+}

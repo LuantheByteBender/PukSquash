@@ -1,0 +1,48 @@
+# ============================================================
+# PukSquash - Initial Mutations
+# ============================================================
+
+mutation UpsertUser(
+  $studentNumber: String!
+  $name: String!
+  $email: String!
+)
+@auth(level: USER_EMAIL_VERIFIED) {
+  user_upsert(
+    data: {
+      id_expr: "auth.uid"
+      studentNumber: $studentNumber
+      name: $name
+      email: $email
+    }
+  )
+}
+
+# Court creation is a privileged backend/admin operation.
+# It cannot be called directly by normal authenticated users.
+mutation CreateCourt(
+  $name: String!
+)
+@auth(level: NO_ACCESS) {
+  court_insert(
+    data: {
+      name: $name
+    }
+  )
+}
+
+mutation CreateBooking(
+  $courtId: UUID!
+  $startTime: Timestamp!
+  $endTime: Timestamp!
+)
+@auth(level: USER_EMAIL_VERIFIED) {
+  booking_insert(
+    data: {
+      userId_expr: "auth.uid"
+      courtId: $courtId
+      startTime: $startTime
+      endTime: $endTime
+    }
+  )
+}
