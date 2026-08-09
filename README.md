@@ -1,59 +1,131 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PukSquash
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+PukSquash is a Laravel 12 application with a Vue frontend, Vite, Tailwind CSS, and Firebase Authentication.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Install the following before setting up the project:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2 or newer
+- Composer
+- Node.js and npm
+- Access to the project's Firebase configuration and service-account credentials
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Local setup
 
-## Learning Laravel
+### 1. Clone the repository
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+git clone <repository-url>
+cd PukSquash
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Replace `<repository-url>` with the URL of this repository. Make sure the terminal is in the directory containing `artisan`, `composer.json`, and `package.json` before continuing.
 
-## Laravel Sponsors
+### 2. Install PHP dependencies
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+composer install
+```
 
-### Premium Partners
+This installs Laravel and the PHP Firebase SDK into the `vendor` directory.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3. Install frontend dependencies
 
-## Contributing
+```bash
+npm install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+This installs Vue, Vite, Tailwind CSS, Firebase's JavaScript SDK, and the other frontend packages into `node_modules`.
 
-## Code of Conduct
+### 4. Create the local environment file
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+On Windows PowerShell:
 
-## Security Vulnerabilities
+```powershell
+Copy-Item .env.example .env
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+On macOS or Linux:
 
-## License
+```bash
+cp .env.example .env
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The `.env` file contains machine-specific configuration and secrets. It is ignored by Git and must not be committed.
+
+### 5. Generate the Laravel application key
+
+```bash
+php artisan key:generate
+```
+
+This writes the `APP_KEY` value to `.env`. Laravel uses it to encrypt application data.
+
+### 6. Add the Firebase frontend environment values
+
+Open `.env` and provide the Firebase web-app values supplied by the project administrator or found in **Firebase Console > Project settings > Your apps > Web app**:
+
+```dotenv
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+These `VITE_` values are used by the Vue frontend. Values prefixed with `VITE_` are included in the browser build and must not contain private service-account credentials.
+
+Restart `npm run dev` whenever these values are changed.
+
+### 7. Add the local Firebase service-account credential
+
+Obtain the authorized Firebase service-account JSON file from the project administrator. Alternatively, an authorized Firebase administrator can generate one from **Firebase Console > Project settings > Service accounts > Generate new private key**.
+
+Save the downloaded file as:
+
+```text
+auth.json
+```
+
+Place it in the project root, beside `artisan`. Then set this value in `.env`:
+
+```dotenv
+FIREBASE_CREDENTIALS=auth.json
+```
+
+`auth.json` contains a private key and is already excluded by `.gitignore`. Never commit it, send it through an insecure channel, or expose its contents in a frontend `VITE_` variable.
+
+### 8. Start the Laravel backend
+
+In the first terminal, run:
+
+```bash
+php artisan serve
+```
+
+By default, Laravel starts at `http://127.0.0.1:8000`.
+
+### 9. Start the Vite frontend development server
+
+Keep Laravel running. Open a second terminal in the project root and run:
+
+```bash
+npm run dev
+```
+
+Vite compiles the Vue frontend and automatically refreshes it when frontend files change. Open the Laravel URL shown by `php artisan serve`, normally `http://127.0.0.1:8000`.
+
+
+
+## Troubleshooting
+
+- **Firebase authentication returns `401`:** Confirm that `auth.json` belongs to the same Firebase project as the `VITE_FIREBASE_*` values and that `FIREBASE_CREDENTIALS=auth.json` is present in `.env`.
+- **Laravel reports that the credential file cannot be found:** Confirm that `auth.json` is beside `artisan`, not inside `resources` or `public`.
+- **Environment changes are not detected:** Restart the relevant development server. If Laravel still uses old values, run `php artisan config:clear`.
+- **The page has no compiled assets:** Make sure `npm run dev` is still running in a second terminal.
+
+## Security
+
+Do not commit `.env`, `auth.json`, or any other service-account JSON file. If a service-account key is accidentally exposed, revoke it immediately in Firebase/Google Cloud and generate a replacement.
