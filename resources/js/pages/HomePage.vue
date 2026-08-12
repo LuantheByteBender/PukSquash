@@ -1,6 +1,7 @@
 <script setup>
-// The parent component listens for these events and decides which page to show.
-const emit = defineEmits(['sign-in', 'sign-up']);
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 </script>
 
 <template>
@@ -13,14 +14,14 @@ const emit = defineEmits(['sign-in', 'sign-up']);
             <div class="actions">
                 <button
                     class="button button-primary"
-                    @click="emit('sign-in')"
+                    @click="router.push('/login')"
                 >
                     Sign in
                 </button>
 
                 <button
                     class="button button-secondary"
-                    @click="emit('sign-up')"
+                    @click="router.push('/signup')"
                 >
                     Sign up
                 </button>

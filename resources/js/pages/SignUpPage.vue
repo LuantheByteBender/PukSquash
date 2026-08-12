@@ -1,11 +1,15 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import {
     registerUser,
     loginUser,
     logoutUser,
 } from '../features/auth/authService';
+import { getCurrentUser } from '../services/api.js';
+
+const router = useRouter();
 
 const email = ref('');
 const password = ref('');
@@ -54,8 +58,6 @@ async function logout() {
     }
 }
 
-import { getCurrentUser } from '../services/api.js';
-
 async function testBackend() {
     try {
         const result = await getCurrentUser();
@@ -101,11 +103,13 @@ async function testBackend() {
         </div>
 
         <p>{{ message }}</p>
+
+        <button @click="testBackend">
+            Test Laravel Authentication
+        </button>
+
+        <button @click="router.push('/')">
+            Back to home
+        </button>
     </main>
-
-    <button @click="testBackend">
-    Test Laravel Authentication
-    </button>
-</template> 
-
-46251960@mynwu.co.za
+</template>
