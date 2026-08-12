@@ -2,48 +2,49 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class User extends Authenticatable
+class User extends Model
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    /**
+     * The table associated with the model.
+     * Firebase Data Connect creates tables matching the type name.
+     */
+    protected $table = 'User';
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * The primary key is the Firebase UID (string, not auto-increment).
      */
+    protected $keyType = 'string';
+    public $incrementing = false;
+
+    /**
+     * Data Connect does not use Laravel's updated_at/created_at columns.
+     */
+    public $timestamps = false;
+
     protected $fillable = [
+        'id',
+        'studentNumber',
         'name',
         'email',
-        'password',
+        'role',
+        'status',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'createdAt' => 'datetime',
         ];
+    }
+
+    /**
+     * A user can have many bookings.
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'userId');
     }
 }
