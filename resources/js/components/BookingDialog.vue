@@ -9,7 +9,6 @@
  */
 import { ref, watch, computed } from 'vue';
 import { bookingService } from '../features/booking/bookingService.js';
-import { useAuth } from '../composables/useAuth.js';
 import LoadingSpinner from './LoadingSpinner.vue';
 
 const props = defineProps({
@@ -24,8 +23,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'confirm', 'join']);
-
-const { user } = useAuth();
 
 const joining = computed(() => props.cell.state === 'OPEN');
 
@@ -57,11 +54,7 @@ async function loadCoaches() {
     coachId.value = null;
 
     try {
-        coaches.value = await bookingService.availableCoaches(
-            props.date,
-            props.timeSlot.id,
-            user.value
-        );
+        coaches.value = await bookingService.availableCoaches(props.date, props.timeSlot.id);
 
         if (coaches.value.length === 1) {
             coachId.value = coaches.value[0].id;

@@ -139,8 +139,14 @@ function describe(court, slot, cell) {
 </template>
 
 <style scoped>
+/* The grid scrolls sideways on a phone, and the Time column is the only thing
+   that says which row you are looking at. It is frozen to the left edge, and the
+   "Time" header corner is frozen in both directions so the two never come apart.
+   Every frozen cell needs an opaque background — a transparent one lets the
+   scrolling court columns show through it. */
 .grid-wrap {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid var(--ps-border-soft);
     border-radius: var(--ps-radius);
     background: var(--ps-surface);
@@ -148,6 +154,8 @@ function describe(court, slot, cell) {
 
 .grid {
     width: 100%;
+    /* separate, not collapse: collapsed borders are painted by the table rather
+       than the cell, and they do not travel with a sticky column. */
     border-collapse: separate;
     border-spacing: 0;
     min-width: 640px;
@@ -171,22 +179,35 @@ thead th {
     margin-top: 0.15rem;
 }
 
+/* Frozen column — width fixed so the courts do not shift under it as it scrolls. */
+.time-head,
+.time {
+    position: sticky;
+    left: 0;
+    width: 92px;
+    min-width: 92px;
+    background: var(--ps-surface);
+    /* The divider is a shadow, not a border: it stays on the frozen edge and
+       does not add to the column's width. */
+    box-shadow: 1px 0 0 var(--ps-border-soft);
+}
+
 .time-head {
+    /* Above both the frozen column and the sticky header row — it overlaps both. */
+    z-index: 4;
     text-align: left;
     padding-left: 0.7rem;
 }
 
 .time {
+    z-index: 1;
     white-space: nowrap;
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--ps-text-muted);
     padding: 0.3rem 0.7rem;
     border-bottom: 1px solid var(--ps-border-soft);
-    background: var(--ps-surface);
-    position: sticky;
-    left: 0;
-    z-index: 1;
+    text-align: left;
 }
 
 .dash {
@@ -313,6 +334,35 @@ thead th {
     .cell {
         min-height: 42px;
         font-size: 0.72rem;
+    }
+
+    /* Narrower frozen column so more courts fit beside it, and a soft shadow so
+       it reads as sitting above the columns sliding underneath. */
+    .time-head,
+    .time {
+        width: 68px;
+        min-width: 68px;
+        box-shadow: 2px 0 6px rgba(24, 14, 33, 0.1);
+    }
+
+    .time-head {
+        padding-left: 0.5rem;
+    }
+
+    /* Stack start over end so the frozen column stays narrow. The dash becomes
+       the line break; left visible it would read as a minus sign. */
+    .time {
+        font-size: 0.72rem;
+        padding: 0.3rem 0.5rem;
+        white-space: normal;
+        line-height: 1.2;
+    }
+
+    .time .dash {
+        display: block;
+        margin: 0;
+        height: 0;
+        overflow: hidden;
     }
 }
 </style>

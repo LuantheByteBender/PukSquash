@@ -9,16 +9,13 @@
  * merely looks right.
  */
 import { ref, computed, onMounted } from 'vue';
-import { bookingService, ApiConflict, usingMockBookings } from '../features/booking/bookingService.js';
-import { armConflict, conflictArmed, resetMockData } from '../features/booking/mockBookingData.js';
-import { useAuth } from '../composables/useAuth.js';
+import { bookingService, ApiConflict } from '../features/booking/bookingService.js';
 import { useToast } from '../composables/useToast.js';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
 import GridLegend from '../components/GridLegend.vue';
 import BookingDialog from '../components/BookingDialog.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
-const { user } = useAuth();
 const toast = useToast();
 
 const todayIso = new Date().toISOString().slice(0, 10);
@@ -55,7 +52,7 @@ async function load() {
     loadError.value = null;
 
     try {
-        data.value = await bookingService.availability(date.value, user.value);
+        data.value = await bookingService.availability(date.value);
     } catch (error) {
         loadError.value = error.message;
     } finally {
@@ -88,7 +85,7 @@ async function createBooking(payload) {
     busyKey.value = `${payload.court_id}:${payload.time_slot_id}`;
 
     try {
-        const booking = await bookingService.createBooking(payload, user.value);
+        const booking = await bookingService.createBooking(payload);
         selection.value = null;
         toast.success(`Booked — ${booking.court.name}, ${slotLabel(booking)}.`);
     } catch (error) {
@@ -108,7 +105,7 @@ async function joinBooking(bookingId) {
         : null;
 
     try {
-        const booking = await bookingService.joinBooking(bookingId, user.value);
+        const booking = await bookingService.joinBooking(bookingId);
         selection.value = null;
         toast.success(
             `You have joined ${booking.players[0]?.name}'s session on ${booking.court.name}.`
@@ -141,25 +138,11 @@ function handleFailure(error) {
 const slotLabel = (booking) =>
     `${(booking.time_slot.start_time || '').slice(0, 5)}–${(booking.time_slot.end_time || '').slice(0, 5)}`;
 
-/* --- demo controls, mock data source only --------------------------------- */
-
-const armed = ref(usingMockBookings ? conflictArmed() : false);
-
-function toggleConflict() {
-    armed.value = !armed.value;
-    armConflict(armed.value);
-
-    if (armed.value) {
-        toast.info('The next booking attempt will be rejected as a conflict.');
-    }
-}
-
-function resetDemo() {
-    resetMockData();
-    armed.value = false;
-    load();
-    toast.info('Demo data reset.');
-}
+/** An empty grid is a real state, not a failure: the admin has configured no
+ *  active courts or no active time slots for this date (BR-04, BR-05). */
+const gridEmpty = computed(
+    () => !data.value?.courts?.length || !data.value?.time_slots?.length
+);
 </script>
 
 <template>
@@ -206,34 +189,21 @@ function resetDemo() {
                     <LoadingSpinner v-if="loading" label="refreshing" />
                 </div>
 
-                <AvailabilityGrid
-                    :courts="data.courts"
-                    :time-slots="data.time_slots"
-                    :cells="data.cells"
-                    :busy-key="busyKey"
-                    @select="onSelect"
-                />
-
-                <GridLegend />
-            </div>
-
-            <div v-if="usingMockBookings" class="card dev">
-                <h3>Demo controls</h3>
-
-                <p class="faint">
-                    Present only while the booking screens run on mock data. Use these to show the
-                    booking-conflict path in a sprint demo without opening two browsers.
+                <p v-if="gridEmpty" class="muted empty">
+                    No courts are open for booking on this date.
                 </p>
 
-                <div class="row">
-                    <button class="btn btn-secondary btn-sm" @click="toggleConflict">
-                        {{ armed ? 'Disarm conflict' : 'Arm a booking conflict' }}
-                    </button>
+                <template v-else>
+                    <AvailabilityGrid
+                        :courts="data.courts"
+                        :time-slots="data.time_slots"
+                        :cells="data.cells"
+                        :busy-key="busyKey"
+                        @select="onSelect"
+                    />
 
-                    <button class="btn btn-secondary btn-sm" @click="resetDemo">
-                        Reset demo data
-                    </button>
-                </div>
+                    <GridLegend />
+                </template>
             </div>
         </template>
 
@@ -300,13 +270,9 @@ function resetDemo() {
     padding: 2rem 1rem;
 }
 
-.dev {
-    border-style: dashed;
-    margin-top: 1rem;
-}
-
-.dev h3 {
-    margin: 0 0 0.2rem;
-    font-size: 0.95rem;
+.empty {
+    margin: 0;
+    padding: 1.5rem 0;
+    text-align: center;
 }
 </style>

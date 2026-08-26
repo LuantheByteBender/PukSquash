@@ -2,12 +2,10 @@
 /** FR-15 / FR-16 — view your bookings and cancel your own. */
 import { ref, onMounted } from 'vue';
 import { bookingService } from '../features/booking/bookingService.js';
-import { useAuth } from '../composables/useAuth.js';
 import { useToast } from '../composables/useToast.js';
 import BookingCard from '../components/BookingCard.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
-const { user } = useAuth();
 const toast = useToast();
 
 const tabs = [
@@ -28,7 +26,7 @@ async function load() {
     error.value = null;
 
     try {
-        bookings.value = await bookingService.myBookings(tab.value, user.value);
+        bookings.value = await bookingService.myBookings(tab.value);
     } catch (err) {
         error.value = err.message;
     } finally {
@@ -49,7 +47,7 @@ async function doCancel() {
     cancellingId.value = booking.id;
 
     try {
-        const result = await bookingService.cancelBooking(booking.id, user.value);
+        const result = await bookingService.cancelBooking(booking.id);
 
         toast.success(
             result.left
