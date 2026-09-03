@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CoachAvailabilityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,3 +22,10 @@ Route::middleware('firebase.auth')
                 ),
         ]);
     });
+
+//Handles publishing a Coach's selected time slots for a specific date.
+Route::middleware('firebase.auth')
+    ->put(
+        '/coach/availability',
+        [CoachAvailabilityController::class, 'publish']
+    );
