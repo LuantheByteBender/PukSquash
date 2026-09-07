@@ -1,6 +1,6 @@
 <script setup>
 // The parent component listens for these events and decides which page to show.
-const emit = defineEmits(['sign-in', 'sign-up']);
+const emit = defineEmits(['sign-in', 'sign-up', 'auth-test']);
 </script>
 
 <template>
@@ -23,6 +23,13 @@ const emit = defineEmits(['sign-in', 'sign-up']);
                     @click="emit('sign-up')"
                 >
                     Sign up
+                </button>
+
+                <button
+                    class="button button-secondary"
+                    @click="emit('auth-test')"
+                >
+                    Auth test
                 </button>
             </div>
         </section>

@@ -1,11 +1,12 @@
 <?php
 
+use App\Http\Controllers\CourtController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('firebase.auth')
-    ->get('/me', function (Request $request) {
+Route::middleware('firebase.auth')->group(function () {
 
+    Route::get('/me', function (Request $request) {
         return response()->json([
             'authenticated' => true,
 
@@ -21,3 +22,6 @@ Route::middleware('firebase.auth')
                 ),
         ]);
     });
+
+    Route::get('/courts', [CourtController::class, 'index']);
+});

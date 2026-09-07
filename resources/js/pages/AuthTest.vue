@@ -7,6 +7,13 @@ import {
     logoutUser,
 } from '../features/auth/authService';
 
+import {
+    getCurrentUser,
+    getCourts,
+} from '../services/api.js';
+
+const emit = defineEmits(['go-home']);
+
 const email = ref('');
 const password = ref('');
 const message = ref('');
@@ -54,12 +61,29 @@ async function logout() {
     }
 }
 
-import { getCurrentUser } from '../services/api.js';
-
 async function testBackend() {
     try {
         const result = await getCurrentUser();
-        message.value = JSON.stringify(result);
+
+        message.value = JSON.stringify(
+            result,
+            null,
+            2
+        );
+    } catch (error) {
+        message.value = error.message;
+    }
+}
+
+async function testCourts() {
+    try {
+        const courts = await getCourts();
+
+        message.value = JSON.stringify(
+            courts,
+            null,
+            2
+        );
     } catch (error) {
         message.value = error.message;
     }
@@ -69,6 +93,10 @@ async function testBackend() {
 <template>
     <main>
         <h1>PukSquash Authentication Test</h1>
+
+        <button @click="emit('go-home')">
+            Go Home
+        </button>
 
         <div>
             <input
@@ -100,10 +128,16 @@ async function testBackend() {
             </button>
         </div>
 
-        <p>{{ message }}</p>
-    </main>
+        <div>
+            <button @click="testBackend">
+                Test Laravel Authentication
+            </button>
 
-    <button @click="testBackend">
-    Test Laravel Authentication
-    </button>
+            <button @click="testCourts">
+                Load Courts Through Laravel
+            </button>
+        </div>
+
+        <pre>{{ message }}</pre>
+    </main>
 </template>

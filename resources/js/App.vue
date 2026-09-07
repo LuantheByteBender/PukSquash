@@ -4,6 +4,7 @@ import { ref } from 'vue';
 import HomePage from './pages/HomePage.vue';
 import LoginPage from './pages/LoginPage.vue';
 import SignUpPage from './pages/SignUpPage.vue';
+import AuthTest from './pages/AuthTest.vue';
 import { myBookings } from '@firebasegen/example-connector';
 
 // Vue shows the landing page when the application first starts.
@@ -16,6 +17,7 @@ const currentPage = ref('home');
         v-if="currentPage === 'home'"
         @sign-in="currentPage = 'login'"
         @sign-up="currentPage = 'signup'"
+        @auth-test="currentPage = 'auth-test'"
     />
 
     <LoginPage
