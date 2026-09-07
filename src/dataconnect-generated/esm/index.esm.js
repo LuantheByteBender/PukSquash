@@ -2,19 +2,19 @@ import { queryRef, executeQuery, validateArgsWithOptions, mutationRef, executeMu
 
 export const connectorConfig = {
   connector: 'example',
-  service: 'puksquash',
-  location: 'southamerica-west1'
+  service: 'puksquash-devdb-1',
+  location: 'us-central1'
 };
-export const upsertUserRef = (dcOrVars, vars) => {
+export const createUserRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'UpsertUser', inputVars);
+  return mutationRef(dcInstance, 'CreateUser', inputVars);
 }
-upsertUserRef.operationName = 'UpsertUser';
+createUserRef.operationName = 'CreateUser';
 
-export function upsertUser(dcOrVars, vars) {
+export function createUser(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(upsertUserRef(dcInstance, inputVars));
+  return executeMutation(createUserRef(dcInstance, inputVars));
 }
 
 export const createCourtRef = (dcOrVars, vars) => {
@@ -27,6 +27,18 @@ createCourtRef.operationName = 'CreateCourt';
 export function createCourt(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
   return executeMutation(createCourtRef(dcInstance, inputVars));
+}
+
+export const createTimeSlotRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'CreateTimeSlot', inputVars);
+}
+createTimeSlotRef.operationName = 'CreateTimeSlot';
+
+export function createTimeSlot(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(createTimeSlotRef(dcInstance, inputVars));
 }
 
 export const createBookingRef = (dcOrVars, vars) => {
@@ -78,6 +90,19 @@ export function getCourt(dcOrVars, varsOrOptions, options) {
   
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getCourtRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+
+export const listTimeSlotsRef = (dc) => {
+  const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListTimeSlots');
+}
+listTimeSlotsRef.operationName = 'ListTimeSlots';
+
+export function listTimeSlots(dcOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrOptions, options, undefined,false, false);
+  return executeQuery(listTimeSlotsRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 
 export const myBookingsRef = (dc) => {

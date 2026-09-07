@@ -1,48 +1,122 @@
 # ============================================================
-# PukSquash - Initial Mutations
+# PukSquash - Phase 1 Mutations
 # ============================================================
 
-mutation UpsertUser(
-  $studentNumber: String!
-  $name: String!
+
+# ------------------------------------------------------------
+# User profile creation
+#
+# Laravel verifies Firebase Authentication and supplies the
+# verified Firebase UID and profile information.
+#
+# Browser clients cannot call this operation directly.
+# ------------------------------------------------------------
+
+mutation CreateUser(
+  $firebaseUid: String!
+  $studentNumber: String
+  $fullName: String!
   $email: String!
 )
-@auth(level: USER_EMAIL_VERIFIED) {
-  user_upsert(
+@auth(level: NO_ACCESS) {
+
+  user_insert(
     data: {
-      id_expr: "auth.uid"
+      firebaseUid: $firebaseUid
       studentNumber: $studentNumber
-      name: $name
+      fullName: $fullName
       email: $email
     }
   )
 }
 
-# Court creation is a privileged backend/admin operation.
-# It cannot be called directly by normal authenticated users.
+
+# ------------------------------------------------------------
+# Court creation
+#
+# Laravel must first verify that the requesting user is ADMIN.
+# ------------------------------------------------------------
+
 mutation CreateCourt(
   $name: String!
+  $description: String
 )
 @auth(level: NO_ACCESS) {
+
   court_insert(
     data: {
       name: $name
+      description: $description
     }
   )
 }
 
-mutation CreateBooking(
-  $courtId: UUID!
-  $startTime: Timestamp!
-  $endTime: Timestamp!
+
+# ------------------------------------------------------------
+# Time slot creation
+#
+# Phase 1 uses predefined fixed one-hour time slots.
+# ------------------------------------------------------------
+
+mutation CreateTimeSlot(
+  $startTime: String!
+  $endTime: String!
+  $displayOrder: Int!
 )
-@auth(level: USER_EMAIL_VERIFIED) {
-  booking_insert(
+@auth(level: NO_ACCESS) {
+
+  timeSlot_insert(
     data: {
-      userId_expr: "auth.uid"
-      courtId: $courtId
       startTime: $startTime
       endTime: $endTime
+      displayOrder: $displayOrder
+    }
+  )
+}
+
+
+# ------------------------------------------------------------
+# Booking creation
+#
+# Laravel performs the booking validation first:
+# - authenticated user
+# - role/status
+# - court status
+# - booking limits
+# - slot availability
+# - booking type rules
+# - coach validation where applicable
+#
+# The booking and Player 1 record are then created atomically.
+# ------------------------------------------------------------
+
+mutation CreateBooking(
+  $courtId: UUID!
+  $timeSlotId: UUID!
+  $createdByUserId: UUID!
+  $coachId: UUID
+  $bookingDate: Date!
+  $bookingType: String!
+)
+@auth(level: NO_ACCESS)
+@transaction {
+
+  booking_insert(
+    data: {
+      courtId: $courtId
+      timeSlotId: $timeSlotId
+      createdByUserId: $createdByUserId
+      coachId: $coachId
+      bookingDate: $bookingDate
+      bookingType: $bookingType
+    }
+  )
+
+  bookingPlayer_insert(
+    data: {
+      bookingId_expr: "response.booking_insert.id"
+      userId: $createdByUserId
+      playerPosition: 1
     }
   )
 }

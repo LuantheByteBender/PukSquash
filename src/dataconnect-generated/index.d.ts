@@ -10,9 +10,19 @@ export type DateString = string;
 
 
 
+export interface BookingPlayer_Key {
+  id: UUIDString;
+  __typename?: 'BookingPlayer_Key';
+}
+
 export interface Booking_Key {
   id: UUIDString;
   __typename?: 'Booking_Key';
+}
+
+export interface CoachAvailability_Key {
+  id: UUIDString;
+  __typename?: 'CoachAvailability_Key';
 }
 
 export interface Court_Key {
@@ -22,12 +32,16 @@ export interface Court_Key {
 
 export interface CreateBookingData {
   booking_insert: Booking_Key;
+  bookingPlayer_insert: BookingPlayer_Key;
 }
 
 export interface CreateBookingVariables {
   courtId: UUIDString;
-  startTime: TimestampString;
-  endTime: TimestampString;
+  timeSlotId: UUIDString;
+  createdByUserId: UUIDString;
+  coachId?: UUIDString | null;
+  bookingDate: DateString;
+  bookingType: string;
 }
 
 export interface CreateCourtData {
@@ -36,14 +50,38 @@ export interface CreateCourtData {
 
 export interface CreateCourtVariables {
   name: string;
+  description?: string | null;
+}
+
+export interface CreateTimeSlotData {
+  timeSlot_insert: TimeSlot_Key;
+}
+
+export interface CreateTimeSlotVariables {
+  startTime: string;
+  endTime: string;
+  displayOrder: number;
+}
+
+export interface CreateUserData {
+  user_insert: User_Key;
+}
+
+export interface CreateUserVariables {
+  firebaseUid: string;
+  studentNumber?: string | null;
+  fullName: string;
+  email: string;
 }
 
 export interface GetCourtData {
   court?: {
     id: UUIDString;
     name: string;
+    description?: string | null;
     status: string;
     createdAt: TimestampString;
+    updatedAt: TimestampString;
   } & Court_Key;
 }
 
@@ -52,67 +90,92 @@ export interface GetCourtVariables {
 }
 
 export interface GetCurrentUserData {
-  user?: {
-    id: string;
-    studentNumber: string;
-    name: string;
+  users: ({
+    id: UUIDString;
+    firebaseUid: string;
+    studentNumber?: string | null;
+    fullName: string;
     email: string;
     role: string;
     status: string;
     createdAt: TimestampString;
-  } & User_Key;
+    updatedAt: TimestampString;
+  } & User_Key)[];
 }
 
 export interface ListCourtsData {
   courts: ({
     id: UUIDString;
     name: string;
+    description?: string | null;
     status: string;
     createdAt: TimestampString;
+    updatedAt: TimestampString;
   } & Court_Key)[];
 }
 
-export interface MyBookingsData {
-  bookings: ({
+export interface ListTimeSlotsData {
+  timeSlots: ({
     id: UUIDString;
-    startTime: TimestampString;
-    endTime: TimestampString;
-    status: string;
-    createdAt: TimestampString;
-    court: {
+    startTime: string;
+    endTime: string;
+    displayOrder: number;
+    isActive: boolean;
+  } & TimeSlot_Key)[];
+}
+
+export interface MyBookingsData {
+  users: ({
+    id: UUIDString;
+    bookings_on_createdByUser: ({
       id: UUIDString;
-      name: string;
+      bookingDate: DateString;
+      bookingType: string;
       status: string;
-    } & Court_Key;
-  } & Booking_Key)[];
+      bookedAt: TimestampString;
+      cancelledAt?: TimestampString | null;
+      createdAt: TimestampString;
+      updatedAt: TimestampString;
+      court: {
+        id: UUIDString;
+        name: string;
+        status: string;
+      } & Court_Key;
+      timeSlot: {
+        id: UUIDString;
+        startTime: string;
+        endTime: string;
+        displayOrder: number;
+      } & TimeSlot_Key;
+      coach?: {
+        id: UUIDString;
+        fullName: string;
+      } & User_Key;
+    } & Booking_Key)[];
+  } & User_Key)[];
 }
 
-export interface UpsertUserData {
-  user_upsert: User_Key;
-}
-
-export interface UpsertUserVariables {
-  studentNumber: string;
-  name: string;
-  email: string;
+export interface TimeSlot_Key {
+  id: UUIDString;
+  __typename?: 'TimeSlot_Key';
 }
 
 export interface User_Key {
-  id: string;
+  id: UUIDString;
   __typename?: 'User_Key';
 }
 
-interface UpsertUserRef {
+interface CreateUserRef {
   /* Allow users to create refs without passing in DataConnect */
-  (vars: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
+  (vars: CreateUserVariables): MutationRef<CreateUserData, CreateUserVariables>;
   /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: UpsertUserVariables): MutationRef<UpsertUserData, UpsertUserVariables>;
+  (dc: DataConnect, vars: CreateUserVariables): MutationRef<CreateUserData, CreateUserVariables>;
   operationName: string;
 }
-export const upsertUserRef: UpsertUserRef;
+export const createUserRef: CreateUserRef;
 
-export function upsertUser(vars: UpsertUserVariables): MutationPromise<UpsertUserData, UpsertUserVariables>;
-export function upsertUser(dc: DataConnect, vars: UpsertUserVariables): MutationPromise<UpsertUserData, UpsertUserVariables>;
+export function createUser(vars: CreateUserVariables): MutationPromise<CreateUserData, CreateUserVariables>;
+export function createUser(dc: DataConnect, vars: CreateUserVariables): MutationPromise<CreateUserData, CreateUserVariables>;
 
 interface CreateCourtRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -125,6 +188,18 @@ export const createCourtRef: CreateCourtRef;
 
 export function createCourt(vars: CreateCourtVariables): MutationPromise<CreateCourtData, CreateCourtVariables>;
 export function createCourt(dc: DataConnect, vars: CreateCourtVariables): MutationPromise<CreateCourtData, CreateCourtVariables>;
+
+interface CreateTimeSlotRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: CreateTimeSlotVariables): MutationRef<CreateTimeSlotData, CreateTimeSlotVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: CreateTimeSlotVariables): MutationRef<CreateTimeSlotData, CreateTimeSlotVariables>;
+  operationName: string;
+}
+export const createTimeSlotRef: CreateTimeSlotRef;
+
+export function createTimeSlot(vars: CreateTimeSlotVariables): MutationPromise<CreateTimeSlotData, CreateTimeSlotVariables>;
+export function createTimeSlot(dc: DataConnect, vars: CreateTimeSlotVariables): MutationPromise<CreateTimeSlotData, CreateTimeSlotVariables>;
 
 interface CreateBookingRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -173,6 +248,18 @@ export const getCourtRef: GetCourtRef;
 
 export function getCourt(vars: GetCourtVariables, options?: ExecuteQueryOptions): QueryPromise<GetCourtData, GetCourtVariables>;
 export function getCourt(dc: DataConnect, vars: GetCourtVariables, options?: ExecuteQueryOptions): QueryPromise<GetCourtData, GetCourtVariables>;
+
+interface ListTimeSlotsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListTimeSlotsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListTimeSlotsData, undefined>;
+  operationName: string;
+}
+export const listTimeSlotsRef: ListTimeSlotsRef;
+
+export function listTimeSlots(options?: ExecuteQueryOptions): QueryPromise<ListTimeSlotsData, undefined>;
+export function listTimeSlots(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListTimeSlotsData, undefined>;
 
 interface MyBookingsRef {
   /* Allow users to create refs without passing in DataConnect */

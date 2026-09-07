@@ -18,6 +18,6 @@
     "dependencies": {
         "@dataconnect/generated": "file:src/dataconnect-generated",
         "@firebasegen/example-connector": "file:src/dataconnect-generated",
-        "firebase": "^12.17.1"
+        "firebase": "^12.18.0"
     }
 }

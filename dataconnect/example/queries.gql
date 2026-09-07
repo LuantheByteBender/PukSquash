@@ -1,28 +1,53 @@
+# ============================================================
+# PukSquash - Phase 1 Queries
+# ============================================================
+
+
+# ------------------------------------------------------------
+# Current application user
+# ------------------------------------------------------------
+
 query GetCurrentUser
 @auth(level: USER_EMAIL_VERIFIED) {
-  user(key: { id_expr: "auth.uid" }) {
+  users(
+    where: {
+      firebaseUid: {
+        eq_expr: "auth.uid"
+      }
+    }
+  ) {
     id
+    firebaseUid
     studentNumber
-    name
+    fullName
     email
     role
     status
     createdAt
+    updatedAt
   }
 }
+
+
+# ------------------------------------------------------------
+# Courts
+# ------------------------------------------------------------
 
 query ListCourts
 @auth(
   level: USER_EMAIL_VERIFIED
-  insecureReason: "Verified users may view available squash courts."
+  insecureReason: "Verified users may view squash courts."
 ) {
   courts {
     id
     name
+    description
     status
     createdAt
+    updatedAt
   }
 }
+
 
 query GetCourt($id: UUID!)
 @auth(
@@ -32,30 +57,78 @@ query GetCourt($id: UUID!)
   court(key: { id: $id }) {
     id
     name
+    description
     status
     createdAt
+    updatedAt
   }
 }
 
+
+# ------------------------------------------------------------
+# Fixed time slots
+# ------------------------------------------------------------
+
+query ListTimeSlots
+@auth(
+  level: USER_EMAIL_VERIFIED
+  insecureReason: "Verified users may view squash court time slots."
+) {
+  timeSlots {
+    id
+    startTime
+    endTime
+    displayOrder
+    isActive
+  }
+}
+
+
+# ------------------------------------------------------------
+# Current user's bookings
+# ------------------------------------------------------------
+
 query MyBookings
 @auth(level: USER_EMAIL_VERIFIED) {
-  bookings(
+
+  users(
     where: {
-      userId: {
+      firebaseUid: {
         eq_expr: "auth.uid"
       }
     }
   ) {
     id
-    startTime
-    endTime
-    status
-    createdAt
 
-    court {
+    bookings_on_createdByUser {
       id
-      name
+
+      bookingDate
+      bookingType
       status
+
+      bookedAt
+      cancelledAt
+      createdAt
+      updatedAt
+
+      court {
+        id
+        name
+        status
+      }
+
+      timeSlot {
+        id
+        startTime
+        endTime
+        displayOrder
+      }
+
+      coach {
+        id
+        fullName
+      }
     }
   }
 }

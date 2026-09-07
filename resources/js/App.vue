@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage.vue';
 import LoginPage from './pages/LoginPage.vue';
 import SignUpPage from './pages/SignUpPage.vue';
 import AuthTest from './pages/AuthTest.vue';
-import { myBookings } from '@firebasegen/example-connector';
+
 
 // Vue shows the landing page when the application first starts.
 // The buttons on HomePage update this value to select another page.

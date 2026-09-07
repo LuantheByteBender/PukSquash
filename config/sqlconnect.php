@@ -4,17 +4,17 @@ return [
 
     'project_id' => env(
         'SQL_CONNECT_PROJECT_ID',
-        'puksquash-development'
+        'squashtest-560f0'
     ),
 
     'location' => env(
         'SQL_CONNECT_LOCATION',
-        'southamerica-west1'
+        'us-central1'
     ),
 
     'service_id' => env(
         'SQL_CONNECT_SERVICE_ID',
-        'puksquash'
+        'puksquash-devdb-1'
     ),
 
     'connector_id' => env(

@@ -1,14 +1,14 @@
 specVersion: "v1"
-serviceId: "puksquash"
-location: "southamerica-west1"
+serviceId: "puksquash-devdb-1"
+location: "us-central1"
 
 schema:
   source: "./schema"
   datasource:
     postgresql:
-      database: "fdcdb"
+      database: "puksquash-devdb-1"
       cloudSql:
-        instanceId: "puksquash-fdc"
+        instanceId: "puksquash-devdb-1"
 
 connectorDirs:
   - "./example"
