@@ -1,5 +1,7 @@
 import { auth } from './firebase.js';
 
+import { startLoading, stopLoading } from './loading.js';
+
 export async function getCurrentUser() {
     const user = auth.currentUser;
 
@@ -7,25 +9,31 @@ export async function getCurrentUser() {
         throw new Error('User is not logged in.');
     }
 
-    const token = await user.getIdToken(true);
+    const token = await user.getIdToken();
 
-    const response = await fetch('/api/me', {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-        },
-    });
+    startLoading();
 
-    const text = await response.text();
+    try {
+        const response = await fetch('/api/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+            },
+        });
 
-    console.log('Status:', response.status);
-    console.log('Response:', text);
+        const text = await response.text();
 
-    if (!response.ok) {
-        throw new Error(
-            `Backend authentication failed (${response.status}): ${text}`
-        );
+        console.log('Status:', response.status);
+        console.log('Response:', text);
+
+        if (!response.ok) {
+            throw new Error(
+                `Backend authentication failed (${response.status}): ${text}`
+            );
+        }
+
+        return JSON.parse(text);
+    } finally {
+        stopLoading();
     }
-
-    return JSON.parse(text);
 }

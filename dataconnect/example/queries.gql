@@ -1,61 +1,286 @@
-query GetCurrentUser
-@auth(level: USER_EMAIL_VERIFIED) {
-  user(key: { id_expr: "auth.uid" }) {
+# ============================================================
+# PukSquash — Phase 1 Queries
+# ============================================================
+# Every query here is called by Laravel through the SQL Connect
+# GraphQL endpoint. The frontend never calls these directly.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# User queries
+# ------------------------------------------------------------
+
+# Look up the current user's profile by their Firebase UID.
+query GetUserByFirebaseUid($firebaseUid: String!)
+@auth(level: NO_ACCESS) {
+  users(where: { firebaseUid: { eq: $firebaseUid } }, limit: 1) {
     id
+    firebaseUid
     studentNumber
-    name
+    fullName
     email
     role
     status
     createdAt
+    updatedAt
   }
 }
 
-query ListCourts
-@auth(
-  level: USER_EMAIL_VERIFIED
-  insecureReason: "Verified users may view available squash courts."
-) {
-  courts {
+query GetBookingsByUserForSlot($userId: UUID!, $bookingDate: Date!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      createdById: { eq: $userId }
+      status: { eq: "CONFIRMED" }
+      bookingDate: { eq: $bookingDate }
+      timeSlotId: { eq: $timeSlotId }
+    }
+    limit: 1
+  ) {
     id
-    name
+  }
+}
+query GetBookingForCell($bookingDate: Date!, $courtId: UUID!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      bookingDate: { eq: $bookingDate }
+      status: { eq: "CONFIRMED" }
+      courtId: { eq: $courtId }
+      timeSlotId: { eq: $timeSlotId }
+    }
+    limit: 1
+  ) {
+    id
+  }
+}
+
+# Fetch a user by their internal UUID (for joins/lookups).
+query GetUserById($id: UUID!)
+@auth(level: NO_ACCESS) {
+  user(key: { id: $id }) {
+    id
+    firebaseUid
+    studentNumber
+    fullName
+    email
+    role
     status
     createdAt
+    updatedAt
+  }
+}
+
+
+# ------------------------------------------------------------
+# Court queries
+# ------------------------------------------------------------
+
+query ListActiveCourts
+@auth(level: NO_ACCESS) {
+  courts(where: { status: { eq: "ACTIVE" } }) {
+    id
+    name
+    description
+    status
+    createdAt
+    updatedAt
   }
 }
 
 query GetCourt($id: UUID!)
-@auth(
-  level: USER_EMAIL_VERIFIED
-  insecureReason: "Verified users may view squash court information."
-) {
+@auth(level: NO_ACCESS) {
   court(key: { id: $id }) {
     id
     name
+    description
     status
     createdAt
+    updatedAt
   }
 }
 
-query MyBookings
-@auth(level: USER_EMAIL_VERIFIED) {
-  bookings(
-    where: {
-      userId: {
-        eq_expr: "auth.uid"
-      }
-    }
-  ) {
+
+# ------------------------------------------------------------
+# TimeSlot queries
+# ------------------------------------------------------------
+
+query ListActiveTimeSlots
+@auth(level: NO_ACCESS) {
+  timeSlots(where: { isActive: { eq: true } }, orderBy: [{ displayOrder: ASC }]) {
     id
     startTime
     endTime
+    displayOrder
+    isActive
+  }
+}
+
+query GetAvailabilityData($bookingDate: Date!)
+@auth(level: NO_ACCESS) {
+  courts(where: { status: { eq: "ACTIVE" } }) {
+    id
+    name
+    description
     status
     createdAt
+    updatedAt
+  }
 
-    court {
+  timeSlots(where: { isActive: { eq: true } }, orderBy: [{ displayOrder: ASC }]) {
+    id
+    startTime
+    endTime
+    displayOrder
+    isActive
+  }
+
+  bookings(where: { bookingDate: { eq: $bookingDate }, status: { eq: "CONFIRMED" } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+    court { id }
+    timeSlot { id }
+    createdBy { firebaseUid }
+
+    bookingPlayers_on_booking {
       id
-      name
-      status
+      playerPosition
+      joinedAt
+      user { id firebaseUid fullName }
     }
+  }
+}
+
+
+# ------------------------------------------------------------
+# Booking queries
+# ------------------------------------------------------------
+
+# All CONFIRMED bookings for a given date. Used to build the
+# availability grid (court × time-slot matrix).
+query GetBookingsForDate($bookingDate: Date!)
+@auth(level: NO_ACCESS) {
+  bookings(where: { bookingDate: { eq: $bookingDate }, status: { eq: "CONFIRMED" } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName email }
+    coach { id fullName email }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id fullName email }
+    }
+  }
+}
+
+# Single booking by ID (for detail / cancel screens).
+query GetBookingById($id: UUID!)
+@auth(level: NO_ACCESS) {
+  booking(key: { id: $id }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName email }
+    coach { id fullName email }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id fullName email }
+    }
+  }
+}
+
+# Bookings created by a specific user (My Bookings screen).
+query GetBookingsByUser($userId: UUID!, $status: String)
+@auth(level: NO_ACCESS) {
+  bookings(where: { createdById: { eq: $userId }, status: { eq: $status } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    coach { id fullName }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      user { id fullName }
+    }
+  }
+}
+
+
+# ------------------------------------------------------------
+# BookingPlayer queries
+# ------------------------------------------------------------
+
+query GetBookingPlayers($bookingId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookingPlayers(where: { bookingId: { eq: $bookingId } }) {
+    id
+    playerPosition
+    joinedAt
+    user { id fullName email }
+  }
+}
+
+
+# ------------------------------------------------------------
+# CoachAvailability queries
+# ------------------------------------------------------------
+
+# Coaches available for a specific date + time-slot.
+query GetAvailableCoaches($availabilityDate: Date!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  coachAvailabilities(where: { availabilityDate: { eq: $availabilityDate }, timeSlotId: { eq: $timeSlotId } }) {
+    availabilityDate
+    createdAt
+    coachId
+    timeSlotId
+    coach { id fullName email }
+    timeSlot { id startTime endTime }
+  }
+}
+
+query IsCoachAvailable($availabilityDate: Date!, $timeSlotId: UUID!, $coachId: UUID!)
+@auth(level: NO_ACCESS) {
+  coachAvailabilities(
+    where: {
+      availabilityDate: { eq: $availabilityDate }
+      timeSlotId: { eq: $timeSlotId }
+      coachId: { eq: $coachId }
+    }
+    limit: 1
+  ) {
+    coachId
   }
 }

@@ -37,6 +37,12 @@ class FirebaseAuth
             $firebaseUser =
                 $this->firebaseAuth->getUser($uid);
 
+            if ($firebaseUser->emailVerified === false) {
+                return response()->json([
+                    'message' => 'Email address not verified.',
+                ], 403);
+            }
+
             $request->attributes->set(
                 'firebase_uid',
                 $uid
