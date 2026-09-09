@@ -67,6 +67,17 @@ class BookingController extends Controller
             return response()->json(['message' => 'Court is not available.'], 422);
         }
 
+        if ($this->bookings->userHasBookingForSlot(
+            $user->id,
+            $request->input('booking_date'),
+            $request->input('time_slot_id'),
+        )) {
+            return response()->json([
+                'message' => 'You already have a booking for this time slot.',
+                'code'    => 'USER_ALREADY_BOOKED',
+            ], 422);
+        }
+
         // Slot must not already be taken by a CONFIRMED booking.
         if ($this->bookings->isSlotTaken(
             $request->input('court_id'),
@@ -163,6 +174,14 @@ class BookingController extends Controller
 
         if ($booking->bookingType !== 'OPEN') {
             return response()->json(['message' => 'Only OPEN bookings can be joined.'], 422);
+        }
+
+        $timeSlotId = $booking->timeSlot['id'] ?? null;
+        if ($timeSlotId && $this->bookings->userHasBookingForSlot($user->id, $booking->bookingDate, $timeSlotId)) {
+            return response()->json([
+                'message' => 'You already have a booking for this time slot.',
+                'code'    => 'USER_ALREADY_BOOKED',
+            ], 422);
         }
 
         // Check if slot is full (2 players).
