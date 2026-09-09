@@ -34,6 +34,17 @@ class CoachAvailabilityRepository
         ]);
     }
 
+    public function isCoachAvailable(string $availabilityDate, string $timeSlotId, string $coachId): bool
+    {
+        $data = $this->client->execute('IsCoachAvailable', [
+            'availabilityDate' => $availabilityDate,
+            'timeSlotId'       => $timeSlotId,
+            'coachId'          => $coachId,
+        ]);
+
+        return ! empty($data['coachAvailabilities'] ?? []);
+    }
+
     public function delete(string $id): void
     {
         $this->client->execute('DeleteCoachAvailability', ['id' => $id]);

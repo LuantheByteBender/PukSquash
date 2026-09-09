@@ -88,20 +88,11 @@ class BookingController extends Controller
         }
 
         if ($bookingType === 'PRIVATE_COACH') {
-            $available = $this->coachAvailability->getAvailableCoaches(
+            if (! $this->coachAvailability->isCoachAvailable(
                 $request->input('booking_date'),
                 $request->input('time_slot_id'),
-            );
-
-            $coachIds = [];
-            foreach ($available as $a) {
-                $coach = $a->coach;
-                if (! empty($coach['id'])) {
-                    $coachIds[] = $coach['id'];
-                }
-            }
-
-            if (! in_array($coachId, $coachIds, true)) {
+                $coachId,
+            )) {
                 return response()->json([
                     'message' => 'Selected coach is not available for this time slot.',
                     'code'    => 'COACH_UNAVAILABLE',
@@ -143,9 +134,7 @@ class BookingController extends Controller
         // Add the creator as Player 1.
         $this->players->add($bookingId, $user->id, 1);
 
-        $booking = $this->bookings->findById($bookingId);
-
-        return response()->json($booking?->toArray(), 201);
+        return response()->json(['id' => $bookingId], 201);
     }
 
     /**
@@ -193,9 +182,7 @@ class BookingController extends Controller
 
         $this->players->add($id, $user->id, 2);
 
-        $updated = $this->bookings->findById($id);
-
-        return response()->json($updated?->toArray());
+        return response()->json(['id' => $id]);
     }
 
     /**

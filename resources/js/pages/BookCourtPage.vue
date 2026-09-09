@@ -92,10 +92,20 @@ async function createBooking(payload) {
     dialogError.value = null;
     busyKey.value = `${payload.court_id}:${payload.time_slot_id}`;
 
+    const selected = selection.value;
+    const when = selected?.slot
+        ? `${(selected.slot.start_time || '').slice(0, 5)}–${(selected.slot.end_time || '').slice(0, 5)}`
+        : '';
+
     try {
-        const booking = await bookingService.createBooking(payload);
+        await bookingService.createBooking(payload);
         selection.value = null;
-        toast.success(`Booked — ${booking.court.name}, ${slotLabel(booking)}.`);
+
+        if (selected?.court?.name && when) {
+            toast.success(`Booked — ${selected.court.name}, ${when}.`);
+        } else {
+            toast.success('Booked successfully.');
+        }
     } catch (error) {
         handleFailure(error);
     } finally {
@@ -112,12 +122,18 @@ async function joinBooking(bookingId) {
         ? `${selection.value.court.id}:${selection.value.slot.id}`
         : null;
 
+    const selected = selection.value;
+    const host = selected?.cell?.players?.[0]?.name;
+
     try {
-        const booking = await bookingService.joinBooking(bookingId);
+        await bookingService.joinBooking(bookingId);
         selection.value = null;
-        toast.success(
-            `You have joined ${booking.players[0]?.name}'s session on ${booking.court.name}.`
-        );
+
+        if (host && selected?.court?.name) {
+            toast.success(`You have joined ${host}'s session on ${selected.court.name}.`);
+        } else {
+            toast.success('You have joined the booking.');
+        }
     } catch (error) {
         handleFailure(error);
     } finally {
@@ -142,9 +158,6 @@ function handleFailure(error) {
     dialogError.value = error.message;
     toast.error(error.message);
 }
-
-const slotLabel = (booking) =>
-    `${(booking.time_slot.start_time || '').slice(0, 5)}–${(booking.time_slot.end_time || '').slice(0, 5)}`;
 
 /** An empty grid is a real state, not a failure: the admin has configured no
  *  active courts or no active time slots for this date (BR-04, BR-05). */

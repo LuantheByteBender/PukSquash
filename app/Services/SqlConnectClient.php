@@ -24,8 +24,8 @@ class SqlConnectClient
 
     /** @var array<string, string> */
     private static array $operationCache = [];
-    private ?string $cachedToken = null;
-    private ?int $tokenExpiresAt = null;
+    private static ?string $cachedToken = null;
+    private static ?int $tokenExpiresAt = null;
 
     public function __construct()
     {
@@ -176,8 +176,8 @@ class SqlConnectClient
      */
     private function getAccessToken(): string
     {
-        if ($this->cachedToken && $this->tokenExpiresAt > time() + 60) {
-            return $this->cachedToken;
+        if (self::$cachedToken && self::$tokenExpiresAt > time() + 60) {
+            return self::$cachedToken;
         }
 
         if (! $this->credentialsPath || ! is_file($this->credentialsPath)) {
@@ -220,10 +220,10 @@ class SqlConnectClient
 
         $tokenData = $tokenResponse->json();
 
-        $this->cachedToken    = $tokenData['access_token'];
-        $this->tokenExpiresAt = $now + ($tokenData['expires_in'] ?? 3600);
+        self::$cachedToken    = $tokenData['access_token'];
+        self::$tokenExpiresAt = $now + ($tokenData['expires_in'] ?? 3600);
 
-        return $this->cachedToken;
+        return self::$cachedToken;
     }
 }
 

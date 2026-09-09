@@ -25,6 +25,20 @@ query GetUserByFirebaseUid($firebaseUid: String!)
     updatedAt
   }
 }
+query GetBookingForCell($bookingDate: Date!, $courtId: UUID!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      bookingDate: { eq: $bookingDate }
+      status: { eq: "CONFIRMED" }
+      courtId: { eq: $courtId }
+      timeSlotId: { eq: $timeSlotId }
+    }
+    limit: 1
+  ) {
+    id
+  }
+}
 
 # Fetch a user by their internal UUID (for joins/lookups).
 query GetUserById($id: UUID!)
@@ -84,6 +98,46 @@ query ListActiveTimeSlots
     endTime
     displayOrder
     isActive
+  }
+}
+
+query GetAvailabilityData($bookingDate: Date!)
+@auth(level: NO_ACCESS) {
+  courts(where: { status: { eq: "ACTIVE" } }) {
+    id
+    name
+    description
+    status
+    createdAt
+    updatedAt
+  }
+
+  timeSlots(where: { isActive: { eq: true } }, orderBy: [{ displayOrder: ASC }]) {
+    id
+    startTime
+    endTime
+    displayOrder
+    isActive
+  }
+
+  bookings(where: { bookingDate: { eq: $bookingDate }, status: { eq: "CONFIRMED" } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+    court { id }
+    timeSlot { id }
+    createdBy { firebaseUid }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id firebaseUid fullName }
+    }
   }
 }
 
@@ -199,5 +253,19 @@ query GetAvailableCoaches($availabilityDate: Date!, $timeSlotId: UUID!)
     timeSlotId
     coach { id fullName email }
     timeSlot { id startTime endTime }
+  }
+}
+
+query IsCoachAvailable($availabilityDate: Date!, $timeSlotId: UUID!, $coachId: UUID!)
+@auth(level: NO_ACCESS) {
+  coachAvailabilities(
+    where: {
+      availabilityDate: { eq: $availabilityDate }
+      timeSlotId: { eq: $timeSlotId }
+      coachId: { eq: $coachId }
+    }
+    limit: 1
+  ) {
+    coachId
   }
 }

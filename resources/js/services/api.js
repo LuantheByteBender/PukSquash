@@ -9,7 +9,7 @@ export async function getCurrentUser() {
         throw new Error('User is not logged in.');
     }
 
-    const token = await user.getIdToken(true);
+    const token = await user.getIdToken();
 
     startLoading();
 

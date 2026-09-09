@@ -75,18 +75,12 @@ class BookingRepository
      */
     public function isSlotTaken(string $courtId, string $bookingDate, string $timeSlotId): bool
     {
-        $bookings = $this->getForDate($bookingDate);
+        $data = $this->client->execute('GetBookingForCell', [
+            'bookingDate' => $bookingDate,
+            'courtId'     => $courtId,
+            'timeSlotId'  => $timeSlotId,
+        ]);
 
-        foreach ($bookings as $booking) {
-            if (
-                ($booking->court['id'] ?? null) === $courtId
-                && ($booking->timeSlot['id'] ?? null) === $timeSlotId
-                && $booking->status === 'CONFIRMED'
-            ) {
-                return true;
-            }
-        }
-
-        return false;
+        return ! empty($data['bookings'] ?? []);
     }
 }

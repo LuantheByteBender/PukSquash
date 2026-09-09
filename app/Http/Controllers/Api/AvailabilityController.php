@@ -3,20 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\BookingRepository;
-use App\Repositories\CourtRepository;
-use App\Repositories\TimeSlotRepository;
-use App\Repositories\UserRepository;
+use App\Repositories\AvailabilityRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AvailabilityController extends Controller
 {
     public function __construct(
-        private CourtRepository    $courts,
-        private TimeSlotRepository $timeSlots,
-        private BookingRepository  $bookings,
-        private UserRepository     $users,
+        private AvailabilityRepository $availability,
     ) {}
 
     /**
@@ -30,14 +24,12 @@ class AvailabilityController extends Controller
         $request->validate(['date' => 'required|date_format:Y-m-d']);
 
         $date    = $request->query('date');
-        $courts  = $this->courts->listActive();
-        $slots   = $this->timeSlots->listActive();
-        $booked  = $this->bookings->getForDate($date);
+        $snapshot = $this->availability->getForDate($date);
+        $courts  = $snapshot['courts'];
+        $slots   = $snapshot['timeSlots'];
+        $booked  = $snapshot['bookings'];
 
         $firebaseUid = $request->attributes->get('firebase_uid');
-        $actingUser = $firebaseUid
-            ? $this->users->findByFirebaseUid($firebaseUid)
-            : null;
 
         // Index confirmed bookings by "courtId:timeSlotId" for O(1) lookups.
         $index = [];
@@ -87,12 +79,12 @@ class AvailabilityController extends Controller
                 };
 
                 $isMine = false;
-                if ($actingUser) {
-                    if (($booking->createdBy['id'] ?? null) === $actingUser->id) {
+                if ($firebaseUid) {
+                    if (($booking->createdBy['firebaseUid'] ?? null) === $firebaseUid) {
                         $isMine = true;
                     } else {
                         foreach ($booking->players as $p) {
-                            if (($p->toArray()['user_id'] ?? null) === $actingUser->id) {
+                            if (($p->user['firebaseUid'] ?? null) === $firebaseUid) {
                                 $isMine = true;
                                 break;
                             }

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\DataTransferObjects\CourtDTO;
 use App\Services\SqlConnectClient;
+use Illuminate\Support\Facades\Cache;
 
 class CourtRepository
 {
@@ -24,13 +25,23 @@ class CourtRepository
 
     public function findById(string $id): ?CourtDTO
     {
+        $key = 'sqlconnect_court_id_' . $id;
+        $cached = Cache::get($key);
+
+        if ($cached instanceof CourtDTO) {
+            return $cached;
+        }
+
         $data = $this->client->execute('GetCourt', ['id' => $id]);
 
         if (empty($data['court'])) {
             return null;
         }
 
-        return CourtDTO::fromGraphQL($data['court']);
+        $dto = CourtDTO::fromGraphQL($data['court']);
+        Cache::put($key, $dto, now()->addMinutes(10));
+
+        return $dto;
     }
 
     public function create(array $params): void
