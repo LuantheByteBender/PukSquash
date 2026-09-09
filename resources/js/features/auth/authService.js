@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 
 import { auth } from '../../services/firebase.js';
+import { startLoading, stopLoading } from '../../services/loading.js';
 
 function normalizeEmail(email) {
     return String(email ?? '').trim();
@@ -38,6 +39,8 @@ function friendlyAuthError(error) {
 }
 
 export async function registerUser(email, password) {
+    startLoading();
+
     try {
         const result = await createUserWithEmailAndPassword(
             auth,
@@ -50,10 +53,14 @@ export async function registerUser(email, password) {
         return result;
     } catch (error) {
         throw new Error(friendlyAuthError(error));
+    } finally {
+        stopLoading();
     }
 }
 
 export async function loginUser(email, password) {
+    startLoading();
+
     try {
         return await signInWithEmailAndPassword(
             auth,
@@ -62,9 +69,15 @@ export async function loginUser(email, password) {
         );
     } catch (error) {
         throw new Error(friendlyAuthError(error));
+    } finally {
+        stopLoading();
     }
 }
 
 export function logoutUser() {
-    return signOut(auth);
+    startLoading();
+
+    return signOut(auth).finally(() => {
+        stopLoading();
+    });
 }

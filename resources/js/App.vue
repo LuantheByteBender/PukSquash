@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import AppNavbar from './components/AppNavbar.vue';
 import AppToast from './components/AppToast.vue';
 import { usingMockBookings } from './features/booking/bookingService.js';
+import { isLoading } from './services/loading.js';
 
 /* The landing, login and sign-up screens are full-bleed designs of their own, so
    they opt out of the application chrome via `meta.chrome: false`. */
@@ -25,6 +26,13 @@ const showChrome = computed(() => route.meta.chrome !== false);
         </main>
 
         <AppToast />
+
+        <div v-if="isLoading" class="app-loading" aria-busy="true" aria-live="polite">
+            <div class="app-loading__panel">
+                <div class="app-loading__spinner" aria-hidden="true" />
+                <p class="app-loading__text">Loading…</p>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -292,5 +300,50 @@ a:focus-visible {
     clip: rect(0 0 0 0);
     white-space: nowrap;
     border: 0;
+}
+
+.app-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(23, 18, 29, 0.55);
+    pointer-events: all;
+}
+
+.app-loading__panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ps-text);
+    border-radius: var(--ps-radius);
+    border: 1px solid var(--ps-border-soft);
+    box-shadow: 0 6px 20px rgba(24, 18, 33, 0.2);
+    min-width: 180px;
+}
+
+.app-loading__text {
+    margin: 0;
+    font-weight: 700;
+}
+
+.app-loading__spinner {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 4px solid rgba(108, 62, 148, 0.25);
+    border-top-color: var(--ps-brand);
+    animation: ps-spin 0.9s linear infinite;
+}
+
+@keyframes ps-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

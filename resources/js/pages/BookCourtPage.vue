@@ -18,7 +18,15 @@ import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 const toast = useToast();
 
-const todayIso = new Date().toISOString().slice(0, 10);
+function isoDateLocal(value) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+const todayIso = isoDateLocal(new Date());
 
 const date = ref(todayIso);
 const data = ref(null);
@@ -35,7 +43,7 @@ const maxDate = computed(() => {
     const value = new Date(`${todayIso}T00:00:00`);
     value.setDate(value.getDate() + days);
 
-    return value.toISOString().slice(0, 10);
+    return isoDateLocal(value);
 });
 
 const prettyDate = computed(() =>
@@ -66,7 +74,7 @@ function shiftDay(days) {
     const value = new Date(`${date.value}T00:00:00`);
     value.setDate(value.getDate() + days);
 
-    const iso = value.toISOString().slice(0, 10);
+    const iso = isoDateLocal(value);
 
     if (iso < todayIso || iso > maxDate.value) return;
 
