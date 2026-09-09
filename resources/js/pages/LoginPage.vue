@@ -1,10 +1,14 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { loginUser } from '../features/auth/authService';
+import { getCurrentUser } from '../services/api.js';
 
 // Allows this page to ask App.vue to return to the landing page.
 const emit = defineEmits(['go-home']);
+
+const router = useRouter();
 
 const email = ref('');
 const password = ref('');
@@ -29,6 +33,15 @@ async function login() {
 
         message.value =
             `Logged in successfully as ${result.user.email}`;
+
+        try {
+            await getCurrentUser();
+        } catch (error) {
+            message.value = error.message;
+            return;
+        }
+
+        await router.push({ name: 'book' });
     } catch (error) {
         message.value = error.message;
     } finally {

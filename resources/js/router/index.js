@@ -15,8 +15,7 @@ const routes = [
     {
         path: '/',
         name: 'home',
-        component: () => import('../pages/LandingPage.vue'),
-        meta: { chrome: false },
+        redirect: { name: 'login' },
     },
     {
         path: '/login',

@@ -7,6 +7,8 @@ import {
     logoutUser,
 } from '../features/auth/authService';
 
+import { getCurrentUser } from '../services/api.js';
+
 const email = ref('');
 const password = ref('');
 const message = ref('');
@@ -40,6 +42,12 @@ async function login() {
 
         message.value =
             `Logged in successfully as ${result.user.email}`;
+
+        try {
+            await getCurrentUser();
+        } catch (error) {
+            message.value = error.message;
+        }
     } catch (error) {
         message.value = error.message;
     }
@@ -53,8 +61,6 @@ async function logout() {
         message.value = error.message;
     }
 }
-
-import { getCurrentUser } from '../services/api.js';
 
 async function testBackend() {
     try {
@@ -106,6 +112,4 @@ async function testBackend() {
     <button @click="testBackend">
     Test Laravel Authentication
     </button>
-</template> 
-
-46251960@mynwu.co.za
+</template>
