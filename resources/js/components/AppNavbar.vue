@@ -52,7 +52,7 @@ async function signOut() {
                     <button class="btn btn-secondary btn-sm" @click="signOut">Sign out</button>
                 </template>
 
-                <RouterLink v-else :to="{ name: 'signup' }" class="link" @click="open = false">
+                <RouterLink v-else :to="{ name: 'login' }" class="link" @click="open = false">
                     Sign in
                 </RouterLink>
             </nav>

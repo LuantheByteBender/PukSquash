@@ -2,26 +2,35 @@
 
 ## Purpose and area
 
-This is the **Firebase Data Connect and PostgreSQL database-schema** folder. It is the source of truth for application tables managed through Data Connect.
+This is the **Firebase Data Connect / PostgreSQL database-schema** folder. It is the **sole source of truth** for the application's data model. Laravel does NOT manage these tables via migrations or Eloquent — it talks to them through the SQL Connect GraphQL connector exclusively.
 
-## Existing file developers edit
+## Phase 1 tables
 
-`schema.gql` currently defines:
+`schema.gql` currently defines six tables:
 
-- `User`, keyed by the Firebase Authentication UID, with student, profile, role, and status fields.
-- `Court`, representing a squash court and its availability status.
-- `Booking`, relating a user to a court for a start and end time.
+| Table                | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| **User**             | Application profile linked to a Firebase Auth UID.          |
+| **Court**            | A physical squash court (ACTIVE / INACTIVE).                |
+| **TimeSlot**         | Fixed one-hour booking windows.                             |
+| **Booking**          | Reservation of a court + time-slot on a date.               |
+| **BookingPlayer**    | Join table: Player 1 / Player 2 positions per booking.      |
+| **CoachAvailability**| A coach's published availability for a date + slot.         |
 
-Data Connect turns these GraphQL-style table definitions into PostgreSQL structures. Operations in `dataconnect/example` select or modify the fields defined here, and SDK generation exposes those operations to JavaScript.
+## Architecture
 
-## Example
+```
+Vue frontend → Laravel REST API → Firebase SQL Connect GraphQL → PostgreSQL
+Firebase Auth → ID token → Laravel middleware
+```
 
-When a booking needs a new cancellation reason, update the schema deliberately, update the relevant queries and mutations, deploy/apply the schema change, and regenerate the client SDK.
+Laravel handles **business logic, validation and authorization only**. All data access goes through `App\Services\SqlConnectClient` → `App\Repositories\*`.
 
 ## Beginner mistakes to avoid
 
-- Do not use free-form status strings without considering validation and allowed values.
-- Relationships, uniqueness rules, required fields, defaults, and indexes affect data integrity; review them before deployment.
-- A schema change can break existing operations or data, so update all consumers and test migrations carefully.
+- Do not create Laravel migrations or Eloquent models for these tables.
+- Do not use free-form status strings without considering allowed values.
+- Relationships, uniqueness rules, required fields, defaults, and indexes affect data integrity.
+- A schema change can break existing operations — update queries, mutations, DTOs and repositories together.
 - Do not add Firebase service-account secrets to schema files.
 

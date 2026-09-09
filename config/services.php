@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'firebase' => [
+        'credentials'           => env('FIREBASE_CREDENTIALS'),
+        'project_id'            => env('FIREBASE_PROJECT_ID'),
+        'dataconnect_emulator_host' => env('DATA_CONNECT_EMULATOR_HOST'),
+        'dataconnect_location'  => env('FIREBASE_DATACONNECT_LOCATION', 'southamerica-west1'),
+        'dataconnect_service'   => env('FIREBASE_DATACONNECT_SERVICE', 'puksquash'),
+        'dataconnect_connector' => env('FIREBASE_DATACONNECT_CONNECTOR', 'example'),
+    ],
+
 ];

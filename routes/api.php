@@ -1,23 +1,33 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\AvailabilityController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\CoachAvailabilityController;
+use App\Http\Controllers\Api\CourtController;
+use App\Http\Controllers\Api\TimeSlotController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('firebase.auth')
-    ->get('/me', function (Request $request) {
+Route::middleware('firebase.auth')->group(function () {
+    // User
+    Route::get('/me', [UserController::class, 'me']);
 
-        return response()->json([
-            'authenticated' => true,
+    // Courts
+    Route::get('/courts', [CourtController::class, 'index']);
+    Route::get('/courts/{id}', [CourtController::class, 'show']);
 
-            'firebase_uid' =>
-                $request->attributes->get('firebase_uid'),
+    // Time slots
+    Route::get('/time-slots', [TimeSlotController::class, 'index']);
 
-            'email' =>
-                $request->attributes->get('firebase_email'),
+    // Availability grid
+    Route::get('/availability', [AvailabilityController::class, 'index']);
 
-            'email_verified' =>
-                $request->attributes->get(
-                    'firebase_email_verified'
-                ),
-        ]);
-    });
+    // Bookings
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/mine', [BookingController::class, 'mine']);
+    Route::post('/bookings/{id}/join', [BookingController::class, 'join']);
+    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+
+    // Coach availability
+    Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
+});

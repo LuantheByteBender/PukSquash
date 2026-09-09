@@ -13,6 +13,8 @@
  *    ApiConflict, tell the user plainly and refresh the availability grid.
  */
 
+import { startLoading, stopLoading } from './loading.js';
+
 export class ApiError extends Error {
     constructor(message, status, code) {
         super(message);
@@ -67,39 +69,45 @@ function defaultMessage(status) {
 }
 
 export async function request(method, path, body) {
-    const response = await fetch(`/api${path}`, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            ...(await authHeader()),
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-    });
-
-    if (response.status === 204) {
-        return null;
-    }
-
-    let payload = null;
+    startLoading();
 
     try {
-        payload = await response.json();
-    } catch {
-        // Empty or non-JSON body — leave payload as null.
+        const response = await fetch(`/api${path}`, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                ...(await authHeader()),
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+        });
+
+        if (response.status === 204) {
+            return null;
+        }
+
+        let payload = null;
+
+        try {
+            payload = await response.json();
+        } catch {
+            // Empty or non-JSON body — leave payload as null.
+        }
+
+        if (response.ok) {
+            return payload;
+        }
+
+        const message = payload?.message || defaultMessage(response.status);
+
+        if (response.status === 409) {
+            throw new ApiConflict(message, payload?.code);
+        }
+
+        throw new ApiError(message, response.status, payload?.code);
+    } finally {
+        stopLoading();
     }
-
-    if (response.ok) {
-        return payload;
-    }
-
-    const message = payload?.message || defaultMessage(response.status);
-
-    if (response.status === 409) {
-        throw new ApiConflict(message, payload?.code);
-    }
-
-    throw new ApiError(message, response.status, payload?.code);
 }
 
 export const http = {
