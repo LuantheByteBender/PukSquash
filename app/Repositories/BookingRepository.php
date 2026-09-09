@@ -86,12 +86,23 @@ class BookingRepository
 
     public function userHasBookingForSlot(string $userId, string $bookingDate, string $timeSlotId): bool
     {
-        $data = $this->client->execute('GetBookingsByUserForSlot', [
-            'userId'      => $userId,
+        $data = $this->client->execute('GetBookingsForTimeSlot', [
             'bookingDate' => $bookingDate,
             'timeSlotId'  => $timeSlotId,
         ]);
 
-        return ! empty($data['bookings'] ?? []);
+        foreach ($data['bookings'] ?? [] as $booking) {
+            if (($booking['createdBy']['id'] ?? null) === $userId) {
+                return true;
+            }
+
+            foreach ($booking['bookingPlayers_on_booking'] ?? [] as $p) {
+                if (($p['user']['id'] ?? null) === $userId) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
