@@ -83,4 +83,15 @@ class BookingRepository
 
         return ! empty($data['bookings'] ?? []);
     }
+
+    public function userHasBookingForSlot(string $userId, string $bookingDate, string $timeSlotId): bool
+    {
+        $data = $this->client->execute('GetBookingsByUserForSlot', [
+            'userId'      => $userId,
+            'bookingDate' => $bookingDate,
+            'timeSlotId'  => $timeSlotId,
+        ]);
+
+        return ! empty($data['bookings'] ?? []);
+    }
 }

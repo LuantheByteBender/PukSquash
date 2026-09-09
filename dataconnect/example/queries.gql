@@ -25,6 +25,21 @@ query GetUserByFirebaseUid($firebaseUid: String!)
     updatedAt
   }
 }
+
+query GetBookingsByUserForSlot($userId: UUID!, $bookingDate: Date!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      createdById: { eq: $userId }
+      status: { eq: "CONFIRMED" }
+      bookingDate: { eq: $bookingDate }
+      timeSlotId: { eq: $timeSlotId }
+    }
+    limit: 1
+  ) {
+    id
+  }
+}
 query GetBookingForCell($bookingDate: Date!, $courtId: UUID!, $timeSlotId: UUID!)
 @auth(level: NO_ACCESS) {
   bookings(
