@@ -100,6 +100,15 @@ async function login() {
                 <p v-if="message" class="login-message" role="status">
                     {{ message }}
                 </p>
+
+                <p class="login-message">
+                    Don’t have an account?
+                    <RouterLink
+                        :to="{ name: 'signup' }"
+                    >
+                        <u>Sign up</u>
+                    </RouterLink>
+                </p>
             </form>
         </section>
 
