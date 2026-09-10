@@ -52,7 +52,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => now()->addDay()->format('Y-m-d'),
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -115,7 +115,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => now()->addDay()->format('Y-m-d'),
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -178,7 +178,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => now()->addDay()->format('Y-m-d'),
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -243,7 +243,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => now()->addDay()->format('Y-m-d'),
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -252,7 +252,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response->assertJson([
             'message' => 'One or more selected time slots are invalid or inactive.',
             'invalid_time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
     }
@@ -301,7 +301,7 @@ class PublishCoachAvailabilityTest extends TestCase
                 ->once()
                 ->andReturn([
                     new TimeSlotDTO(
-                        id: '00000000-0000-4000-8000-000000000001',
+                        id: '00000000000000000000000000000006',
                         startTime: '08:00',
                         endTime: '09:00',
                         displayOrder: 1,
@@ -316,7 +316,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $this->mock(
             CoachAvailabilityRepository::class,
             function ($mock) use ($user, $date) {
-                $slotId = '00000000-0000-4000-8000-000000000001';
+                $slotId = '00000000000000000000000000000006';
 
                 $mock->shouldReceive('isCoachAvailable')
                     ->once()
@@ -334,7 +334,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => $date,
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -344,10 +344,10 @@ class PublishCoachAvailabilityTest extends TestCase
             'data' => [
                 'availability_date' => $date,
                 'time_slot_ids' => [
-                    '00000000-0000-4000-8000-000000000001',
+                    '00000000000000000000000000000006',
                 ],
                 'created_time_slot_ids' => [
-                    '00000000-0000-4000-8000-000000000001',
+                    '00000000000000000000000000000006',
                 ],
                 'existing_time_slot_ids' => [],
             ],
@@ -398,7 +398,7 @@ class PublishCoachAvailabilityTest extends TestCase
                 ->once()
                 ->andReturn([
                     new TimeSlotDTO(
-                        id: '00000000-0000-4000-8000-000000000001',
+                        id: '00000000000000000000000000000006',
                         startTime: '08:00',
                         endTime: '09:00',
                         displayOrder: 1,
@@ -413,7 +413,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $this->mock(
             CoachAvailabilityRepository::class,
             function ($mock) use ($user, $date) {
-                $slotId = '00000000-0000-4000-8000-000000000001';
+                $slotId = '00000000000000000000000000000006';
 
                 // Simulate an availability record that already exists.
                 $mock->shouldReceive('isCoachAvailable')
@@ -430,7 +430,7 @@ class PublishCoachAvailabilityTest extends TestCase
         $response = $this->putJson('/api/coach/availability', [
             'availability_date' => $date,
             'time_slot_ids' => [
-                '00000000-0000-4000-8000-000000000001',
+                '00000000000000000000000000000006',
             ],
         ]);
 
@@ -440,11 +440,11 @@ class PublishCoachAvailabilityTest extends TestCase
             'data' => [
                 'availability_date' => $date,
                 'time_slot_ids' => [
-                    '00000000-0000-4000-8000-000000000001',
+                    '00000000000000000000000000000006',
                 ],
                 'created_time_slot_ids' => [],
                 'existing_time_slot_ids' => [
-                    '00000000-0000-4000-8000-000000000001',
+                    '00000000000000000000000000000006',
                 ],
             ],
         ]);

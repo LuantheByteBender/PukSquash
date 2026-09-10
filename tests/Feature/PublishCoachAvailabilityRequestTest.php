@@ -8,8 +8,8 @@ use Tests\TestCase;
 
 class PublishCoachAvailabilityRequestTest extends TestCase
 {
-    // a correctly formatted example UUID representing a time slot
-    private const SLOT_ID = '00000000-0000-4000-8000-000000000001';
+    // a correctly formatted example representing a time slot
+    private const SLOT_ID = '00000000000000000000000000000006';
 
     /**
      * correct availability information must pass validation

@@ -43,7 +43,8 @@ class PublishCoachAvailabilityRequest extends FormRequest
             // validate every ID contained in the time_slot_ids array
             'time_slot_ids.*' => [
                 'required',
-                'uuid',
+                'string',
+                'regex:/\A[0-9a-fA-F]{32}\z/',
                 'distinct',
 
             ],
