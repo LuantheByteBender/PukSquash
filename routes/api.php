@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\StudentController;
 
 Route::middleware('firebase.auth')
     ->get('/me', function (Request $request) {
@@ -21,3 +22,6 @@ Route::middleware('firebase.auth')
                 ),
         ]);
     });
+    
+Route::middleware('firebase.auth')
+    ->get('/student/profile', [StudentController::class, 'profile']);
