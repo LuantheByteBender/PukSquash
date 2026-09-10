@@ -284,3 +284,45 @@ query IsCoachAvailable($availabilityDate: Date!, $timeSlotId: UUID!, $coachId: U
     coachId
   }
 }
+
+# Published availability for one Coach on a selected date.
+query GetCoachAvailabilityForDate(
+  $coachId: UUID!
+  $availabilityDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  coachAvailabilities(
+    where: {
+      coachId: { eq: $coachId }
+      availabilityDate: { eq: $availabilityDate }
+    }
+  ) {
+
+    availabilityDate
+    createdAt
+    coachId
+    timeSlotId
+    coach { id fullName }
+    timeSlot { id startTime endTime }
+  }
+}
+
+# check whether a confirmed booking uses this Coach's date and time slot
+query GetConfirmedBookingForCoachSlot(
+  $coachId: UUID!
+  $bookingDate: Date!
+  $timeSlotId: UUID!
+)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      coachId: { eq: $coachId }
+      bookingDate: { eq: $bookingDate }
+      timeSlotId: { eq: $timeSlotId }
+      status: { eq: "CONFIRMED" }
+    }
+    limit: 1
+  ) {
+    id
+  }
+}

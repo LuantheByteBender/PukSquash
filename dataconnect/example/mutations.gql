@@ -175,3 +175,19 @@ mutation DeleteCoachAvailability($id: UUID!)
 @auth(level: NO_ACCESS) {
   coachAvailability_delete(key: { id: $id })
 }
+
+# Remove one Coach's availability for a specific date and time slot
+mutation DeleteCoachAvailabilityForSlot(
+  $coachId: UUID!
+  $timeSlotId: UUID!
+  $availabilityDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  coachAvailability_delete(
+    key: {
+      coachId: $coachId
+      timeSlotId: $timeSlotId
+      availabilityDate: $availabilityDate
+    }
+  )
+}
