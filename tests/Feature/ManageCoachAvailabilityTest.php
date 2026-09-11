@@ -122,6 +122,29 @@ class ManageCoachAvailabilityTest extends TestCase
         );
     }
 
+    public function test_coach_without_availability_receives_an_empty_list(): void
+    {
+        $coach = $this->mockActiveCoach();
+        $date = now()->addDay()->format('Y-m-d');
+
+        $this->mock(
+            CoachAvailabilityRepository::class,
+            function ($mock) use ($coach, $date) {
+                $mock->shouldReceive('getForCoachAndDate')
+                    ->once()
+                    ->with($coach->id, $date)
+                    ->andReturn([]);
+            }
+        );
+
+        $response = $this->getJson(
+            "/api/coach/availability?availability_date={$date}"
+        );
+
+        $response->assertStatus(200);
+        $response->assertExactJson(['data' => []]);
+    }
+
     public function test_nonexistent_availability_cannot_be_removed(): void
     {
         $coach = $this->mockActiveCoach();
