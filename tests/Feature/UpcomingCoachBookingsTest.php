@@ -24,7 +24,7 @@ class UpcomingCoachBookingsTest extends TestCase
     {
         // 10:00 UTC is 12:00 in SAST
         CarbonImmutable::setTestNow(
-            CarbonImmutable::parse('2026-09-15 10:00:00', 'UTC')
+            CarbonImmutable::parse('2026-09-15 10:30:00', 'UTC')
         );
 
         // simulate firebase verifying the signed-in Coach
@@ -69,7 +69,7 @@ class UpcomingCoachBookingsTest extends TestCase
         );
 
         $endsExactlyNow = $this->booking(
-            'ends-now', '2026-09-15', '11:00:00', '12:00:00'
+            'ends-now', '2026-09-15', '11:30:00', '12:30:00'
         );
 
         $ongoing = $this->booking(
@@ -206,6 +206,39 @@ class UpcomingCoachBookingsTest extends TestCase
         $response->assertStatus(401);
         $response->assertExactJson([
             'message' => 'Authentication token missing.',
+        ]);
+    }
+
+    public function test_invalid_token_cannot_view_coach_bookings(): void
+    {
+        // use the real middleware, but simulate firebase rejecting the token
+        $this->mock(FirebaseAuthService::class, function ($mock) {
+            $mock->shouldReceive('verifyToken')
+                ->once()
+                ->with('invalid-test-token')
+                ->andThrow(
+                    new \RuntimeException('Token verification failed.')
+                );
+
+            $mock->shouldNotReceive('getUser');
+        });
+
+        // authentication must fail before any application data is loaded
+        $this->mock(UserRepository::class, function ($mock) {
+            $mock->shouldNotReceive('findByFirebaseUid');
+        });
+
+        $this->mock(BookingRepository::class, function ($mock) {
+            $mock->shouldNotReceive('getConfirmedByCoach');
+        });
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer invalid-test-token',
+        ])->getJson('/api/coach/bookings/upcoming');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Invalid authentication token.',
         ]);
     }
 
