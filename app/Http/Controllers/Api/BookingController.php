@@ -48,10 +48,13 @@ class BookingController extends Controller
                 return response()->json(['message' => 'User profile not found.'], 404);
             }
 
+            $studentNumber = explode('@', $email)[0];
+
             $this->users->upsert([
                 'firebaseUid' => $firebaseUid,
                 'fullName'    => explode('@', $email)[0],
                 'email'       => $email,
+                'studentNumber' => $studentNumber,
             ]);
 
             $user = $this->users->findByFirebaseUid($firebaseUid);

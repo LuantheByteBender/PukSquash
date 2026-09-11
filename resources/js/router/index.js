@@ -43,6 +43,22 @@ const routes = [
     },
 
     {
+        path: '/coach/bookings',
+        name: 'coach-bookings',
+        component: () => import('../pages/CoachBookings.vue'),
+    },
+    {
+        path: '/coach/profile',
+        name: 'coach-profile',
+        redirect: { name: 'user-profile' },
+    },
+    {
+        path: '/profile',
+        name: 'user-profile',
+        component: () => import('../pages/UserProfile.vue'),
+    },
+
+    {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         redirect: { name: 'home' },

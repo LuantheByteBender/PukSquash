@@ -33,6 +33,21 @@ mutation UpsertUser(
   )
 }
 
+mutation UpdateUserProfile(
+  $firebaseUid: String!
+  $fullName: String!
+  $studentNumber: String
+)
+@auth(level: NO_ACCESS) {
+  user_updateMany(
+    where: { firebaseUid: { eq: $firebaseUid } }
+    data: {
+      fullName: $fullName
+      studentNumber: $studentNumber
+    }
+  )
+}
+
 
 # ------------------------------------------------------------
 # Court mutations
