@@ -33,6 +33,21 @@ mutation UpsertUser(
   )
 }
 
+mutation UpdateUserProfile(
+  $firebaseUid: String!
+  $fullName: String!
+  $studentNumber: String
+)
+@auth(level: NO_ACCESS) {
+  user_updateMany(
+    where: { firebaseUid: { eq: $firebaseUid } }
+    data: {
+      fullName: $fullName
+      studentNumber: $studentNumber
+    }
+  )
+}
+
 
 # ------------------------------------------------------------
 # Court mutations
@@ -147,6 +162,19 @@ mutation AddBookingPlayer(
       userId: $userId
       playerPosition: $playerPosition
       joinedAt: $joinedAt
+    }
+  )
+}
+
+mutation LeaveBooking(
+  $bookingId: UUID!
+  $userId: UUID!
+)
+@auth(level: NO_ACCESS) {
+  bookingPlayer_deleteMany(
+    where: {
+      bookingId: { eq: $bookingId }
+      userId: { eq: $userId }
     }
   )
 }

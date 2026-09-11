@@ -31,6 +31,14 @@ function friendlyAuthError(error) {
         return 'Please enter a valid email address.';
     }
 
+    if (code === 'auth/email-already-in-use') {
+        return 'An account already exists for this email address.';
+    }
+
+    if (code === 'auth/weak-password') {
+        return 'Your password is too weak. Please choose a stronger password.';
+    }
+
     if (code === 'auth/network-request-failed') {
         return 'Network error. Please check your connection and try again.';
     }

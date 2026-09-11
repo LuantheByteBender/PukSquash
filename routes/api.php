@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('firebase.auth')->group(function () {
     // User
     Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/me', [UserController::class, 'update']);
 
     // Courts
     Route::get('/courts', [CourtController::class, 'index']);

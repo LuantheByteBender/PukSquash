@@ -1,26 +1,75 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import { refreshAccount, updateAccount, useAccount } from '../composables/useAccount.js';
 
 const isEditing = ref(false);
+const { profile: accountProfile } = useAccount();
+const error = ref('');
+const saving = ref(false);
 
 const coach = ref({
-    firstName: 'Coach',
-    lastName: 'Example',
-    email: 'coach@nwu.ac.za',
-    phone: '082 123 4567',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     speciality: 'Squash Coaching',
     experience: '5 years',
     availability: 'Monday - Friday',
     bio: 'Experienced squash coach helping players improve their technique, fitness and confidence on court.'
 });
 
-const saveProfile = () => {
-    isEditing.value = false;
+function applyFromAccount(next) {
+    if (!next) return;
+
+    const full = String(next.full_name ?? '').trim();
+    const parts = full.split(/\s+/).filter(Boolean);
+
+    coach.value.firstName = parts[0] ?? full;
+    coach.value.lastName = parts.slice(1).join(' ');
+    coach.value.email = String(next.email ?? '');
+}
+
+onMounted(async () => {
+    error.value = '';
+
+    try {
+        const next = await refreshAccount();
+        applyFromAccount(next);
+    } catch (e) {
+        error.value = e?.message ?? String(e);
+    }
+});
+
+const saveProfile = async () => {
+    error.value = '';
+    saving.value = true;
+
+    try {
+        const fullName = `${coach.value.firstName} ${coach.value.lastName}`.trim();
+        await updateAccount({
+            full_name: fullName,
+            student_number: null,
+        });
+
+        applyFromAccount(accountProfile.value);
+        isEditing.value = false;
+    } catch (e) {
+        error.value = e?.message ?? String(e);
+    } finally {
+        saving.value = false;
+    }
 };
 </script>
 
 <template>
     <div class="min-h-screen bg-gray-50">
+
+        <div class="mx-auto max-w-5xl px-6 py-10">
+            <div class="rounded-xl bg-white p-6 shadow-md">
+                <h1 class="text-xl font-bold text-gray-900">Profile</h1>
+                <p class="mt-2 text-gray-600">This page has moved. Use the Profile link in the menu.</p>
+            </div>
+        </div>
 
         <!-- Navigation -->
         <nav class="bg-purple-900 text-white shadow-md">
@@ -61,6 +110,10 @@ const saveProfile = () => {
                     View and manage your coaching profile.
                 </p>
             </div>
+
+            <p v-if="error" class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {{ error }}
+            </p>
 
 
             <!-- Profile Card -->
@@ -142,7 +195,7 @@ const saveProfile = () => {
 
                             <input
                                 v-model="coach.email"
-                                :disabled="!isEditing"
+                                disabled
                                 type="email"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -160,7 +213,7 @@ const saveProfile = () => {
 
                             <input
                                 v-model="coach.phone"
-                                :disabled="!isEditing"
+                                disabled
                                 type="tel"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -178,7 +231,7 @@ const saveProfile = () => {
 
                             <input
                                 v-model="coach.speciality"
-                                :disabled="!isEditing"
+                                disabled
                                 type="text"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -196,7 +249,7 @@ const saveProfile = () => {
 
                             <input
                                 v-model="coach.experience"
-                                :disabled="!isEditing"
+                                disabled
                                 type="text"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -214,7 +267,7 @@ const saveProfile = () => {
 
                             <input
                                 v-model="coach.availability"
-                                :disabled="!isEditing"
+                                disabled
                                 type="text"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -232,7 +285,7 @@ const saveProfile = () => {
 
                             <textarea
                                 v-model="coach.bio"
-                                :disabled="!isEditing"
+                                disabled
                                 rows="4"
                                 class="w-full rounded-lg border border-gray-300 px-4 py-3
                                        focus:border-purple-700 focus:outline-none
@@ -270,6 +323,7 @@ const saveProfile = () => {
 
                             <button
                                 @click="saveProfile"
+                                :disabled="saving"
                                 class="rounded-lg bg-purple-900 px-6 py-3
                                        font-semibold text-white transition
                                        hover:bg-purple-800"
