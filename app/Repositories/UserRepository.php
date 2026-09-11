@@ -84,4 +84,27 @@ class UserRepository
             throw $exception;
         }
     }
+    
+    public function listAll(): array
+    {
+        $data = $this->client->execute('ListAllUsers');
+
+        return array_map(
+            fn (array $row) => UserDTO::fromGraphQL($row),
+            $data['users'] ?? [],
+        );
+    }
+
+    public function updateUser(string $id, array $params): void
+    {
+        $this->client->execute('UpdateUser', array_merge(
+            ['id' => $id],
+            $params,
+        ));
+    }
+
+    public function deleteUser(string $id): void
+    {
+        $this->client->execute('DeleteUser', ['id' => $id]);
+    }
 }
