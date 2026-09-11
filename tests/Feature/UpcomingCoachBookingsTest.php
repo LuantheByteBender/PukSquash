@@ -9,6 +9,7 @@ use App\Repositories\BookingRepository;
 use App\Repositories\UserRepository;
 use App\Services\FirebaseAuthService;
 use Carbon\CarbonImmutable;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UpcomingCoachBookingsTest extends TestCase
@@ -22,7 +23,7 @@ class UpcomingCoachBookingsTest extends TestCase
 
     public function test_coach_sees_ongoing_and_future_sessions_until_they_end(): void
     {
-        // 10:00 UTC is 12:00 in SAST
+        // 10:00 UTC is 12:30 in SAST
         CarbonImmutable::setTestNow(
             CarbonImmutable::parse('2026-09-15 10:30:00', 'UTC')
         );
@@ -242,8 +243,24 @@ class UpcomingCoachBookingsTest extends TestCase
         ]);
     }
 
-    public function test_coach_without_bookings_receives_an_empty_list(): void
-    {
+    #[DataProvider('emptyScheduleCases')]
+    public function test_coach_receives_empty_list_when_no_sessions_remain(
+        bool $hasEndedBooking,
+    ): void {
+        CarbonImmutable::setTestNow(
+            CarbonImmutable::parse('2026-09-15 10:30:00', 'UTC')
+        );
+
+        $bookings = $hasEndedBooking
+            ? [
+                $this->booking(
+                    'ended',
+                    '2026-09-15',
+                    '11:00:00',
+                    '12:00:00',
+                ),
+            ]
+        : [];
         $this->mock(FirebaseAuth::class, function ($mock) {
             $mock->shouldReceive('handle')
                 ->once()
@@ -276,17 +293,25 @@ class UpcomingCoachBookingsTest extends TestCase
                 ->andReturn($coach);
         });
 
-        $this->mock(BookingRepository::class, function ($mock) use ($coach) {
+        $this->mock(BookingRepository::class, function ($mock) use ($coach, $bookings) {
             $mock->shouldReceive('getConfirmedByCoach')
                 ->once()
                 ->with($coach->id)
-                ->andReturn([]);
+                ->andReturn($bookings);
         });
 
         $response = $this->getJson('/api/coach/bookings/upcoming');
 
         $response->assertOk();
         $response->assertExactJson([]);
+    }
+
+    public static function emptyScheduleCases(): array
+    {
+        return [
+            'no bookings exist' => [false],
+            'all bookings have ended' => [true],
+        ];
     }
 
     /**
