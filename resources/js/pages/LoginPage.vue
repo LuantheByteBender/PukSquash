@@ -5,9 +5,6 @@ import { useRouter } from 'vue-router';
 import { loginUser } from '../features/auth/authService';
 import { getCurrentUser } from '../services/api.js';
 
-// Allows this page to ask App.vue to return to the landing page.
-const emit = defineEmits(['go-home']);
-
 const router = useRouter();
 
 const email = ref('');
@@ -119,10 +116,6 @@ async function login() {
                 <button type="submit" form="login-form" :disabled="isLoggingIn">
                     {{ isLoggingIn ? 'Logging in...' : 'Login' }}
                 </button>
-
-                <button type="button" @click="emit('go-home')">
-                    Back to Landing Page
-                </button>
             </div>
         </section>
 
@@ -221,6 +214,10 @@ async function login() {
 
     .login-content {
         transform: translateY(clamp(-5rem, -7vh, -2.5rem));
+    }
+
+    #bottom-screen {
+        transform: translateY(clamp(-2rem, -4vh, -0.75rem));
     }
 }
 
