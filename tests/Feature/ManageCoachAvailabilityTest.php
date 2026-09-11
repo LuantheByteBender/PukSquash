@@ -100,8 +100,10 @@ class ManageCoachAvailabilityTest extends TestCase
             }
         );
 
+        // A supplied coach ID must not override the signed-in Coach.
         $response = $this->getJson(
             "/api/coach/availability?availability_date={$date}"
+            .'&coach_id=22222222222222222222222222222222'
         );
 
         $response->assertStatus(200);
@@ -250,6 +252,29 @@ class ManageCoachAvailabilityTest extends TestCase
         $response->assertStatus(403);
         $response->assertExactJson([
             'message' => 'Only active Coaches may remove availability.',
+        ]);
+    }
+
+    #[DataProvider('profilesDeniedRemoval')]
+    public function test_unauthorised_profile_cannot_view_availability(
+        string $role,
+        string $status,
+    ): void {
+        $this->mockActiveCoach($role, $status);
+        $date = now()->addDay()->format('Y-m-d');
+
+        $this->mock(CoachAvailabilityRepository::class, function ($mock) {
+            // reject the profile before loading any Coach availability
+            $mock->shouldNotReceive('getForCoachAndDate');
+        });
+
+        $response = $this->getJson(
+            "/api/coach/availability?availability_date={$date}"
+        );
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'message' => 'Only active Coaches may view their availability.',
         ]);
     }
 
