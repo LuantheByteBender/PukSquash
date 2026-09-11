@@ -94,4 +94,21 @@ class BookingRepository
 
         return ! empty($data['bookings'] ?? []);
     }
+
+    /**
+    * get confirmed private-coaching bookings assigned to one Coach
+    *
+    * @return BookingDTO[]
+    */
+    public function getConfirmedByCoach(string $coachId): array
+    {
+        $data = $this->client->execute('GetConfirmedBookingsByCoach', [
+            'coachId' => $coachId,
+        ]);
+
+        return array_map(
+            fn (array $row) => BookingDTO::fromGraphQL($row),
+            $data['bookings'] ?? [],
+        );
+    }
 }
