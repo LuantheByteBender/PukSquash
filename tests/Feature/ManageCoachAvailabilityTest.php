@@ -8,6 +8,7 @@ use App\Http\Middleware\FirebaseAuth;
 use App\Repositories\CoachAvailabilityRepository;
 use App\Repositories\TimeSlotRepository;
 use App\Repositories\UserRepository;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ManageCoachAvailabilityTest extends TestCase
@@ -21,9 +22,11 @@ class ManageCoachAvailabilityTest extends TestCase
     /**
      * create a fake active Coach and simulate firebase authentication
      */
-    private function mockActiveCoach(): UserDTO
-    {
-        // Replace real Firebase verification during this test.
+    private function mockActiveCoach(
+        string $role = 'COACH',
+        string $status = 'ACTIVE',
+    ): UserDTO {
+        // Simulate Firebase verifying the signed-in user.
         $this->mock(FirebaseAuth::class, function ($mock) {
             $mock->shouldReceive('handle')
                 ->once()
@@ -44,8 +47,8 @@ class ManageCoachAvailabilityTest extends TestCase
             studentNumber: null,
             fullName: 'Test Coach',
             email: 'coach@example.com',
-            role: 'COACH',
-            status: 'ACTIVE',
+            role: $role,
+            status: $status,
             createdAt: now()->toIso8601String(),
             updatedAt: now()->toIso8601String(),
         );
@@ -215,11 +218,46 @@ class ManageCoachAvailabilityTest extends TestCase
         $response = $this->deleteJson('/api/coach/availability', [
             'availability_date' => $date,
             'time_slot_id' => self::SLOT_ID,
+            'coach_id' => '22222222222222222222222222222222',
         ]);
 
         $response->assertStatus(200);
         $response->assertExactJson([
             'message' => 'Coach availability removed successfully.',
         ]);
+    }
+
+    #[DataProvider('profilesDeniedRemoval')]
+    public function test_unauthorised_profile_cannot_remove_availability(
+        string $role,
+        string $status,
+    ): void {
+        $this->mockActiveCoach($role, $status);
+        $date = now()->addDay()->format('Y-m-d');
+
+        $this->mock(CoachAvailabilityRepository::class, function ($mock) {
+            // reject the profile before checking or changing availability
+            $mock->shouldNotReceive('isCoachAvailable');
+            $mock->shouldNotReceive('hasConfirmedBooking');
+            $mock->shouldNotReceive('deleteForCoachAndSlot');
+        });
+
+        $response = $this->deleteJson('/api/coach/availability', [
+            'availability_date' => $date,
+            'time_slot_id' => self::SLOT_ID,
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'message' => 'Only active Coaches may remove availability.',
+        ]);
+    }
+
+    public static function profilesDeniedRemoval(): array
+    {
+        return [
+            'ordinary user' => ['USER', 'ACTIVE'],
+            'inactive coach' => ['COACH', 'INACTIVE'],
+        ];
     }
 }
