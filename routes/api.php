@@ -1,27 +1,38 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AvailabilityController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\CoachAvailabilityController;
+use App\Http\Controllers\Api\CourtController;
+use App\Http\Controllers\Api\TimeSlotController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\StudentController;
+use Illuminate\Support\Facades\Route;
 
-Route::middleware('firebase.auth')
-    ->get('/me', function (Request $request) {
+Route::middleware('firebase.auth')->group(function () {
+    // User
+    Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/me', [UserController::class, 'update']);
 
-        return response()->json([
-            'authenticated' => true,
+    // Student - your route
+    Route::get('/student/profile', [StudentController::class, 'profile']);
 
-            'firebase_uid' =>
-                $request->attributes->get('firebase_uid'),
+    // Courts
+    Route::get('/courts', [CourtController::class, 'index']);
+    Route::get('/courts/{id}', [CourtController::class, 'show']);
 
-            'email' =>
-                $request->attributes->get('firebase_email'),
+    // Time slots
+    Route::get('/time-slots', [TimeSlotController::class, 'index']);
 
-            'email_verified' =>
-                $request->attributes->get(
-                    'firebase_email_verified'
-                ),
-        ]);
-    });
-    
-Route::middleware('firebase.auth')
-    ->get('/student/profile', [StudentController::class, 'profile']);
+    // Availability grid
+    Route::get('/availability', [AvailabilityController::class, 'index']);
+
+    // Bookings - teammate's routes
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::get('/bookings/mine', [BookingController::class, 'mine']);
+    Route::post('/bookings/{id}/join', [BookingController::class, 'join']);
+    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
+
+    // Coach availability
+    Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
+});
