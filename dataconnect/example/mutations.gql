@@ -151,6 +151,19 @@ mutation AddBookingPlayer(
   )
 }
 
+mutation LeaveBooking(
+  $bookingId: UUID!
+  $userId: UUID!
+)
+@auth(level: NO_ACCESS) {
+  bookingPlayer_deleteMany(
+    where: {
+      bookingId: { eq: $bookingId }
+      userId: { eq: $userId }
+    }
+  )
+}
+
 
 # ------------------------------------------------------------
 # CoachAvailability mutations

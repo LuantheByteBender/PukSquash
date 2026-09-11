@@ -36,19 +36,29 @@ class BookingRepository
     }
 
     /** @return BookingDTO[] */
-    public function getByUser(string $userId, ?string $status = null): array
+    public function getByUser(string $userId, string $status): array
     {
-        $vars = ['userId' => $userId];
+        $data = $this->client->execute('GetBookingsByStatus', [
+            'status' => $status,
+        ]);
 
-        if ($status !== null) {
-            $vars['status'] = $status;
-        }
+        $rows = array_filter($data['bookings'] ?? [], function (array $booking) use ($userId) {
+            if (($booking['createdBy']['id'] ?? null) === $userId) {
+                return true;
+            }
 
-        $data = $this->client->execute('GetBookingsByUser', $vars);
+            foreach ($booking['bookingPlayers_on_booking'] ?? [] as $p) {
+                if (($p['user']['id'] ?? null) === $userId) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
 
         return array_map(
             fn (array $row) => BookingDTO::fromGraphQL($row),
-            $data['bookings'] ?? [],
+            array_values($rows),
         );
     }
 

@@ -156,6 +156,31 @@ query GetAvailabilityData($bookingDate: Date!)
   }
 }
 
+query GetBookingsByStatus($status: String!)
+@auth(level: NO_ACCESS) {
+  bookings(where: { status: { eq: $status } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName email }
+    coach { id fullName email }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id fullName email }
+    }
+  }
+}
+
 
 # ------------------------------------------------------------
 # Booking queries
@@ -250,6 +275,7 @@ query GetBookingsByUser($userId: UUID!, $status: String)
     bookingPlayers_on_booking {
       id
       playerPosition
+      joinedAt
       user { id fullName }
     }
   }

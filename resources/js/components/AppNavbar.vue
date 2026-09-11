@@ -20,14 +20,14 @@ async function signOut() {
         // Already signed out, or Firebase is unavailable — either way, leave.
     }
 
-    router.push({ name: 'home' });
+    router.push({ name: 'login' });
 }
 </script>
 
 <template>
     <header class="nav">
         <div class="inner">
-            <RouterLink :to="{ name: 'home' }" class="brand" @click="open = false">
+            <RouterLink :to="{ name: 'book' }" class="brand" @click="open = false">
                 <span class="mark" aria-hidden="true">PS</span>
                 <span>PukSquash</span>
             </RouterLink>

@@ -37,12 +37,6 @@ class FirebaseAuth
             $firebaseUser =
                 $this->firebaseAuth->getUser($uid);
 
-            if ($firebaseUser->emailVerified === false) {
-                return response()->json([
-                    'message' => 'Email address not verified.',
-                ], 403);
-            }
-
             $request->attributes->set(
                 'firebase_uid',
                 $uid
@@ -57,6 +51,14 @@ class FirebaseAuth
                 'firebase_email_verified',
                 $firebaseUser->emailVerified
             );
+
+            $isMeEndpoint = $request->is('api/me') && $request->method() === 'GET';
+
+            if ($firebaseUser->emailVerified === false && ! $isMeEndpoint) {
+                return response()->json([
+                    'message' => 'Email address not verified.',
+                ], 403);
+            }
 
             return $next($request);
 

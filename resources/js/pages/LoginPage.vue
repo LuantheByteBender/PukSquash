@@ -1,16 +1,26 @@
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { loginUser } from '../features/auth/authService';
 import { getCurrentUser } from '../services/api.js';
 
 const router = useRouter();
+const route = useRoute();
 
 const email = ref('');
 const password = ref('');
 const message = ref('');
 const isLoggingIn = ref(false);
+
+if (typeof route.query.email === 'string' && route.query.email) {
+    email.value = route.query.email;
+}
+
+const statePassword = route.state?.password ?? window.history.state?.password;
+if (typeof statePassword === 'string' && statePassword) {
+    password.value = statePassword;
+}
 
 async function login() {
     message.value = '';

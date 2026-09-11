@@ -225,14 +225,85 @@ class BookingController extends Controller
 
         $bookings = $this->bookings->getByUser($user->id, $status);
 
-        $today = now()->format('Y-m-d');
+        $tz = 'Africa/Johannesburg';
+        $now = now($tz);
+        $today = $now->format('Y-m-d');
 
-        // For upcoming/past, further filter by date.
         if ($scope === 'upcoming') {
-            $bookings = array_filter($bookings, fn ($b) => $b->bookingDate >= $today);
+            $bookings = array_filter($bookings, function ($b) use ($now, $today, $tz) {
+                $start = $b->timeSlot['start_time']
+                    ?? $b->timeSlot['startTime']
+                    ?? null;
+
+                if ($b->bookingDate > $today) {
+                    return true;
+                }
+
+                if ($b->bookingDate < $today) {
+                    return false;
+                }
+
+                if (! is_string($start) || $start === '') {
+                    return true;
+                }
+
+                try {
+                    $slotStart = \Illuminate\Support\Carbon::parse($b->bookingDate . ' ' . $start, $tz);
+                    return $slotStart->greaterThanOrEqualTo($now);
+                } catch (\Throwable) {
+                    return true;
+                }
+            });
         } elseif ($scope === 'past') {
-            $bookings = array_filter($bookings, fn ($b) => $b->bookingDate < $today);
+            $bookings = array_filter($bookings, function ($b) use ($now, $today, $tz) {
+                $start = $b->timeSlot['start_time']
+                    ?? $b->timeSlot['startTime']
+                    ?? null;
+
+                if ($b->bookingDate < $today) {
+                    return true;
+                }
+
+                if ($b->bookingDate > $today) {
+                    return false;
+                }
+
+                if (! is_string($start) || $start === '') {
+                    return false;
+                }
+
+                try {
+                    $slotStart = \Illuminate\Support\Carbon::parse($b->bookingDate . ' ' . $start, $tz);
+                    return $slotStart->lessThan($now);
+                } catch (\Throwable) {
+                    return false;
+                }
+            });
         }
+
+        usort($bookings, function ($a, $b) use ($tz) {
+            $aStart = $a->timeSlot['start_time']
+                ?? $a->timeSlot['startTime']
+                ?? null;
+            $bStart = $b->timeSlot['start_time']
+                ?? $b->timeSlot['startTime']
+                ?? null;
+
+            try {
+                $aDt = \Illuminate\Support\Carbon::parse($a->bookingDate . ' ' . ($aStart ?: '00:00'), $tz);
+            } catch (\Throwable) {
+                $aDt = \Illuminate\Support\Carbon::parse($a->bookingDate . ' 00:00', $tz);
+            }
+
+            try {
+                $bDt = \Illuminate\Support\Carbon::parse($b->bookingDate . ' ' . ($bStart ?: '00:00'), $tz);
+            } catch (\Throwable) {
+                $bDt = \Illuminate\Support\Carbon::parse($b->bookingDate . ' 00:00', $tz);
+            }
+
+            // Latest first.
+            return $bDt->getTimestamp() <=> $aDt->getTimestamp();
+        });
 
         return response()->json(
             array_values(array_map(fn ($b) => $b->toArray(), $bookings)),
@@ -265,13 +336,29 @@ class BookingController extends Controller
         $isCreator = ($booking->createdBy['id'] ?? null) === $user->id;
 
         if (! $isCreator) {
-            return response()->json(['message' => 'You are not authorised to cancel this booking.'], 403);
+            if ($booking->bookingType !== 'OPEN') {
+                return response()->json(['message' => 'You are not authorised to cancel this booking.'], 403);
+            }
+
+            $isPlayer = false;
+            foreach ($booking->players as $p) {
+                if (($p->user['id'] ?? null) === $user->id) {
+                    $isPlayer = true;
+                    break;
+                }
+            }
+
+            if (! $isPlayer) {
+                return response()->json(['message' => 'You are not authorised to cancel this booking.'], 403);
+            }
+
+            $this->players->remove($id, $user->id);
+
+            return response()->json(['left' => true]);
         }
 
         $this->bookings->cancel($id);
 
-        $updated = $this->bookings->findById($id);
-
-        return response()->json($updated?->toArray());
+        return response()->json(['left' => false]);
     }
 }
