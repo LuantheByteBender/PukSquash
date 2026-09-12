@@ -19,6 +19,8 @@ import { http, query, ApiError, ApiConflict } from '../../services/http.js';
 
 export { ApiError, ApiConflict };
 
+export const usingMockBookings = false;
+
 export const bookingService = {
     /**
      * FR-06 — live availability for one date.

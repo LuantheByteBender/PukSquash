@@ -15,8 +15,7 @@ const routes = [
     {
         path: '/',
         name: 'home',
-        component: () => import('../pages/LandingPage.vue'),
-        meta: { chrome: false },
+        redirect: { name: 'login' },
     },
     {
         path: '/login',
@@ -41,6 +40,22 @@ const routes = [
         path: '/my-bookings',
         name: 'my-bookings',
         component: () => import('../pages/MyBookingsPage.vue'),
+    },
+
+    {
+        path: '/coach/bookings',
+        name: 'coach-bookings',
+        component: () => import('../pages/CoachBookings.vue'),
+    },
+    {
+        path: '/coach/profile',
+        name: 'coach-profile',
+        redirect: { name: 'user-profile' },
+    },
+    {
+        path: '/profile',
+        name: 'user-profile',
+        component: () => import('../pages/UserProfile.vue'),
     },
 
     {
