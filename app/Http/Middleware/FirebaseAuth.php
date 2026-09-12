@@ -65,7 +65,7 @@ class FirebaseAuth
         } catch (\Throwable $exception) {
             return response()->json([
                 'message' => 'Invalid authentication token.',
-                'error' => $exception->getMessage(),
+                
             ], 401);
         }
     }

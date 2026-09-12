@@ -6,16 +6,13 @@ use App\Http\Controllers\Api\CoachAvailabilityController;
 use App\Http\Controllers\Api\CourtController;
 use App\Http\Controllers\Api\TimeSlotController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\StudentController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('firebase.auth')->group(function () {
     // User
     Route::get('/me', [UserController::class, 'me']);
-    Route::patch('/me', [UserController::class, 'update']);
-
-    // Student - your route
-    Route::get('/student/profile', [StudentController::class, 'profile']);
+    Route::patch('/me', [UserController::class, 'update'])
+    ->middleware('account.active');
 
     // Courts
     Route::get('/courts', [CourtController::class, 'index']);
