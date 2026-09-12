@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminCourtController;
 use Illuminate\Support\Facades\Route;
-
+   
+    // Admin
 Route::middleware('firebase.auth')->group(function () {
     // User
     Route::get('/me', [UserController::class, 'me']);
@@ -45,4 +46,4 @@ Route::middleware('firebase.auth')->group(function () {
         Route::delete('/admin/courts/{id}', [AdminCourtController::class, 'destroy']);
     });
 });
-    
+   
