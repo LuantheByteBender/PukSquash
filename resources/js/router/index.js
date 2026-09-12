@@ -53,6 +53,16 @@ const routes = [
         redirect: { name: 'user-profile' },
     },
     {
+        path: '/admin/dashboard',
+        name: 'admin-dashboard',
+        component: () => import('../pages/AdminDashboard.vue'),
+    },
+    {
+        path: '/admin/users',
+        name: 'admin-users',
+        component: () => import('../pages/ManageUsersPage.vue'),
+    },
+    {
         path: '/profile',
         name: 'user-profile',
         component: () => import('../pages/UserProfile.vue'),

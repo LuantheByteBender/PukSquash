@@ -87,7 +87,26 @@ async function signOut() {
                     </RouterLink>
 
                     <RouterLink
-                        
+                        v-if="role === 'ADMIN'"
+                        :to="{ name: 'admin-dashboard' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Admin dashboard
+                    </RouterLink>
+
+                    <RouterLink
+                        v-if="role === 'ADMIN'"
+                        :to="{ name: 'admin-users' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Manage users
+                    </RouterLink>
+
+                    <RouterLink
                         :to="{ name: 'user-profile' }"
                         class="menu-item"
                         role="menuitem"
