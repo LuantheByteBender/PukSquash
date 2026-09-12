@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppNavbar from './components/AppNavbar.vue';
 import AppToast from './components/AppToast.vue';
-import { usingMockBookings } from './features/booking/bookingService.js';
 
 /* The landing, login and sign-up screens are full-bleed designs of their own, so
    they opt out of the application chrome via `meta.chrome: false`. */
@@ -13,11 +12,6 @@ const showChrome = computed(() => route.meta.chrome !== false);
 
 <template>
     <div class="shell">
-        <p v-if="usingMockBookings" class="dev-banner">
-            Development mode — the booking screens are running on mock data. Nothing here is a
-            real booking.
-        </p>
-
         <AppNavbar v-if="showChrome" />
 
         <main>
