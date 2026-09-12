@@ -101,7 +101,7 @@ onUnmounted(() => {
 
             <!-- Input section: Email & Password -->
             <section id="signup-section">
-                <div class="input-fields">gToL
+                <div class="input-fields">
                     <label for="email">Email</label>
                     <input
                         id="email"
