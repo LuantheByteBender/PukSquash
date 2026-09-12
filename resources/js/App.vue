@@ -3,11 +3,7 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppNavbar from './components/AppNavbar.vue';
 import AppToast from './components/AppToast.vue';
-<<<<<<< HEAD
-=======
-import { usingMockBookings } from './features/booking/bookingService.js';
 import { isLoading } from './services/loading.js';
->>>>>>> origin/backend/luan/backend-booking-functionality
 
 /* The landing, login and sign-up screens are full-bleed designs of their own, so
    they opt out of the application chrome via `meta.chrome: false`. */
