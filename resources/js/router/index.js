@@ -48,6 +48,11 @@ const routes = [
         component: () => import('../pages/CoachBookings.vue'),
     },
     {
+        path: '/coach/notice-board',
+        name: 'coach-notice-board',
+        component: () => import('../pages/CoachNoticeBoardPage.vue'),
+    },
+    {
         path: '/coach/profile',
         name: 'coach-profile',
         redirect: { name: 'user-profile' },
@@ -61,6 +66,11 @@ const routes = [
         path: '/admin/users',
         name: 'admin-users',
         component: () => import('../pages/ManageUsersPage.vue'),
+    },
+    {
+        path: '/admin/courts',
+        name: 'manage-courts',
+        component: () => import('../pages/ManageCourtsPage.vue'),
     },
     {
         path: '/profile',
