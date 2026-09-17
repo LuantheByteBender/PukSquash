@@ -16,7 +16,7 @@ class CoachAvailabilityRepository
     {
         $data = $this->client->execute('GetAvailableCoaches', [
             'availabilityDate' => $availabilityDate,
-            'timeSlotId'       => $timeSlotId,
+            'timeSlotId' => $timeSlotId,
         ]);
 
         return array_map(
@@ -28,8 +28,8 @@ class CoachAvailabilityRepository
     public function create(string $coachId, string $timeSlotId, string $availabilityDate): void
     {
         $this->client->execute('CreateCoachAvailability', [
-            'coachId'          => $coachId,
-            'timeSlotId'       => $timeSlotId,
+            'coachId' => $coachId,
+            'timeSlotId' => $timeSlotId,
             'availabilityDate' => $availabilityDate,
         ]);
     }
@@ -38,15 +38,67 @@ class CoachAvailabilityRepository
     {
         $data = $this->client->execute('IsCoachAvailable', [
             'availabilityDate' => $availabilityDate,
-            'timeSlotId'       => $timeSlotId,
-            'coachId'          => $coachId,
+            'timeSlotId' => $timeSlotId,
+            'coachId' => $coachId,
         ]);
 
         return ! empty($data['coachAvailabilities'] ?? []);
     }
 
-    public function delete(string $id): void
-    {
-        $this->client->execute('DeleteCoachAvailability', ['id' => $id]);
+    /**
+     * get one Coach's published time slots for a selected date
+     *
+     * @return CoachAvailabilityDTO[]
+     */
+    public function getForCoachAndDate(
+        string $coachId,
+        string $availabilityDate,
+    ): array {
+        // execute the query using filter values
+        $data = $this->client->execute('GetCoachAvailabilityForDate', [
+            'coachId' => $coachId,
+            'availabilityDate' => $availabilityDate,
+        ]);
+
+        // convert each returned row into the existing availability DTO
+        return array_map(
+            fn (array $row) => CoachAvailabilityDTO::fromGraphQL($row),
+            $data['coachAvailabilities'] ?? [],
+        );
+    }
+
+    /**
+     * remove one Coach's published availability using its composite key
+     */
+    public function deleteForCoachAndSlot(
+        string $coachId,
+        string $timeSlotId,
+        string $availabilityDate,
+    ): void {
+        // pass all three key values to the GraphQL mutation
+        $this->client->execute('DeleteCoachAvailabilityForSlot', [
+            'coachId' => $coachId,
+            'timeSlotId' => $timeSlotId,
+            'availabilityDate' => $availabilityDate,
+        ]);
+    }
+
+    /**
+     * check whether a confirmed booking uses this coach's selected slot
+     */
+    public function hasConfirmedBooking(
+        string $coachId,
+        string $availabilityDate,
+        string $timeSlotId,
+    ): bool {
+        // check bookings across all courts for this coach, date and slot
+        $data = $this->client->execute('GetConfirmedBookingForCoachSlot', [
+            'coachId' => $coachId,
+            'bookingDate' => $availabilityDate,
+            'timeSlotId' => $timeSlotId,
+        ]);
+
+        // true means a booking exists, so removal must be blocked
+        return ! empty($data['bookings'] ?? []);
     }
 }
