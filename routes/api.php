@@ -31,4 +31,5 @@ Route::middleware('firebase.auth')->group(function () {
 
     // Coach availability
     Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
+    Route::put('/coach/availability', [CoachAvailabilityController::class, 'publish']);
 });
