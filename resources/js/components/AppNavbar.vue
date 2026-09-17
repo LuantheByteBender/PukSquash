@@ -1,15 +1,36 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth.js';
+import { useAccount, refreshAccount, clearAccount } from '../composables/useAccount.js';
 
 const router = useRouter();
 const { isSignedIn, displayName } = useAuth();
+const { role } = useAccount();
 
 const open = ref(false);
+const confirmingSignOut = ref(false);
+
+watch(isSignedIn, async (signedIn) => {
+    if (!signedIn) {
+        clearAccount();
+        open.value = false;
+        return;
+    }
+
+    try {
+        await refreshAccount();
+    } catch {
+    }
+}, { immediate: true });
+
+function requestSignOut() {
+    open.value = false;
+    confirmingSignOut.value = true;
+}
 
 async function signOut() {
-    open.value = false;
+    confirmingSignOut.value = false;
 
     try {
         // Loaded on demand: authService imports services/firebase.js, which
@@ -20,42 +41,102 @@ async function signOut() {
         // Already signed out, or Firebase is unavailable — either way, leave.
     }
 
-    router.push({ name: 'home' });
+    clearAccount();
+    router.push({ name: 'login' });
 }
 </script>
 
 <template>
     <header class="nav">
         <div class="inner">
-            <RouterLink :to="{ name: 'home' }" class="brand" @click="open = false">
+            <RouterLink :to="{ name: isSignedIn ? 'book' : 'login' }" class="brand" @click="open = false">
                 <span class="mark" aria-hidden="true">PS</span>
                 <span>PukSquash</span>
             </RouterLink>
 
-            <button class="burger" :aria-expanded="open" aria-label="Menu" @click="open = !open">
-                <span></span><span></span><span></span>
-            </button>
+            <div class="spacer"></div>
 
-            <nav class="links" :class="{ open }">
-                <RouterLink :to="{ name: 'book' }" class="link" @click="open = false">
-                    Book a court
-                </RouterLink>
+            <div v-if="isSignedIn" class="menu">
+                <button
+                    class="menu-btn"
+                    type="button"
+                    :aria-expanded="open"
+                    aria-label="User menu"
+                    @click="open = !open"
+                >
+                    {{ displayName }}<span class="caret" aria-hidden="true">▾</span>
+                </button>
 
-                <RouterLink :to="{ name: 'my-bookings' }" class="link" @click="open = false">
-                    My bookings
-                </RouterLink>
+                <div v-if="open" class="menu-panel" role="menu">
+                    <RouterLink :to="{ name: 'book' }" class="menu-item" role="menuitem" @click="open = false">
+                        Book a court
+                    </RouterLink>
 
-                <span class="spacer"></span>
+                    <RouterLink :to="{ name: 'my-bookings' }" class="menu-item" role="menuitem" @click="open = false">
+                        My bookings
+                    </RouterLink>
 
-                <template v-if="isSignedIn">
-                    <span class="who">{{ displayName }}</span>
-                    <button class="btn btn-secondary btn-sm" @click="signOut">Sign out</button>
-                </template>
+                    <RouterLink
+                        v-if="role === 'COACH'"
+                        :to="{ name: 'coach-bookings' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Coach bookings
+                    </RouterLink>
 
-                <RouterLink v-else :to="{ name: 'login' }" class="link" @click="open = false">
-                    Sign in
-                </RouterLink>
-            </nav>
+                    <RouterLink
+                        v-if="role === 'ADMIN'"
+                        :to="{ name: 'admin-dashboard' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Admin dashboard
+                    </RouterLink>
+
+                    <RouterLink
+                        v-if="role === 'ADMIN'"
+                        :to="{ name: 'admin-users' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Manage users
+                    </RouterLink>
+
+                    <RouterLink
+                        :to="{ name: 'user-profile' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Profile
+                    </RouterLink>
+
+                    <button class="menu-item danger" type="button" role="menuitem" @click="requestSignOut">
+                        Sign out
+                    </button>
+                </div>
+            </div>
+
+            <RouterLink v-else :to="{ name: 'login' }" class="link" @click="open = false">
+                Sign in
+            </RouterLink>
+        </div>
+
+        <div v-if="confirmingSignOut" class="backdrop" @click.self="confirmingSignOut = false">
+            <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="signout-title">
+                <h2 id="signout-title">Sign out?</h2>
+
+                <p class="muted">Are you sure you want to sign out?</p>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" type="button" @click="confirmingSignOut = false">Cancel</button>
+                    <button class="btn btn-danger" type="button" @click="signOut">Sign out</button>
+                </div>
+            </div>
         </div>
     </header>
 </template>
@@ -107,6 +188,104 @@ async function signOut() {
 
 .spacer {
     flex: 1;
+}
+
+.menu {
+    position: relative;
+}
+
+.menu-btn {
+    border: 0;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font: inherit;
+    font-weight: 650;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--ps-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.caret {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    min-width: 200px;
+    background: #fff;
+    color: var(--ps-text);
+    border-radius: var(--ps-radius);
+    box-shadow: 0 12px 28px rgba(24, 14, 33, 0.25);
+    overflow: hidden;
+    z-index: 30;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 0.85rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+}
+
+.menu-item:hover {
+    background: rgba(108, 61, 145, 0.08);
+}
+
+.menu-item.danger {
+    color: #b42318;
+}
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    padding: 1rem;
+    background: rgba(24, 14, 33, 0.5);
+    display: grid;
+    place-items: center;
+}
+
+.dialog {
+    max-width: 420px;
+    width: 100%;
+    background: var(--ps-surface);
+    border-radius: var(--ps-radius);
+    padding: 1.1rem;
+    box-shadow: 0 10px 30px rgba(24, 14, 33, 0.25);
+}
+
+.dialog h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+.muted {
+    color: var(--ps-text-muted);
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
 }
 
 .link {

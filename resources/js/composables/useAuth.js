@@ -1,4 +1,5 @@
 import { ref, computed, readonly } from 'vue';
+import { useAccount } from './useAccount.js';
 
 /**
  * Shared authentication state for the Vue application.
@@ -56,15 +57,22 @@ async function start() {
 export function useAuth() {
     start();
 
+    const { profile } = useAccount();
+
     return {
         user: readonly(user),
         ready: readonly(ready),
         authAvailable: readonly(authAvailable),
         isSignedIn: computed(() => Boolean(user.value)),
         email: computed(() => user.value?.email || null),
-        displayName: computed(
-            () => user.value?.displayName || user.value?.email?.split('@')[0] || 'Student'
-        ),
+        displayName: computed(() => {
+            const full = profile.value?.full_name;
+            if (typeof full === 'string' && full.trim()) {
+                return full.trim();
+            }
+
+            return user.value?.displayName || user.value?.email?.split('@')[0] || 'Student';
+        }),
         emailVerified: computed(() => Boolean(user.value?.emailVerified)),
     };
 }

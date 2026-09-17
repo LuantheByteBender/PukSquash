@@ -1,16 +1,26 @@
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { loginUser } from '../features/auth/authService';
-import { getCurrentUser } from '../services/api.js';
+import { refreshAccount } from '../composables/useAccount.js';
 
 const router = useRouter();
+const route = useRoute();
 
 const email = ref('');
 const password = ref('');
 const message = ref('');
 const isLoggingIn = ref(false);
+
+if (typeof route.query.email === 'string' && route.query.email) {
+    email.value = route.query.email;
+}
+
+const statePassword = route.state?.password ?? window.history.state?.password;
+if (typeof statePassword === 'string' && statePassword) {
+    password.value = statePassword;
+}
 
 async function login() {
     message.value = '';
@@ -32,13 +42,22 @@ async function login() {
             `Logged in successfully as ${result.user.email}`;
 
         try {
-            await getCurrentUser();
+            const profile = await refreshAccount();
+            const role = profile?.role ?? null;
+
+            if (role) {
+                message.value = `Logged in successfully as ${result.user.email} (${role})`;
+            }
+
+            if (role === 'COACH') {
+                await router.push({ name: 'coach-bookings' });
+            } else {
+                await router.push({ name: 'book' });
+            }
         } catch (error) {
             message.value = error.message;
             return;
         }
-
-        await router.push({ name: 'book' });
     } catch (error) {
         message.value = error.message;
     } finally {

@@ -28,15 +28,52 @@ class UserController extends Controller
         $user = $this->users->findByFirebaseUid($firebaseUid);
 
         if (! $user) {
+            $studentNumber = $email ? explode('@', $email)[0] : null;
+
             $this->users->upsert([
                 'firebaseUid' => $firebaseUid,
                 'fullName'    => explode('@', $email)[0],
                 'email'       => $email,
+                'studentNumber' => $studentNumber,
             ]);
 
             $user = $this->users->findByFirebaseUid($firebaseUid);
         }
 
         return response()->json($user?->toArray());
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        $request->validate([
+            'full_name'      => 'required|string|max:120',
+            'student_number' => 'nullable|string|max:30',
+        ]);
+
+        $firebaseUid = $request->attributes->get('firebase_uid');
+        $email       = $request->attributes->get('firebase_email');
+
+        $user = $this->users->findByFirebaseUid($firebaseUid);
+
+        if (! $user) {
+            $studentNumber = $email ? explode('@', $email)[0] : null;
+
+            $this->users->upsert([
+                'firebaseUid' => $firebaseUid,
+                'fullName'    => explode('@', $email)[0],
+                'email'       => $email,
+                'studentNumber' => $studentNumber,
+            ]);
+        }
+
+        $this->users->updateProfile(
+            $firebaseUid,
+            $request->input('full_name'),
+            $request->input('student_number'),
+        );
+
+        $updated = $this->users->findByFirebaseUid($firebaseUid);
+
+        return response()->json($updated?->toArray());
     }
 }
