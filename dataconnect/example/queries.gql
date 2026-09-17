@@ -284,3 +284,29 @@ query IsCoachAvailable($availabilityDate: Date!, $timeSlotId: UUID!, $coachId: U
     coachId
   }
 }
+query ListAllUsers
+@auth(level: NO_ACCESS) {
+  users {
+    id
+    firebaseUid
+    studentNumber
+    fullName
+    email
+    role
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllCourts
+@auth(level: NO_ACCESS) {
+  courts {
+    id
+    name
+    description
+    status
+    createdAt
+    updatedAt
+  }
+}
