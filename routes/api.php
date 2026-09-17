@@ -7,10 +7,12 @@ use App\Http\Controllers\Api\CourtController;
 use App\Http\Controllers\Api\TimeSlotController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\CoachBookingController;
 
 Route::middleware('firebase.auth')->group(function () {
     // User
     Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/me', [UserController::class, 'update']);
 
     // Courts
     Route::get('/courts', [CourtController::class, 'index']);
@@ -30,6 +32,12 @@ Route::middleware('firebase.auth')->group(function () {
 
     // Coach availability
     Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
+
+    // Current and upcoming confirmed Coach bookings
+    Route::get(
+        '/coach/bookings/upcoming',
+        [CoachBookingController::class, 'upcoming']
+    );
     Route::put('/coach/availability', [CoachAvailabilityController::class, 'publish']);
     Route::get('/coach/availability', [CoachAvailabilityController::class, 'mine']);
     Route::delete('/coach/availability', [CoachAvailabilityController::class, 'destroy']);

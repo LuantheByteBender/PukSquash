@@ -156,6 +156,31 @@ query GetAvailabilityData($bookingDate: Date!)
   }
 }
 
+query GetBookingsByStatus($status: String!)
+@auth(level: NO_ACCESS) {
+  bookings(where: { status: { eq: $status } }) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName email }
+    coach { id fullName email }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id fullName email }
+    }
+  }
+}
+
 
 # ------------------------------------------------------------
 # Booking queries
@@ -214,6 +239,23 @@ query GetBookingById($id: UUID!)
   }
 }
 
+query GetBookingsForTimeSlot($bookingDate: Date!, $timeSlotId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      bookingDate: { eq: $bookingDate }
+      timeSlotId: { eq: $timeSlotId }
+      status: { eq: "CONFIRMED" }
+    }
+  ) {
+    id
+    createdBy { id }
+    bookingPlayers_on_booking {
+      user { id }
+    }
+  }
+}
+
 # Bookings created by a specific user (My Bookings screen).
 query GetBookingsByUser($userId: UUID!, $status: String)
 @auth(level: NO_ACCESS) {
@@ -233,6 +275,7 @@ query GetBookingsByUser($userId: UUID!, $status: String)
     bookingPlayers_on_booking {
       id
       playerPosition
+      joinedAt
       user { id fullName }
     }
   }
@@ -297,7 +340,6 @@ query GetCoachAvailabilityForDate(
       availabilityDate: { eq: $availabilityDate }
     }
   ) {
-
     availabilityDate
     createdAt
     coachId
@@ -307,7 +349,7 @@ query GetCoachAvailabilityForDate(
   }
 }
 
-# check whether a confirmed booking uses this Coach's date and time slot
+# Check whether a confirmed booking uses this Coach's date and time slot.
 query GetConfirmedBookingForCoachSlot(
   $coachId: UUID!
   $bookingDate: Date!
@@ -324,5 +366,29 @@ query GetConfirmedBookingForCoachSlot(
     limit: 1
   ) {
     id
+  }
+}
+
+# Confirmed private-coaching bookings assigned to one Coach.
+query GetConfirmedBookingsByCoach($coachId: UUID!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      coachId: { eq: $coachId }
+      bookingType: { eq: "PRIVATE_COACH" }
+      status: { eq: "CONFIRMED" }
+    }
+  ) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName }
   }
 }
