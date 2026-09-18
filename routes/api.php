@@ -33,6 +33,9 @@ Route::middleware('firebase.auth')->group(function () {
     // Coach availability
     Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
 
+    // Coach availability Notice Board
+    Route::get('/notice-board/coaches', [CoachAvailabilityController::class, 'noticeBoard']);
+
     // Current and upcoming confirmed Coach bookings
     Route::get(
         '/coach/bookings/upcoming',

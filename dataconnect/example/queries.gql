@@ -392,3 +392,36 @@ query GetConfirmedBookingsByCoach($coachId: UUID!)
     createdBy { id fullName }
   }
 }
+
+# Notice Board:
+# All published Coach availability for a selected date.
+query GetCoachAvailabilityNoticeBoard(
+  $availabilityDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  coachAvailabilities(
+    where: {
+      availabilityDate: { eq: $availabilityDate }
+    }
+  ) {
+    availabilityDate
+    createdAt
+    coachId
+    timeSlotId
+
+    coach {
+      id
+      fullName
+      role
+      status
+    }
+
+    timeSlot {
+      id
+      startTime
+      endTime
+      displayOrder
+      isActive
+    }
+  }
+}

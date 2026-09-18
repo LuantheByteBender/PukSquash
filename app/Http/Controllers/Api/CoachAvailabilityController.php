@@ -136,6 +136,83 @@ class CoachAvailabilityController extends Controller
     }
 
     /**
+    * GET /api/notice-board/coaches?date=YYYY-MM-DD
+    *
+    * Return all published Coach availability for the Notice Board
+    * on a selected date.
+    */
+    public function noticeBoard(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => [
+                'required',
+                'date_format:Y-m-d',
+            ],
+        ]);
+        
+        $availability = $this->availability->getNoticeBoardForDate(
+            $validated['date']
+        );
+        
+        $coaches = [];
+        
+        foreach ($availability as $item) {
+            $coach = $item->coach;
+            $timeSlot = $item->timeSlot;
+            
+            // Ignore incomplete relationship data.
+            if (
+                ! $coach ||
+                empty($coach['id']) ||
+                ($coach['role'] ?? null) !== 'COACH' ||
+                ($coach['status'] ?? null) !== 'ACTIVE' ||
+                ! $timeSlot ||
+                empty($timeSlot['id']) ||
+                ($timeSlot['isActive'] ?? false) !== true
+            ) {
+                continue;
+        }
+            
+            $coachId = $coach['id'];
+            
+            // Create the Coach entry the first time we encounter this Coach.
+            if (! isset($coaches[$coachId])) {
+                $coaches[$coachId] = [
+                    'coach_id' => $coachId,
+                    'coach_name' => $coach['fullName'] ?? null,
+                    'availability_date' => $item->availabilityDate,
+                    'time_slots' => [],
+                ];
+            }
+            
+            // Add this published time slot to the Coach.
+            $coaches[$coachId]['time_slots'][] = [
+                'id' => $timeSlot['id'],
+                'start_time' => $timeSlot['startTime'] ?? null,
+                'end_time' => $timeSlot['endTime'] ?? null,
+                'display_order' => $timeSlot['displayOrder'] ?? null,
+            ];
+        }
+        
+        // Keep each Coach's slots in their configured display order.
+        foreach ($coaches as &$coach) {
+            usort(
+                $coach['time_slots'],
+                fn (array $a, array $b) =>
+                ($a['display_order'] ?? PHP_INT_MAX)
+                <=>
+                ($b['display_order'] ?? PHP_INT_MAX)
+            );
+        }
+        unset($coach);
+        
+        return response()->json([
+            'date' => $validated['date'],
+            'data' => array_values($coaches),
+        ]);
+    }
+
+    /**
     * return the logged in Coach's published availability for a date
     */
     public function mine(Request $request): JsonResponse

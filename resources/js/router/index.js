@@ -30,6 +30,13 @@ const routes = [
         meta: { chrome: false },
     },
 
+    {
+        path: '/auth-test',
+        name: 'auth-test',
+        component: () => import('../pages/AuthTest.vue'),
+        meta: { chrome: false },
+    },
+
     // Booking feature
     {
         path: '/book',
