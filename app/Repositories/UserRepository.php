@@ -107,6 +107,8 @@ class UserRepository
     {
         $this->client->execute('DeleteUser', ['id' => $id]);
 
+    }
+
     public function updateProfile(string $firebaseUid, string $fullName, ?string $studentNumber): void
     {
         $keyFirebase = 'sqlconnect_user_firebase_uid_' . $firebaseUid;

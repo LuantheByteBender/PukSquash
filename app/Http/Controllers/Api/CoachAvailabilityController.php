@@ -100,6 +100,32 @@ class CoachAvailabilityController extends Controller
             ], 422);
         }
 
+        // when publishing for today, reject slots whose start time has already passed.
+        if ($validated['availability_date'] === now()->format('Y-m-d')) {
+            $currentTime = now()->format('H:i:s');
+
+            $slotStartTimes = [];
+            foreach ($this->timeSlots->listActive() as $ts) {
+                $slotStartTimes[$ts->id] = $ts->startTime;
+            }
+
+            $expiredTimeSlotIds = array_values(array_filter(
+                $validated['time_slot_ids'],
+                function (string $id) use ($slotStartTimes, $currentTime) {
+                    $start = $slotStartTimes[$id] ?? null;
+
+                    return $start !== null && $start <= $currentTime;
+                },
+            ));
+
+            if (! empty($expiredTimeSlotIds)) {
+                return response()->json([
+                    'message' => 'One or more selected time slots have already started or passed.',
+                    'expired_time_slot_ids' => $expiredTimeSlotIds,
+                ], 422);
+            }
+        }
+
         $createdTimeSlotIds = [];
         $existingTimeSlotIds = [];
 
@@ -168,12 +194,24 @@ class CoachAvailabilityController extends Controller
             $validated['availability_date'],
         );
 
-        // convert the DTO objects into arrays for the JSON response
+        // convert the DTO objects into arrays and check for confirmed bookings
+        $result = array_map(function ($slot) use ($user, $validated) {
+            $arr = $slot->toArray();
+            $timeSlotId = $slot->timeSlot['id'] ?? null;
+
+            $arr['has_confirmed_booking'] = $timeSlotId
+                ? $this->availability->hasConfirmedBooking(
+                    $user->id,
+                    $validated['availability_date'],
+                    $timeSlotId,
+                )
+                : false;
+
+            return $arr;
+        }, $availability);
+
         return response()->json([
-            'data' => array_map(
-                fn ($slot) => $slot->toArray(),
-                $availability,
-            ),
+            'data' => $result,
         ]);
     }
 

@@ -83,7 +83,7 @@ async function signOut() {
                         role="menuitem"
                         @click="open = false"
                     >
-                        Coach bookings
+                        Coach availability
                     </RouterLink>
 
                     <RouterLink
