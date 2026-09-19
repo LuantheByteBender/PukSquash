@@ -1,10 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
     registerUser,
-    logoutUser,
 } from '../features/auth/authService';
 
 import { getCurrentUser } from '../services/api.js';
@@ -14,6 +13,16 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const message = ref('');
+const isWaitingForVerification = ref(false);
+
+let verificationTimer = null;
+
+function stopVerificationTimer() {
+    if (verificationTimer) {
+        clearInterval(verificationTimer);
+        verificationTimer = null;
+    }
+}
 
 async function register() {
     try {
@@ -22,34 +31,58 @@ async function register() {
             password.value
         );
 
-        message.value =
-            `Account created for ${result.user.email}. Check your email for the verification link.`;
+        try {
+            await getCurrentUser();
+        } catch {
+        }
+
+        message.value = `Account created for ${result.user.email}. Check your email for the verification link.`;
+        isWaitingForVerification.value = true;
+
+        stopVerificationTimer();
+        verificationTimer = setInterval(async () => {
+            try {
+                const { auth } = await import('../services/firebase.js');
+                const user = auth.currentUser;
+
+                if (!user) {
+                    stopVerificationTimer();
+                    isWaitingForVerification.value = false;
+                    return;
+                }
+
+                await user.reload();
+
+                if (!user.emailVerified) {
+                    return;
+                }
+
+                stopVerificationTimer();
+                isWaitingForVerification.value = false;
+                await getCurrentUser();
+                await router.push({ name: 'book' });
+            } catch {
+            }
+        }, 3000);
     } catch (error) {
         message.value = error.message;
     }
 }
 
-async function logout() {
-    try {
-        await logoutUser();
-        message.value = 'Logged out successfully.';
-    } catch (error) {
-        message.value = error.message;
-    }
-}
-
-async function testBackend() {
-    try {
-        const result = await getCurrentUser();
-        message.value = JSON.stringify(result);
-    } catch (error) {
-        message.value = error.message;
-    }
-}
+onUnmounted(() => {
+    stopVerificationTimer();
+});
 </script>
 
 <template>
     <main class="signup-page">
+
+        <RouterLink
+            class="back-link"
+            :to="{ name: 'login' }"
+        >
+            <u>Back to login</u>
+        </RouterLink>
 
         <!-- Background image of entire page -->
         <div class="background-image">
@@ -68,7 +101,7 @@ async function testBackend() {
 
             <!-- Input section: Email & Password -->
             <section id="signup-section">
-                <div class="input-fields">
+                <div class="input-fields">gToL
                     <label for="email">Email</label>
                     <input
                         id="email"
@@ -97,25 +130,17 @@ async function testBackend() {
                     <button type="submit">
                         Register
                     </button>
-
-                    <button type="button" @click="router.push({ name: 'login' })">
-                        Login
-                    </button>
-
-                    <button type="button" @click="logout">
-                        Logout
-                    </button>
                 </div>
 
                 <p v-if="message" role="status" aria-live="polite">
                     {{ message }}
                 </p>
+
+                <p v-if="isWaitingForVerification" role="status" aria-live="polite">
+                    Waiting for email verification...
+                </p>
             </section>
         </form>
-
-        <button type="button" @click="testBackend">
-            Test Laravel Authentication
-        </button>
 
     </main>
 
@@ -168,6 +193,14 @@ header h1 {
     font-size: clamp(2.25rem, 6vw, 4rem);
     line-height: 1.1;
     text-align: center;
+}
+
+.back-link {
+    position: absolute;
+    top: clamp(1rem, 3vw, 2rem);
+    left: clamp(1rem, 3vw, 2rem);
+    color: white;
+    z-index: 1;
 }
 
 /* Signup form */

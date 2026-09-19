@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PublishCoachAvailabilityRequest;
 use App\Repositories\CoachAvailabilityRepository;
+use App\Repositories\TimeSlotRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,6 +14,8 @@ class CoachAvailabilityController extends Controller
 {
     public function __construct(
         private CoachAvailabilityRepository $availability,
+        private TimeSlotRepository $timeSlots,
+        private UserRepository $users,
     ) {}
 
     /**
@@ -19,7 +24,7 @@ class CoachAvailabilityController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'date'         => 'required|date_format:Y-m-d',
+            'date' => 'required|date_format:Y-m-d',
             'time_slot_id' => 'required|string',
         ]);
 
@@ -37,11 +42,199 @@ class CoachAvailabilityController extends Controller
             }
 
             $coaches[$coach['id']] = [
-                'id'   => $coach['id'],
+                'id' => $coach['id'],
                 'name' => $coach['name'] ?? $coach['fullName'] ?? null,
             ];
         }
 
         return response()->json(array_values($coaches));
+
+    }
+
+    /**
+     * Publish a Coach's selected availability.
+     */
+    public function publish(
+        PublishCoachAvailabilityRequest $request,
+    ): JsonResponse {
+        // get the data that passed PublishCoachAvailabilityRequest validation.
+        $validated = $request->validated();
+
+        // firebaseAuth middleware placed the authenticated user's UID here.
+        $firebaseUid = $request->attributes->get('firebase_uid');
+
+        // find the application's User record using the Firebase UID.
+        $user = $this->users->findByFirebaseUid($firebaseUid);
+
+        // the Firebase account exists, but no application profile was found.
+        if (! $user) {
+            return response()->json([
+                'message' => 'User profile not found.',
+            ], 404);
+        }
+
+        // only active Coaches may publish Coach availability.
+        if ($user->role !== 'COACH' || $user->status !== 'ACTIVE') {
+            return response()->json([
+                'message' => 'Only active Coaches may publish availability.',
+            ], 403);
+        }
+
+        // retrieve the IDs of all active time slots from SQL Connect.
+        $activeTimeSlotIds = array_map(
+            fn ($timeSlot) => $timeSlot->id,
+            $this->timeSlots->listActive(),
+        );
+
+        // find submitted IDs that do not belong to active time slots.
+        $invalidTimeSlotIds = array_values(array_diff(
+            $validated['time_slot_ids'],
+            $activeTimeSlotIds,
+        ));
+
+        // reject the complete request if any selected slot is invalid or inactive.
+        if (! empty($invalidTimeSlotIds)) {
+            return response()->json([
+                'message' => 'One or more selected time slots are invalid or inactive.',
+                'invalid_time_slot_ids' => $invalidTimeSlotIds,
+            ], 422);
+        }
+
+        $createdTimeSlotIds = [];
+        $existingTimeSlotIds = [];
+
+        foreach ($validated['time_slot_ids'] as $timeSlotId) {
+            // do not create a duplicate Coach/date/time-slot row.
+            if ($this->availability->isCoachAvailable(
+                $validated['availability_date'],
+                $timeSlotId,
+                $user->id, )) {
+                $existingTimeSlotIds[] = $timeSlotId;
+
+                continue;
+            }
+
+            // create one CoachAvailability row for this selected time slot.
+            $this->availability->create(
+                $user->id,
+                $timeSlotId,
+                $validated['availability_date'],
+            );
+
+            $createdTimeSlotIds[] = $timeSlotId;
+        }
+
+        return response()->json([
+            'message' => 'Coach availability published successfully.',
+            'data' => [
+                'availability_date' => $validated['availability_date'],
+                'time_slot_ids' => $validated['time_slot_ids'],
+                'created_time_slot_ids' => $createdTimeSlotIds,
+                'existing_time_slot_ids' => $existingTimeSlotIds,
+            ],
+        ]);
+    }
+
+    /**
+    * return the logged in Coach's published availability for a date
+    */
+    public function mine(Request $request): JsonResponse
+    {
+        // check that the selected date has the expected format.
+        $validated = $request->validate([
+            'availability_date' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        // identify the caller using the verified firebase identity
+        $firebaseUid = $request->attributes->get('firebase_uid');
+        $user = $this->users->findByFirebaseUid($firebaseUid);
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User profile not found.',
+            ], 404);
+        }
+
+        // only active Coaches may access this management endpoint
+        if ($user->role !== 'COACH' || $user->status !== 'ACTIVE') {
+            return response()->json([
+                'message' => 'Only active Coaches may view their availability.',
+            ], 403);
+        }
+
+        // retrieve only this Coach's availability for the selected date
+        $availability = $this->availability->getForCoachAndDate(
+            $user->id,
+            $validated['availability_date'],
+        );
+
+        // convert the DTO objects into arrays for the JSON response
+        return response()->json([
+            'data' => array_map(
+                fn ($slot) => $slot->toArray(),
+                $availability,
+            ),
+        ]);
+    }
+
+    /**
+    * remove the logged in Coach's availability unless a booking uses it
+    */
+    public function destroy(Request $request): JsonResponse
+    {
+        // validate the date and one time slot ID
+        $validated = $request->validate([
+            'availability_date' => ['required', 'date_format:Y-m-d'],
+            'time_slot_id' => [
+                'required',
+                'string',
+                'regex:/\A[0-9a-fA-F]{32}\z/',
+            ],
+        ]);
+
+        // identify the Coach from their verified login
+        $user = $this->users->findByFirebaseUid(
+            $request->attributes->get('firebase_uid')
+        );
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User profile not found.',
+            ], 404);
+        }
+
+        if ($user->role !== 'COACH' || $user->status !== 'ACTIVE') {
+            return response()->json([
+                'message' => 'Only active Coaches may remove availability.',
+            ], 403);
+        }
+
+        $date = $validated['availability_date'];
+        $slotId = $validated['time_slot_id'];
+
+        // only target availability belonging to this Coach
+        if (! $this->availability->isCoachAvailable($date, $slotId, $user->id)) {
+            return response()->json([
+                'message' => 'Availability not found.',
+            ], 404);
+        }
+
+        // preserve an existing confirmed coaching booking
+        if ($this->availability->hasConfirmedBooking($user->id, $date, $slotId)) {
+            return response()->json([
+                'message' => 'This time slot has a confirmed coaching booking.',
+            ], 409);
+        }
+
+        // delete using Coach + time slot + date
+        $this->availability->deleteForCoachAndSlot(
+            $user->id,
+            $slotId,
+            $date,
+        );
+
+        return response()->json([
+            'message' => 'Coach availability removed successfully.',
+        ]);
     }
 }

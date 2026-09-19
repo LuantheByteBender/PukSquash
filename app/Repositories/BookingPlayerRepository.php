@@ -33,4 +33,12 @@ class BookingPlayerRepository
             'joinedAt'       => now()->toIso8601ZuluString(),
         ]);
     }
+
+    public function remove(string $bookingId, string $userId): void
+    {
+        $this->client->execute('LeaveBooking', [
+            'bookingId' => $bookingId,
+            'userId'    => $userId,
+        ]);
+    }
 }

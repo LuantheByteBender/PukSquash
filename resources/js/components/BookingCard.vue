@@ -44,7 +44,17 @@ const opponent = computed(() => {
 
     if (players.length < 2) return 'Waiting for a second player';
 
-    return `${players[0].name} vs ${players[1].name}`;
+    const sorted = [...players].sort(
+        (a, b) => (a.player_position ?? 99) - (b.player_position ?? 99)
+    );
+
+    const a = sorted[0];
+    const b = sorted[1];
+
+    const nameA = a?.name || a?.full_name || a?.fullName || 'Player 1';
+    const nameB = b?.name || b?.full_name || b?.fullName || 'Player 2';
+
+    return `${nameA} vs ${nameB}`;
 });
 </script>
 

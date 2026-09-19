@@ -106,5 +106,27 @@ class UserRepository
     public function deleteUser(string $id): void
     {
         $this->client->execute('DeleteUser', ['id' => $id]);
+
+    public function updateProfile(string $firebaseUid, string $fullName, ?string $studentNumber): void
+    {
+        $keyFirebase = 'sqlconnect_user_firebase_uid_' . $firebaseUid;
+
+        $existing = $this->findByFirebaseUid($firebaseUid);
+
+        Cache::forget($keyFirebase);
+        if ($existing) {
+            Cache::forget('sqlconnect_user_id_' . $existing->id);
+        }
+
+        $this->client->execute('UpdateUserProfile', [
+            'firebaseUid'    => $firebaseUid,
+            'fullName'       => $fullName,
+            'studentNumber'  => $studentNumber,
+        ]);
+
+        Cache::forget($keyFirebase);
+        if ($existing) {
+            Cache::forget('sqlconnect_user_id_' . $existing->id);
+        }
     }
 }

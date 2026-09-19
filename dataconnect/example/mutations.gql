@@ -33,6 +33,21 @@ mutation UpsertUser(
   )
 }
 
+mutation UpdateUserProfile(
+  $firebaseUid: String!
+  $fullName: String!
+  $studentNumber: String
+)
+@auth(level: NO_ACCESS) {
+  user_updateMany(
+    where: { firebaseUid: { eq: $firebaseUid } }
+    data: {
+      fullName: $fullName
+      studentNumber: $studentNumber
+    }
+  )
+}
+
 
 # ------------------------------------------------------------
 # Court mutations
@@ -151,6 +166,19 @@ mutation AddBookingPlayer(
   )
 }
 
+mutation LeaveBooking(
+  $bookingId: UUID!
+  $userId: UUID!
+)
+@auth(level: NO_ACCESS) {
+  bookingPlayer_deleteMany(
+    where: {
+      bookingId: { eq: $bookingId }
+      userId: { eq: $userId }
+    }
+  )
+}
+
 
 # ------------------------------------------------------------
 # CoachAvailability mutations
@@ -171,7 +199,19 @@ mutation CreateCoachAvailability(
   )
 }
 
-mutation DeleteCoachAvailability($id: UUID!)
+
+# Remove one Coach's availability for a specific date and time slot
+mutation DeleteCoachAvailabilityForSlot(
+  $coachId: UUID!
+  $timeSlotId: UUID!
+  $availabilityDate: Date!
+)
 @auth(level: NO_ACCESS) {
-  coachAvailability_delete(key: { id: $id })
+  coachAvailability_delete(
+    key: {
+      coachId: $coachId
+      timeSlotId: $timeSlotId
+      availabilityDate: $availabilityDate
+    }
+  )
 }
