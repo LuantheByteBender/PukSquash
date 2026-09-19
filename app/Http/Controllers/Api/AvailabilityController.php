@@ -48,6 +48,20 @@ class AvailabilityController extends Controller
                 $booking = $index[$key] ?? null;
 
                 if (! $booking) {
+                    if ($court->status !== 'ACTIVE') {
+                        $cells[] = [
+                            'court_id'     => $court->id,
+                            'time_slot_id' => $slot->id,
+                            'state'        => 'UNAVAILABLE',
+                            'label'        => 'Inactive',
+                            'can_book'     => false,
+                            'can_join'     => false,
+                            'is_mine'      => false,
+                            'booking_id'   => null,
+                        ];
+                        continue;
+                    }
+
                     $cells[] = [
                         'court_id'     => $court->id,
                         'time_slot_id' => $slot->id,

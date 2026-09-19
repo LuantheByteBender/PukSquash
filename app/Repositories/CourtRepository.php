@@ -23,6 +23,17 @@ class CourtRepository
         );
     }
 
+    /** @return CourtDTO[] */
+    public function listAll(): array
+    {
+        $data = $this->client->execute('ListAllCourts');
+
+        return array_map(
+            fn (array $row) => CourtDTO::fromGraphQL($row),
+            $data['courts'] ?? [],
+        );
+    }
+
     public function findById(string $id): ?CourtDTO
     {
         $key = 'sqlconnect_court_id_' . $id;
@@ -49,11 +60,32 @@ class CourtRepository
         $this->client->execute('CreateCourt', $params);
     }
 
+    public function delete(string $id): void
+    {
+        Cache::forget('sqlconnect_court_id_' . $id);
+        $this->client->execute('DeleteCourt', ['id' => $id]);
+        Cache::forget('sqlconnect_court_id_' . $id);
+    }
+
+    public function updateCourt(string $id, array $params): void
+    {
+        Cache::forget('sqlconnect_court_id_' . $id);
+        $this->client->execute('UpdateCourt', array_merge(
+            ['id' => $id],
+            $params,
+        ));
+        Cache::forget('sqlconnect_court_id_' . $id);
+    }
+
     public function updateStatus(string $id, string $status): void
     {
+        Cache::forget('sqlconnect_court_id_' . $id);
+
         $this->client->execute('UpdateCourtStatus', [
             'id'     => $id,
             'status' => $status,
         ]);
+
+        Cache::forget('sqlconnect_court_id_' . $id);
     }
 }

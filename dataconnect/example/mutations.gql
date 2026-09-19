@@ -79,6 +79,32 @@ mutation UpdateCourtStatus(
   )
 }
 
+mutation UpdateCourt(
+  $id: UUID!
+  $name: String
+  $description: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  court_update(
+    key: { id: $id }
+    data: {
+      name: $name
+      description: $description
+      status: $status
+    }
+  )
+}
+
+mutation DeleteCourt(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  court_delete(
+    key: { id: $id }
+  )
+}
+
 
 # ------------------------------------------------------------
 # TimeSlot mutations

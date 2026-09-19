@@ -69,6 +69,12 @@ const routes = [
         meta: { requiresRole: 'ADMIN' },
     },
     {
+        path: '/admin/courts',
+        name: 'admin-courts',
+        component: () => import('../pages/ManageCourtsPage.vue'),
+        meta: { requiresRole: 'ADMIN' },
+    },
+    {
         path: '/profile',
         name: 'user-profile',
         component: () => import('../pages/UserProfile.vue'),

@@ -352,6 +352,8 @@ query ListAllCourts
     status
     createdAt
     updatedAt
+  }
+}
 
 # Published availability for one Coach on a selected date.
 query GetCoachAvailabilityForDate(

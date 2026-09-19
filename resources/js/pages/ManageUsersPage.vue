@@ -10,6 +10,7 @@ const router = useRouter();
 const users = ref([]);
 const isLoading = ref(false);
 const loadError = ref('');
+const actionError = ref('');
 const search = ref('');
 const roleFilter = ref('');
 const statusFilter = ref('');
@@ -19,7 +20,7 @@ const draftStatus = ref('ACTIVE');
 
 // Available options for user roles and statuses
 const roleOptions = ['USER', 'COACH', 'ADMIN'];
-const statusOptions = ['ACTIVE', 'INACTIVE'];
+const statusOptions = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
 
 // Standardizes user data to ensure consistent structure and default values
 function normalizeUser(user) {
@@ -41,9 +42,10 @@ function normalizeUser(user) {
 async function loadUsers() {
     isLoading.value = true;
     loadError.value = '';
+    actionError.value = '';
 
     try {
-        const response = await http.get('/users');
+        const response = await http.get('/admin/users');
         const payload = Array.isArray(response)
             ? response
             : Array.isArray(response?.users)
@@ -94,16 +96,39 @@ function cancelEdit() {
     draftStatus.value = 'ACTIVE';
 }
 
-function saveUser(user) {
-    user.role = draftRole.value;
-    user.status = draftStatus.value;
-    editingUserId.value = null;
-    draftRole.value = 'USER';
-    draftStatus.value = 'ACTIVE';
+async function saveUser(user) {
+    actionError.value = '';
+
+    try {
+        const updated = await http.put(`/admin/users/${user.id}`, {
+            role: draftRole.value,
+            status: draftStatus.value,
+        });
+
+        const normalized = normalizeUser(updated ?? user);
+        users.value = users.value.map((row) => (row.id === user.id ? normalized : row));
+        cancelEdit();
+    } catch (error) {
+        console.error('Failed to update user:', error);
+        actionError.value = 'Unable to save changes. Please try again.';
+    }
 }
 
-function removeUser(id) {
-    users.value = users.value.filter((user) => user.id !== id);
+async function removeUser(id) {
+    actionError.value = '';
+
+    if (!window.confirm('Are you sure you want to remove this user?')) {
+        return;
+    }
+
+    try {
+        await http.delete(`/admin/users/${id}`);
+        users.value = users.value.filter((user) => user.id !== id);
+    } catch (error) {
+        console.error('Failed to delete user:', error);
+        actionError.value = 'Unable to remove user. Please try again.';
+        return;
+    }
 
     if (editingUserId.value === id) {
         cancelEdit();
@@ -131,6 +156,7 @@ onMounted(() => {
         </header>
 
         <p v-if="loadError" class="page-message error">{{ loadError }}</p>
+        <p v-else-if="actionError" class="page-message error">{{ actionError }}</p>
         <p v-else-if="isLoading" class="page-message">Loading users...</p>
 
         <!--Section Filters For Users: Search, Role, Status -->
