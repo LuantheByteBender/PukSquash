@@ -94,47 +94,46 @@ async function login() {
 
         <!-- Middle section of screen: Login fields -->
         <section class="login-content">
-            <form id="login-form" class="login-fields" @submit.prevent="login">
-                <label for="email">NWU Email</label>
-                <input
-                    id="email"
-                    v-model="email"
-                    type="email"
-                    placeholder="NWU Email"
-                    required
-                />
+            <div class="auth-card">
+                <form id="login-form" class="login-fields" @submit.prevent="login">
+                    <label for="email">NWU Email</label>
+                    <input
+                        id="email"
+                        v-model="email"
+                        type="email"
+                        placeholder="NWU Email"
+                        required
+                    />
 
-                <label for="password">Password</label>
-                <input
-                    id="password"
-                    v-model="password"
-                    type="password"
-                    placeholder="Password"
-                    required
-                />
+                    <label for="password">Password</label>
+                    <input
+                        id="password"
+                        v-model="password"
+                        type="password"
+                        placeholder="Password"
+                        required
+                    />
 
-                <p v-if="message" class="login-message" role="status">
-                    {{ message }}
-                </p>
+                    <!-- Bottom section of screen: Login button and back button -->
+                    <div class="login-buttons">
+                        <button type="submit" :disabled="isLoggingIn">
+                            {{ isLoggingIn ? 'Logging in...' : 'Login' }}
+                        </button>
+                    </div>
 
-                <p class="login-message">
-                    Don’t have an account?
-                    <RouterLink
-                        :to="{ name: 'signup' }"
-                    >
-                        <u>Sign up</u>
-                    </RouterLink>
-                </p>
-            </form>
-        </section>
+                    <p v-if="message" class="login-message" role="status">
+                        {{ message }}
+                    </p>
 
-
-        <!-- Bottom section of screen: Login button and back button -->
-        <section id="bottom-screen">
-            <div class="login-buttons">
-                <button type="submit" form="login-form" :disabled="isLoggingIn">
-                    {{ isLoggingIn ? 'Logging in...' : 'Login' }}
-                </button>
+                    <p class="login-message">
+                        Don’t have an account?
+                        <RouterLink
+                            :to="{ name: 'signup' }"
+                        >
+                            <u>Sign up</u>
+                        </RouterLink>
+                    </p>
+                </form>
             </div>
         </section>
 
@@ -188,8 +187,7 @@ async function login() {
 
 
 #topscreen,
-.login-content,
-#bottom-screen {
+.login-content {
     display: flex;
     justify-content: center;
     width: 100%;
@@ -226,6 +224,19 @@ async function login() {
     min-height: 0;
 }
 
+.auth-card {
+    width: min(100%, 26rem);
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-radius: 0.9rem;
+    background: rgb(255 255 255 / 0.92);
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.28);
+    color: #17121d;
+}
+
+.auth-card a {
+    color: inherit;
+}
+
 @media (min-width: 769px) {
     #topscreen {
         transform: translateY(clamp(-5rem, -7vh, -2.5rem));
@@ -234,21 +245,17 @@ async function login() {
     .login-content {
         transform: translateY(clamp(-5rem, -7vh, -2.5rem));
     }
-
-    #bottom-screen {
-        transform: translateY(clamp(-2rem, -4vh, -0.75rem));
-    }
 }
 
 .login-fields {
     display: flex;
     flex-direction: column;
-    width: min(100%, 22rem);
+    width: 100%;
     gap: 0.5rem;
 }
 
 .login-fields label {
-    color: white;
+    color: inherit;
     font-size: 1rem;
     font-weight: 700;
 }
@@ -259,33 +266,27 @@ async function login() {
     margin-bottom: 0.75rem;
     padding: 0.7rem 0.8rem;
     box-sizing: border-box;
-    border: 1px solid white;
+    border: 1px solid rgb(23 18 29 / 0.28);
     border-radius: 0.4rem;
-    color: white;
-    background: rgb(20 20 20 / 0.72);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    color: #17121d;
+    background: white;
     font: inherit;
 }
 
 .login-fields input::placeholder {
-    color: rgb(255 255 255 / 0.8);
+    color: rgb(23 18 29 / 0.55);
 }
 
 .login-fields input:focus {
-    outline: 2px solid white;
+    outline: 2px solid rgb(23 18 29 / 0.65);
     outline-offset: 2px;
-    background: rgb(20 20 20 / 0.86);
+    background: white;
 }
 
 .login-message {
     margin: 0.25rem 0 0;
-    color: white;
+    color: inherit;
     text-align: center;
-}
-
-#bottom-screen {
-    align-items: flex-end;
 }
 
 .login-buttons {
@@ -293,11 +294,12 @@ async function login() {
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.75rem;
-    width: min(100%, 28rem);
+    width: 100%;
 }
 
 .login-buttons button {
-    flex: 1 1 10rem;
+    flex: 1 1 auto;
+    width: 100%;
     min-height: 2.75rem;
     padding: 0.7rem 1rem;
     border: 1px solid white;
