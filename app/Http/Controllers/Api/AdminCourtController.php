@@ -26,7 +26,7 @@ class AdminCourtController extends Controller
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
-            'location' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:255',
             'status'   => 'sometimes|in:ACTIVE,INACTIVE',
         ]);
 
@@ -44,10 +44,18 @@ class AdminCourtController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:ACTIVE,INACTIVE',
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string|max:255',
+            'status' => 'sometimes|in:ACTIVE,INACTIVE',
         ]);
 
-        $this->courts->updateStatus($id, $validated['status']);
+        if (array_key_exists('name', $validated) || array_key_exists('description', $validated)) {
+            $this->courts->updateCourt($id, $validated);
+        } elseif (array_key_exists('status', $validated)) {
+            $this->courts->updateStatus($id, $validated['status']);
+        } else {
+            return response()->json(['message' => 'No changes provided.'], 422);
+        }
 
         $court = $this->courts->findById($id);
 
@@ -62,8 +70,8 @@ class AdminCourtController extends Controller
             return response()->json(['message' => 'Court not found.'], 404);
         }
 
-        $this->courts->updateStatus($id, 'INACTIVE');
+        $this->courts->delete($id);
 
-        return response()->json(['message' => 'Court deactivated successfully.']);
+        return response()->json(null, 204);
     }
 }

@@ -48,7 +48,6 @@ Route::middleware('firebase.auth')->group(function () {
         Route::put('/admin/courts/{id}', [AdminCourtController::class, 'update']);
         Route::delete('/admin/courts/{id}', [AdminCourtController::class, 'destroy']);
     });
-});
    
     // Current and upcoming confirmed Coach bookings
     Route::get(
