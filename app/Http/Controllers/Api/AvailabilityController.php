@@ -61,7 +61,22 @@ class AvailabilityController extends Controller
                     continue;
                 }
 
-                $playerCount = count($booking->players);
+                $playersSorted = $booking->players;
+                usort($playersSorted, fn ($a, $b) => $a->playerPosition <=> $b->playerPosition);
+                $playersPayload = array_map(fn ($p) => $p->toArray(), $playersSorted);
+
+                $playerCount = count($playersPayload);
+                $creatorName = $booking->createdBy['fullName']
+                    ?? $booking->createdBy['name']
+                    ?? null;
+
+                $nameA = $playersPayload[0]['name'] ?? $creatorName;
+                $nameB = $playersPayload[1]['name'] ?? null;
+
+                $coach = $booking->coach;
+                $coachName = is_array($coach)
+                    ? ($coach['name'] ?? $coach['fullName'] ?? null)
+                    : null;
 
                 $state = match (true) {
                     $booking->bookingType === 'PRIVATE_COACH'           => 'PRIVATE_COACH',
@@ -71,11 +86,13 @@ class AvailabilityController extends Controller
                 };
 
                 $label = match ($state) {
-                    'OPEN'          => 'Open',
-                    'FULL'          => 'Full',
-                    'LOCKED'        => 'Locked',
-                    'PRIVATE_COACH' => 'Coach',
-                    default         => $state,
+                    'OPEN'          => $nameA ? ($nameA . ' vs ?') : 'Open',
+                    'FULL'          => ($nameA && $nameB) ? ($nameA . ' vs ' . $nameB) : ($nameA ?: 'Full'),
+                    'LOCKED'        => $nameA ?: 'Locked',
+                    'PRIVATE_COACH' => ($nameA && $coachName)
+                        ? ($nameA . ' / Coach ' . $coachName)
+                        : ($nameA ?: ($coachName ? ('Coach ' . $coachName) : 'Coach')),
+                    default         => $nameA ?: $state,
                 };
 
                 $isMine = false;
@@ -103,7 +120,7 @@ class AvailabilityController extends Controller
                     'can_join'     => $canJoin,
                     'is_mine'      => $isMine,
                     'booking_id'   => $canJoin ? $booking->id : null,
-                    'players'      => array_map(fn ($p) => $p->toArray(), $booking->players),
+                    'players'      => $playersPayload,
                 ];
             }
         }

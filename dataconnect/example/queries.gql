@@ -145,7 +145,8 @@ query GetAvailabilityData($bookingDate: Date!)
     createdAt
     court { id }
     timeSlot { id }
-    createdBy { firebaseUid }
+    createdBy { id firebaseUid fullName }
+    coach { id fullName }
 
     bookingPlayers_on_booking {
       id
