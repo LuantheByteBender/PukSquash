@@ -92,6 +92,12 @@ const routes = [
         name: 'not-found',
         redirect: { name: 'home' },
     },
+
+    {
+        path: '/notice-board',
+        name: 'notice-board',
+        component: () => import('../pages/CoachNoticeBoardPage.vue'),
+    },
 ];
 
 const router = createRouter({
