@@ -83,7 +83,7 @@ async function signOut() {
                         role="menuitem"
                         @click="open = false"
                     >
-                        Coach bookings
+                        Coach availability
                     </RouterLink>
 
                     <RouterLink
@@ -104,6 +104,16 @@ async function signOut() {
                         @click="open = false"
                     >
                         Manage users
+                    </RouterLink>
+
+                    <RouterLink
+                        v-if="role === 'ADMIN'"
+                        :to="{ name: 'admin-courts' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Manage courts
                     </RouterLink>
 
                     <RouterLink

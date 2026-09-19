@@ -48,6 +48,30 @@ mutation UpdateUserProfile(
   )
 }
 
+mutation UpdateUser(
+  $id: UUID!
+  $role: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  user_update(
+    key: { id: $id }
+    data: {
+      role: $role
+      status: $status
+    }
+  )
+}
+
+mutation DeleteUser(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  user_delete(
+    key: { id: $id }
+  )
+}
+
 
 # ------------------------------------------------------------
 # Court mutations
@@ -76,6 +100,32 @@ mutation UpdateCourtStatus(
   court_update(
     key: { id: $id }
     data: { status: $status }
+  )
+}
+
+mutation UpdateCourt(
+  $id: UUID!
+  $name: String
+  $description: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  court_update(
+    key: { id: $id }
+    data: {
+      name: $name
+      description: $description
+      status: $status
+    }
+  )
+}
+
+mutation DeleteCourt(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  court_delete(
+    key: { id: $id }
   )
 }
 
@@ -199,7 +249,19 @@ mutation CreateCoachAvailability(
   )
 }
 
-mutation DeleteCoachAvailability($id: UUID!)
+
+# Remove one Coach's availability for a specific date and time slot
+mutation DeleteCoachAvailabilityForSlot(
+  $coachId: UUID!
+  $timeSlotId: UUID!
+  $availabilityDate: Date!
+)
 @auth(level: NO_ACCESS) {
-  coachAvailability_delete(key: { id: $id })
+  coachAvailability_delete(
+    key: {
+      coachId: $coachId
+      timeSlotId: $timeSlotId
+      availabilityDate: $availabilityDate
+    }
+  )
 }

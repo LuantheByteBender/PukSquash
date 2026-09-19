@@ -12,6 +12,12 @@ class UserRepository
         private SqlConnectClient $client,
     ) {}
 
+    private function forgetCachedUser(UserDTO $user): void
+    {
+        Cache::forget('sqlconnect_user_id_' . $user->id);
+        Cache::forget('sqlconnect_user_firebase_uid_' . $user->firebaseUid);
+    }
+
     public function findByFirebaseUid(string $firebaseUid): ?UserDTO
     {
         $key = 'sqlconnect_user_firebase_uid_' . $firebaseUid;
@@ -82,6 +88,47 @@ class UserRepository
             }
 
             throw $exception;
+        }
+    }
+    
+    public function listAll(): array
+    {
+        $data = $this->client->execute('ListAllUsers');
+
+        return array_map(
+            fn (array $row) => UserDTO::fromGraphQL($row),
+            $data['users'] ?? [],
+        );
+    }
+
+    public function updateUser(string $id, array $params): void
+    {
+        $existing = $this->findById($id);
+        if ($existing) {
+            $this->forgetCachedUser($existing);
+        }
+
+        $this->client->execute('UpdateUser', array_merge(
+            ['id' => $id],
+            $params,
+        ));
+
+        if ($existing) {
+            $this->forgetCachedUser($existing);
+        }
+    }
+
+    public function deleteUser(string $id): void
+    {
+        $existing = $this->findById($id);
+        if ($existing) {
+            $this->forgetCachedUser($existing);
+        }
+
+        $this->client->execute('DeleteUser', ['id' => $id]);
+
+        if ($existing) {
+            $this->forgetCachedUser($existing);
         }
     }
 
