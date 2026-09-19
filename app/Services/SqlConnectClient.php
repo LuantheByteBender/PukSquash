@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -98,6 +99,72 @@ class SqlConnectClient
         }
 
         return $body['data'] ?? [];
+    }
+
+    public function executeMany(string $operationName, array $variablesList): array
+    {
+        $query = $this->loadOperation($operationName);
+
+        $token = null;
+        if (! $this->emulatorHost) {
+            $token = $this->getAccessToken();
+        }
+
+        $responses = Http::pool(function (Pool $pool) use ($operationName, $query, $variablesList, $token) {
+            $requests = [];
+
+            foreach ($variablesList as $index => $variables) {
+                $pending = $pool->timeout(15);
+
+                if ($token) {
+                    $pending = $pending->withToken($token);
+                }
+
+                $requests[$index] = $pending->post($this->endpoint, [
+                    'query'         => $query,
+                    'operationName' => $operationName,
+                    'variables'     => (object) $variables,
+                ]);
+            }
+
+            return $requests;
+        });
+
+        $results = [];
+
+        foreach ($responses as $index => $response) {
+            if ($response->failed()) {
+                $results[$index] = [
+                    'ok' => false,
+                    'error' => "SQL Connect request [{$operationName}] failed: " . $response->body(),
+                    'status' => $response->status(),
+                ];
+
+                continue;
+            }
+
+            $body = $response->json();
+
+            if (! empty($body['errors'])) {
+                $messages = collect($body['errors'])->pluck('message')->implode('; ');
+
+                $results[$index] = [
+                    'ok' => false,
+                    'error' => "SQL Connect GraphQL error [{$operationName}]: {$messages}",
+                ];
+
+                continue;
+            }
+
+            $results[$index] = [
+                'ok' => true,
+                'data' => $body['data'] ?? [],
+            ];
+        }
+
+        ksort($results);
+
+        return array_values($results);
     }
 
     private function loadOperation(string $operationName): string
@@ -207,7 +274,7 @@ class SqlConnectClient
 
         $jwt = "{$header}.{$payload}." . base64url_encode($signature);
 
-        $tokenResponse = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+        $tokenResponse = Http::timeout(15)->asForm()->post('https://oauth2.googleapis.com/token', [
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion'  => $jwt,
         ]);
