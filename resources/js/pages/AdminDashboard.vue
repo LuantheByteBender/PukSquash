@@ -4,9 +4,8 @@ import { onMounted, ref } from 'vue';
 import { http } from '../services/http.js';
 
 const quickActions = ref([
-    { label: 'Manage users', href: '/admin/users' },
-    // Placeholder route for the future Manage Courts page.
-    { label: 'Manage courts', href: '/admin/courts' },
+    { label: 'Manage users', to: { name: 'admin-users' } },
+    { label: 'Manage courts', to: { name: 'admin-courts' } },
 ]);
 
 const defaultStats = [
@@ -70,14 +69,14 @@ onMounted(() => {
             <h2 class="section-title">Quick Actions</h2>
 
             <div class="quick-actions-grid">
-                <a
+                <RouterLink
                     v-for="action in quickActions"
                     :key="action.label"
-                    :href="action.href"
+                    :to="action.to"
                     class="quick-action"
                 >
                     {{ action.label }}
-                </a>
+                </RouterLink>
             </div>
         </section>
 

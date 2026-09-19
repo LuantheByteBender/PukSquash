@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { bookingService } from '../features/booking/bookingService.js';
 import { useToast } from '../composables/useToast.js';
+import { useAccount } from '../composables/useAccount.js';
 import BookingCard from '../components/BookingCard.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
@@ -15,18 +16,26 @@ const tabs = [
 ];
 
 const tab = ref('upcoming');
+const view = ref('mine');
 const bookings = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const cancellingId = ref(null);
 const confirming = ref(null);
 
+const { role } = useAccount();
+
 async function load() {
     loading.value = true;
     error.value = null;
 
     try {
-        bookings.value = await bookingService.myBookings(tab.value);
+        if (view.value === 'coach') {
+            const coachBookings = await bookingService.myCoachBookingsUpcoming();
+            bookings.value = (coachBookings || []).map((b) => ({ ...b, booking_type: 'PRIVATE_COACH' }));
+        } else {
+            bookings.value = await bookingService.myBookings(tab.value);
+        }
     } catch (err) {
         error.value = err.message;
     } finally {
@@ -37,7 +46,22 @@ async function load() {
 onMounted(load);
 
 function switchTab(key) {
+    if (view.value === 'coach' && key !== 'upcoming') {
+        toast.info('Coaching sessions are only available for Upcoming.');
+        return;
+    }
     tab.value = key;
+    load();
+}
+
+function switchView(key) {
+    if (key === view.value) return;
+    view.value = key;
+
+    if (view.value === 'coach') {
+        tab.value = 'upcoming';
+    }
+
     load();
 }
 
@@ -70,7 +94,30 @@ const hhmm = (time) => (time || '').slice(0, 5);
     <div class="page">
         <div class="page-head">
             <h1>My bookings</h1>
-            <p class="muted">Everything you have booked or joined.</p>
+            <p v-if="view === 'coach'" class="muted">Upcoming coaching sessions booked with you.</p>
+            <p v-else class="muted">Everything you have booked or joined.</p>
+        </div>
+
+        <div v-if="role === 'COACH'" class="tabs" role="tablist">
+            <button
+                class="tab"
+                :class="{ on: view === 'mine' }"
+                role="tab"
+                :aria-selected="view === 'mine'"
+                @click="switchView('mine')"
+            >
+                My bookings
+            </button>
+
+            <button
+                class="tab"
+                :class="{ on: view === 'coach' }"
+                role="tab"
+                :aria-selected="view === 'coach'"
+                @click="switchView('coach')"
+            >
+                Coach bookings
+            </button>
         </div>
 
         <div class="tabs" role="tablist">
@@ -79,6 +126,7 @@ const hhmm = (time) => (time || '').slice(0, 5);
                 :key="item.key"
                 class="tab"
                 :class="{ on: tab === item.key }"
+                :disabled="view === 'coach' && item.key !== 'upcoming'"
                 role="tab"
                 :aria-selected="tab === item.key"
                 @click="switchTab(item.key)"
@@ -94,11 +142,12 @@ const hhmm = (time) => (time || '').slice(0, 5);
         <p v-else-if="error" class="alert alert-error">{{ error }}</p>
 
         <div v-else-if="!bookings.length" class="card centred empty">
-            <p v-if="tab === 'upcoming'">You have no upcoming bookings.</p>
+            <p v-if="view === 'coach'">You have no upcoming coaching sessions.</p>
+            <p v-else-if="tab === 'upcoming'">You have no upcoming bookings.</p>
             <p v-else-if="tab === 'past'">Nothing here yet.</p>
             <p v-else>You have not cancelled any bookings.</p>
 
-            <RouterLink v-if="tab === 'upcoming'" :to="{ name: 'book' }" class="btn">
+            <RouterLink v-if="view === 'mine' && tab === 'upcoming'" :to="{ name: 'book' }" class="btn">
                 Book a court
             </RouterLink>
         </div>
@@ -108,7 +157,7 @@ const hhmm = (time) => (time || '').slice(0, 5);
                 v-for="booking in bookings"
                 :key="booking.id"
                 :booking="booking"
-                :show-cancel="tab === 'upcoming'"
+                :show-cancel="view === 'mine' && tab === 'upcoming'"
                 :cancelling="cancellingId === booking.id"
                 @cancel="confirming = $event"
             />

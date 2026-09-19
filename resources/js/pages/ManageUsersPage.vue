@@ -3,13 +3,48 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { http } from '../services/http.js';
+import { useToast } from '../composables/useToast.js';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 
 const router = useRouter();
+const toast = useToast();
 
 // Stores user data, loading state , filters and editing state
 const users = ref([]);
 const isLoading = ref(false);
 const loadError = ref('');
+const actionError = ref('');
+const isWorking = ref(false);
+
+const confirmState = ref({
+    open: false,
+    title: 'Confirm',
+    message: '',
+    confirmText: 'Confirm',
+    confirmVariant: 'primary',
+    resolve: null,
+});
+
+function requestConfirm({ title, message, confirmText, confirmVariant }) {
+    confirmState.value.open = true;
+    confirmState.value.title = title ?? 'Confirm';
+    confirmState.value.message = message ?? '';
+    confirmState.value.confirmText = confirmText ?? 'Confirm';
+    confirmState.value.confirmVariant = confirmVariant ?? 'primary';
+
+    return new Promise((resolve) => {
+        confirmState.value.resolve = resolve;
+    });
+}
+
+function resolveConfirm(value) {
+    const resolve = confirmState.value.resolve;
+    confirmState.value.open = false;
+    confirmState.value.resolve = null;
+    if (typeof resolve === 'function') {
+        resolve(value);
+    }
+}
 const search = ref('');
 const roleFilter = ref('');
 const statusFilter = ref('');
@@ -19,7 +54,19 @@ const draftStatus = ref('ACTIVE');
 
 // Available options for user roles and statuses
 const roleOptions = ['USER', 'COACH', 'ADMIN'];
-const statusOptions = ['ACTIVE', 'INACTIVE'];
+const statusOptions = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
+
+function rolePillVariant(role) {
+    if (role === 'ADMIN') return '';
+    if (role === 'COACH') return 'pill-amber';
+    return 'pill-grey';
+}
+
+function statusPillVariant(status) {
+    if (status === 'ACTIVE') return '';
+    if (status === 'SUSPENDED') return 'pill-red';
+    return 'pill-grey';
+}
 
 // Standardizes user data to ensure consistent structure and default values
 function normalizeUser(user) {
@@ -41,9 +88,10 @@ function normalizeUser(user) {
 async function loadUsers() {
     isLoading.value = true;
     loadError.value = '';
+    actionError.value = '';
 
     try {
-        const response = await http.get('/users');
+        const response = await http.get('/admin/users');
         const payload = Array.isArray(response)
             ? response
             : Array.isArray(response?.users)
@@ -94,16 +142,83 @@ function cancelEdit() {
     draftStatus.value = 'ACTIVE';
 }
 
-function saveUser(user) {
-    user.role = draftRole.value;
-    user.status = draftStatus.value;
-    editingUserId.value = null;
-    draftRole.value = 'USER';
-    draftStatus.value = 'ACTIVE';
+async function saveUser(user) {
+    actionError.value = '';
+
+    if (isWorking.value) return;
+
+    const nextRole = draftRole.value;
+    const nextStatus = draftStatus.value;
+
+    if (nextStatus !== user.status) {
+        const ok = await requestConfirm({
+            title: 'Confirm status change',
+            message: `Change status for "${user.fullName}" from ${user.status} to ${nextStatus}?`,
+            confirmText: 'Confirm',
+        });
+        if (!ok) return;
+    }
+
+    if (nextRole !== user.role) {
+        const ok = await requestConfirm({
+            title: 'Confirm role change',
+            message: `Change role for "${user.fullName}" from ${user.role} to ${nextRole}?`,
+            confirmText: 'Confirm',
+        });
+        if (!ok) return;
+    }
+
+    isWorking.value = true;
+
+    try {
+        const updated = await http.put(`/admin/users/${user.id}`, {
+            role: nextRole,
+            status: nextStatus,
+        });
+
+        const normalized = normalizeUser(updated ?? user);
+        users.value = users.value.map((row) => (row.id === user.id ? normalized : row));
+        cancelEdit();
+        toast.success('User updated.');
+    } catch (error) {
+        console.error('Failed to update user:', error);
+        actionError.value = 'Unable to save changes. Please try again.';
+        toast.error(actionError.value);
+    } finally {
+        isWorking.value = false;
+    }
 }
 
-function removeUser(id) {
-    users.value = users.value.filter((user) => user.id !== id);
+async function removeUser(id) {
+    actionError.value = '';
+
+    if (isWorking.value) return;
+
+    const user = users.value.find((u) => u.id === id);
+    const who = user?.fullName || 'this user';
+
+    const ok = await requestConfirm({
+        title: 'Delete user?',
+        message: `Permanently delete ${who}? This cannot be undone.`,
+        confirmText: 'Delete',
+        confirmVariant: 'danger',
+    });
+    if (!ok) return;
+
+    isWorking.value = true;
+
+    try {
+        await http.delete(`/admin/users/${id}`);
+        users.value = users.value.filter((user) => user.id !== id);
+        toast.success('User deleted.');
+    } catch (error) {
+        console.error('Failed to delete user:', error);
+        actionError.value = 'Unable to remove user. Please try again.';
+        toast.error(actionError.value);
+        return;
+    } finally {
+        isWorking.value = false;
+    }
 
     if (editingUserId.value === id) {
         cancelEdit();
@@ -125,28 +240,23 @@ onMounted(() => {
                 <h1 class="page-title">Manage Users</h1>
             </div>
 
-            <button type="button" class="btn btn-secondary back-button" @click="router.push('/admin/dashboard')">
+            <button type="button" class="btn btn-secondary" @click="router.push('/admin/dashboard')">
                 Back to Dashboard
             </button>
         </header>
 
-        <p v-if="loadError" class="page-message error">{{ loadError }}</p>
-        <p v-else-if="isLoading" class="page-message">Loading users...</p>
+        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
+        <p v-else-if="actionError" class="alert alert-error">{{ actionError }}</p>
 
-        <!--Section Filters For Users: Search, Role, Status -->
-        <section class="table-filters">
-            <div class="filters">
-                <label class="filter-field filter-search">
-                    <span class="filter-label">User name</span>
-                    <input
-                        v-model="search"
-                        type="text"
-                        placeholder="Search users..."
-                    />
+        <section class="card">
+            <div class="row table-controls">
+                <label class="field grow">
+                    <span class="label">User name</span>
+                    <input v-model="search" type="text" placeholder="Search users..." />
                 </label>
 
-                <label class="filter-field">
-                    <span class="filter-label">Role</span>
+                <label class="field">
+                    <span class="label">Role</span>
                     <select v-model="roleFilter">
                         <option value="">All roles</option>
                         <option v-for="role in roleOptions" :key="role" :value="role">
@@ -155,8 +265,8 @@ onMounted(() => {
                     </select>
                 </label>
 
-                <label class="filter-field">
-                    <span class="filter-label">Status</span>
+                <label class="field">
+                    <span class="label">Status</span>
                     <select v-model="statusFilter">
                         <option value="">All statuses</option>
                         <option v-for="status in statusOptions" :key="status" :value="status">
@@ -165,84 +275,76 @@ onMounted(() => {
                     </select>
                 </label>
             </div>
-        </section>
 
-        <!-- Section Contains User Table. -->
-        <section class="table-section">
-            <div class="table-shell">
-                <table>
+            <p v-if="isLoading" class="muted">Loading users...</p>
+
+            <div class="table-wrap" v-else>
+                <table class="users-table">
                     <thead>
                         <tr>
                             <th scope="col">Name</th>
                             <th scope="col">Email</th>
                             <th scope="col">Role</th>
                             <th scope="col">Status</th>
-                            <th scope="col" class="actions-heading">Actions</th>
+                            <th scope="col" class="actions">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr v-for="user in filteredUsers" :key="user.id">
                             <td>
-                                <div class="user-cell">
-                                    <span class="user-name">{{ user.fullName }}</span>
-                                </div>
+                                <strong>{{ user.fullName }}</strong>
                             </td>
-
-                            <td>{{ user.email }}</td>
-
+                            <td class="muted">{{ user.email }}</td>
                             <td>
                                 <template v-if="editingUserId === user.id">
-                                    <select v-model="draftRole" class="inline-select">
+                                    <select v-model="draftRole" :disabled="isWorking">
                                         <option v-for="role in roleOptions" :key="role" :value="role">
                                             {{ role }}
                                         </option>
                                     </select>
                                 </template>
-
                                 <template v-else>
-                                    <span class="badge role-badge" :class="`role-${user.role.toLowerCase()}`">
-                                        {{ user.role }}
-                                    </span>
+                                    <span class="pill" :class="rolePillVariant(user.role)">{{ user.role }}</span>
                                 </template>
                             </td>
-
                             <td>
                                 <template v-if="editingUserId === user.id">
-                                    <select v-model="draftStatus" class="inline-select">
+                                    <select v-model="draftStatus" :disabled="isWorking">
                                         <option v-for="status in statusOptions" :key="status" :value="status">
                                             {{ status }}
                                         </option>
                                     </select>
                                 </template>
-
                                 <template v-else>
-                                    <span class="badge status-badge" :class="`status-${user.status.toLowerCase()}`">
+                                    <span class="pill" :class="statusPillVariant(user.status)">
                                         {{ user.status }}
                                     </span>
                                 </template>
                             </td>
+                            <td class="actions">
+                                <template v-if="editingUserId === user.id">
+                                    <button type="button" class="btn btn-secondary btn-sm" :disabled="isWorking" @click="saveUser(user)">
+                                        Save
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" :disabled="isWorking" @click="cancelEdit">
+                                        Cancel
+                                    </button>
+                                </template>
+                                <template v-else>
+                                    <button type="button" class="btn btn-secondary btn-sm" :disabled="isWorking" @click="startEdit(user)">
+                                        Edit
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" :disabled="isWorking" @click="removeUser(user.id)">
+                                        Delete
+                                    </button>
+                                </template>
+                            </td>
+                        </tr>
 
-                            <td class="actions-cell">
-                                <div class="actions">
-                                    <template v-if="editingUserId === user.id">
-                                        <button type="button" class="btn btn-primary" @click="saveUser(user)">
-                                            Save
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" @click="cancelEdit">
-                                            Cancel
-                                        </button>
-                                    </template>
-
-                                    <template v-else>
-                                        <button type="button" class="btn btn-secondary" @click="startEdit(user)">
-                                            Edit
-                                        </button>
-                                        <button type="button" class="btn btn-danger" @click="removeUser(user.id)">
-                                            Remove
-                                        </button>
-                                    </template>
-                                </div>
+                        <tr v-if="filteredUsers.length === 0 && !isLoading">
+                            <td colspan="5" class="muted empty">
+                                No users found.
                             </td>
                         </tr>
                     </tbody>
@@ -251,6 +353,16 @@ onMounted(() => {
         </section>
 
     </main>
+
+    <ConfirmDialog
+        :open="confirmState.open"
+        :title="confirmState.title"
+        :message="confirmState.message"
+        :confirm-text="confirmState.confirmText"
+        :confirm-variant="confirmState.confirmVariant"
+        @confirm="resolveConfirm(true)"
+        @cancel="resolveConfirm(false)"
+    />
 </template>
 
 <style scoped>
@@ -267,26 +379,6 @@ onMounted(() => {
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
-}
-
-/* =========================
-   Back Button
-   ========================= */
-
-.back-button {
-    margin-left: auto;
-    white-space: nowrap;
-    flex-shrink: 0;
-
-    background-color: #6c3d91;
-    color: #ffffff;
-    border: 1px solid #6c3d91;
-}
-
-.back-button:hover {
-    background-color: #552f73;
-    color: #ffffff;
-    border-color: #552f73;
 }
 
 /* =========================
@@ -308,32 +400,25 @@ onMounted(() => {
     line-height: 1.1;
 }
 
-/* =========================
-   Filters
-   ========================= */
 
-.table-filters {
-    background: #ffffff;
-    border: 1px solid var(--ps-border-soft);
-    border-radius: 20px;
-    box-shadow: 0 1px 2px rgba(24, 18, 33, 0.04);
-    padding: 1rem;
+.table-controls {
+    align-items: flex-end;
+    margin-bottom: 1rem;
 }
 
-.filters {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) repeat(2, minmax(180px, 1fr));
-    gap: 1rem;
-    align-items: end;
-}
-
-.filter-field {
+.field {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.35rem;
+    min-width: 220px;
 }
 
-.filter-label {
+.field.grow {
+    flex: 1;
+    min-width: 260px;
+}
+
+.label {
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--ps-text-muted);
@@ -341,229 +426,49 @@ onMounted(() => {
     text-transform: uppercase;
 }
 
-.filter-field input,
-.filter-field select,
-.inline-select {
-    width: 100%;
-    min-height: 42px;
-    padding: 0.65rem 0.8rem;
-    border-radius: 12px;
-    border: 1px solid var(--ps-border);
-    background: var(--ps-surface);
-    color: var(--ps-text);
-    font: inherit;
-    box-sizing: border-box;
-}
-
-.filter-field input:focus-visible,
-.filter-field select:focus-visible,
-.inline-select:focus-visible {
-    outline: 3px solid rgba(108, 62, 148, 0.2);
-    outline-offset: 1px;
-}
-
-/* =========================
-   Table
-   ========================= */
-
-.table-section {
-    background: #ffffff;
-    border: 1px solid var(--ps-border-soft);
-    border-radius: 20px;
-    box-shadow: 0 1px 2px rgba(24, 18, 33, 0.04);
-    overflow: hidden;
-}
-
-.table-shell {
+.table-wrap {
     overflow-x: auto;
 }
 
-table {
+.users-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 760px;
 }
 
-thead th {
-    background: #f7f4fa;
-    color: var(--ps-text-muted);
+.users-table th {
+    text-align: left;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    text-align: left;
-    padding: 0.9rem 0.85rem;
+    color: var(--ps-text-muted);
+    padding: 0.75rem 0.7rem;
     border-bottom: 1px solid var(--ps-border-soft);
 }
 
-tbody td {
-    padding: 0.9rem 0.85rem;
+.users-table td {
+    padding: 0.75rem 0.7rem;
     border-bottom: 1px solid var(--ps-border-soft);
     vertical-align: middle;
-    color: var(--ps-text);
 }
 
-tbody tr:last-child td {
-    border-bottom: none;
-}
-
-tbody tr:hover {
+.users-table tbody tr:hover {
     background: rgba(108, 62, 148, 0.02);
 }
 
-/* =========================
-   User
-   ========================= */
-
-.user-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.user-name {
-    font-weight: 700;
-    color: var(--ps-text);
-}
-
-/* =========================
-   Badges
-   ========================= */
-
-.badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 30px;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border: 1px solid transparent;
-}
-
-.role-user {
-    background: #f3edf9;
-    border-color: rgba(108, 62, 148, 0.2);
-    color: var(--ps-brand-dark);
-}
-
-.role-coach {
-    background: #fff5e5;
-    border-color: rgba(185, 120, 18, 0.25);
-    color: #8a5209;
-}
-
-.role-admin {
-    background: rgba(108, 62, 148, 0.12);
-    border-color: rgba(108, 62, 148, 0.25);
-    color: var(--ps-brand);
-}
-
-.status-active {
-    background: var(--ps-success-bg);
-    border-color: rgba(29, 107, 52, 0.25);
-    color: var(--ps-success);
-}
-
-.status-inactive {
-    background: #f2f2f4;
-    border-color: var(--ps-border);
-    color: var(--ps-text-muted);
-}
-
-/* =========================
-   Actions
-   ========================= */
-
-.actions-cell {
-    width: 235px;
-}
-
-.actions-heading {
-    width: 235px;
-}
-
 .actions {
+    width: 260px;
+}
+
+.users-table td.actions {
     display: flex;
-    flex-wrap: wrap;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
-/* =========================
-   Buttons
-   ========================= */
-
-.btn {
-    appearance: none;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    padding: 0.55rem 0.9rem;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.15s ease,
-                transform 0.15s ease,
-                color 0.15s ease,
-                border-color 0.15s ease;
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-/* Primary Button */
-
-.btn-primary {
-    background: var(--ps-brand);
-    color: #ffffff;
-}
-
-.btn-primary:hover {
-    background: var(--ps-brand-dark);
-    color: #ffffff;
-}
-
-/* Secondary Button */
-
-.btn-secondary {
-    background: #ffffff;
-    color: var(--ps-text);
-    border-color: var(--ps-border);
-}
-
-.btn-secondary:hover {
-    background: #f3f0f7;
-    color: var(--ps-text);
-}
-
-/* Back Button Override
-   Must come AFTER .btn-secondary
-*/
-
-.back-button {
-    background-color: #6c3d91;
-    color: #ffffff;
-    border-color: #6c3d91;
-}
-
-.back-button:hover {
-    background-color: #552f73;
-    color: #ffffff;
-    border-color: #552f73;
-}
-
-/* Danger Button */
-
-.btn-danger {
-    background: var(--ps-danger-bg);
-    border-color: rgba(179, 38, 30, 0.2);
-    color: var(--ps-danger);
-}
-
-.btn-danger:hover {
-    background: #f7d7d5;
-    color: var(--ps-danger);
+.empty {
+    padding: 1rem 0.7rem;
 }
 
 /* =========================
@@ -586,25 +491,18 @@ tbody tr:hover {
         font-size: clamp(1.8rem, 8vw, 2.2rem);
     }
 
-    .back-button {
-        margin-left: 0;
-        width: 100%;
-        justify-content: center;
-        font-size: 0.9rem;
-        padding: 0.7rem 0.9rem;
+    .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 0.75rem;
     }
 
-    .filters {
-        grid-template-columns: 1fr;
+    .field {
+        min-width: 0;
     }
 
-    .table-section {
-        border-radius: 16px;
-    }
-
-    .actions-cell,
-    .actions-heading {
-        width: auto;
+    .users-table {
+        min-width: 680px;
     }
 }
 

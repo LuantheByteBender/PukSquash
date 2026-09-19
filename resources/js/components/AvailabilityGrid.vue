@@ -127,8 +127,7 @@ function describe(court, slot, cell) {
                             <template v-else>
                                 <span class="cell-label">{{ cellAt(court.id, slot.id).label }}</span>
 
-                                <span v-if="cellAt(court.id, slot.id).is_mine" class="tag tag-you">You</span>
-                                <span v-else-if="cellAt(court.id, slot.id).can_join" class="tag tag-join">Join</span>
+                                <span v-if="cellAt(court.id, slot.id).can_join" class="tag tag-join">Join</span>
                             </template>
                         </component>
                     </td>

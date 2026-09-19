@@ -54,6 +54,11 @@ export const bookingService = {
         return http.get(`/bookings/mine${query({ scope })}`);
     },
 
+    /** Coach — view upcoming coaching sessions booked with you. */
+    myCoachBookingsUpcoming() {
+        return http.get('/coach/bookings/upcoming');
+    },
+
     /** FR-16 — cancel your own booking, or leave someone else's open session. */
     cancelBooking(bookingId) {
         return http.post(`/bookings/${bookingId}/cancel`);

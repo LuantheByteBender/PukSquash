@@ -1,4 +1,7 @@
+import { watch } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuth } from '../composables/useAuth.js';
+import { useAccount, refreshAccount } from '../composables/useAccount.js';
 
 /**
  * Application routes.
@@ -53,6 +56,7 @@ const routes = [
         path: '/coach/bookings',
         name: 'coach-bookings',
         component: () => import('../pages/CoachBookings.vue'),
+        meta: { requiresRole: 'COACH' },
     },
     {
         path: '/coach/profile',
@@ -63,11 +67,19 @@ const routes = [
         path: '/admin/dashboard',
         name: 'admin-dashboard',
         component: () => import('../pages/AdminDashboard.vue'),
+        meta: { requiresRole: 'ADMIN' },
     },
     {
         path: '/admin/users',
         name: 'admin-users',
         component: () => import('../pages/ManageUsersPage.vue'),
+        meta: { requiresRole: 'ADMIN' },
+    },
+    {
+        path: '/admin/courts',
+        name: 'admin-courts',
+        component: () => import('../pages/ManageCourtsPage.vue'),
+        meta: { requiresRole: 'ADMIN' },
     },
     {
         path: '/profile',
@@ -82,8 +94,64 @@ const routes = [
     },
 ];
 
-export default createRouter({
+const router = createRouter({
     history: createWebHistory(),
     routes,
     scrollBehavior: () => ({ top: 0 }),
 });
+
+function waitForTruthy(source) {
+    if (source.value) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+        const stop = watch(source, (value) => {
+            if (!value) return;
+            stop();
+            resolve();
+        });
+    });
+}
+
+router.beforeEach(async (to) => {
+    const { ready, isSignedIn } = useAuth();
+    const { role } = useAccount();
+
+    await waitForTruthy(ready);
+
+    if (to.name === 'login' || to.name === 'signup') {
+        return true;
+    }
+
+    if (!isSignedIn.value) {
+        return {
+            name: 'login',
+            query: to.fullPath ? { redirect: to.fullPath } : undefined,
+        };
+    }
+
+    const requiredRole = to.meta?.requiresRole;
+    if (!requiredRole) {
+        return true;
+    }
+
+    if (!role.value) {
+        try {
+            await refreshAccount();
+        } catch {
+            return {
+                name: 'login',
+                query: to.fullPath ? { redirect: to.fullPath } : undefined,
+            };
+        }
+    }
+
+    if (role.value !== requiredRole) {
+        return { name: 'book' };
+    }
+
+    return true;
+});
+
+export default router;

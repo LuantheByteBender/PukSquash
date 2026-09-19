@@ -145,7 +145,8 @@ query GetAvailabilityData($bookingDate: Date!)
     createdAt
     court { id }
     timeSlot { id }
-    createdBy { firebaseUid }
+    createdBy { id firebaseUid fullName }
+    coach { id fullName }
 
     bookingPlayers_on_booking {
       id
@@ -325,6 +326,32 @@ query IsCoachAvailable($availabilityDate: Date!, $timeSlotId: UUID!, $coachId: U
     limit: 1
   ) {
     coachId
+  }
+}
+query ListAllUsers
+@auth(level: NO_ACCESS) {
+  users {
+    id
+    firebaseUid
+    studentNumber
+    fullName
+    email
+    role
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllCourts
+@auth(level: NO_ACCESS) {
+  courts {
+    id
+    name
+    description
+    status
+    createdAt
+    updatedAt
   }
 }
 

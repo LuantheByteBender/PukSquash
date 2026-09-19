@@ -14,6 +14,7 @@ const email = ref('');
 const password = ref('');
 const message = ref('');
 const isWaitingForVerification = ref(false);
+const submitting = ref(false);
 
 let verificationTimer = null;
 
@@ -25,6 +26,9 @@ function stopVerificationTimer() {
 }
 
 async function register() {
+    if (submitting.value || isWaitingForVerification.value) return;
+    submitting.value = true;
+
     try {
         const result = await registerUser(
             email.value,
@@ -66,6 +70,7 @@ async function register() {
         }, 3000);
     } catch (error) {
         message.value = error.message;
+        submitting.value = false;
     }
 }
 
@@ -101,7 +106,7 @@ onUnmounted(() => {
 
             <!-- Input section: Email & Password -->
             <section id="signup-section">
-                <div class="input-fields">gToL
+                <div class="input-fields">
                     <label for="email">Email</label>
                     <input
                         id="email"
@@ -127,7 +132,7 @@ onUnmounted(() => {
             <!-- Page buttons -->
             <section id="buttons-section">
                 <div class="signUp-buttons">
-                    <button type="submit">
+                    <button type="submit" :disabled="submitting || isWaitingForVerification">
                         Register
                     </button>
                 </div>
