@@ -29,4 +29,9 @@ class FirebaseAuthService
     {
         return $this->auth->getUser($uid);
     }
+
+    public function deleteUser(string $uid): void
+    {
+        $this->auth->deleteUser($uid);
+    }
 }

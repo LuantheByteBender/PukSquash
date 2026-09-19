@@ -70,6 +70,13 @@ class BookingController extends Controller
             return response()->json(['message' => 'Court is not available.'], 422);
         }
 
+        if ($this->timeSlotIsPastOrCurrent(
+            $request->input('booking_date'),
+            $request->input('time_slot_id'),
+        )) {
+            return response()->json(['message' => 'This time slot is no longer available.'], 422);
+        }
+
         if ($this->bookings->userHasBookingForSlot(
             $user->id,
             $request->input('booking_date'),
@@ -180,6 +187,13 @@ class BookingController extends Controller
         }
 
         $timeSlotId = $booking->timeSlot['id'] ?? null;
+
+        if (is_string($timeSlotId) && $timeSlotId !== '') {
+            if ($this->timeSlotIsPastOrCurrent($booking->bookingDate, $timeSlotId)) {
+                return response()->json(['message' => 'This time slot is no longer available.'], 422);
+            }
+        }
+
         if ($timeSlotId && $this->bookings->userHasBookingForSlot($user->id, $booking->bookingDate, $timeSlotId)) {
             return response()->json([
                 'message' => 'You already have a booking for this time slot.',
@@ -363,5 +377,44 @@ class BookingController extends Controller
         $this->bookings->cancel($id);
 
         return response()->json(['left' => false]);
+    }
+
+    private function timeSlotIsPastOrCurrent(string $bookingDate, string $timeSlotId): bool
+    {
+        $tz = 'Africa/Johannesburg';
+        $now = now($tz);
+        $today = $now->format('Y-m-d');
+
+        if ($bookingDate < $today) {
+            return true;
+        }
+
+        if ($bookingDate > $today) {
+            return false;
+        }
+
+        $start = $this->findTimeSlotStartTime($timeSlotId);
+
+        if (! is_string($start) || $start === '') {
+            return true;
+        }
+
+        try {
+            $slotStart = \Illuminate\Support\Carbon::parse($bookingDate . ' ' . $start, $tz);
+            return $slotStart->lessThanOrEqualTo($now);
+        } catch (\Throwable) {
+            return true;
+        }
+    }
+
+    private function findTimeSlotStartTime(string $timeSlotId): ?string
+    {
+        foreach ($this->timeSlots->listActive() as $slot) {
+            if ($slot->id === $timeSlotId) {
+                return $slot->startTime;
+            }
+        }
+
+        return null;
     }
 }

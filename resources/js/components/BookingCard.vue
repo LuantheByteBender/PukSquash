@@ -75,6 +75,7 @@ const opponent = computed(() => {
             </div>
 
             <p v-if="booking.coach" class="sub">Coach: {{ booking.coach.name }}</p>
+            <p v-else-if="booking.player" class="sub">Player: {{ booking.player.name }}</p>
             <p v-else-if="opponent" class="sub">{{ opponent }}</p>
         </div>
 

@@ -48,6 +48,30 @@ mutation UpdateUserProfile(
   )
 }
 
+mutation UpdateUser(
+  $id: UUID!
+  $role: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  user_update(
+    key: { id: $id }
+    data: {
+      role: $role
+      status: $status
+    }
+  )
+}
+
+mutation DeleteUser(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  user_delete(
+    key: { id: $id }
+  )
+}
+
 
 # ------------------------------------------------------------
 # Court mutations

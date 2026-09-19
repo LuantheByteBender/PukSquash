@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 
 import { http } from '../services/http.js';
 import { useToast } from '../composables/useToast.js';
+import ConfirmDialog from '../components/ConfirmDialog.vue';
 
 const router = useRouter();
 const toast = useToast();
@@ -17,6 +18,36 @@ const isWorking = ref(false);
 const editingCourtId = ref(null);
 const draftName = ref('');
 const draftDescription = ref('');
+
+const confirmState = ref({
+    open: false,
+    title: 'Confirm',
+    message: '',
+    confirmText: 'Confirm',
+    confirmVariant: 'primary',
+    resolve: null,
+});
+
+function requestConfirm({ title, message, confirmText, confirmVariant }) {
+    confirmState.value.open = true;
+    confirmState.value.title = title ?? 'Confirm';
+    confirmState.value.message = message ?? '';
+    confirmState.value.confirmText = confirmText ?? 'Confirm';
+    confirmState.value.confirmVariant = confirmVariant ?? 'primary';
+
+    return new Promise((resolve) => {
+        confirmState.value.resolve = resolve;
+    });
+}
+
+function resolveConfirm(value) {
+    const resolve = confirmState.value.resolve;
+    confirmState.value.open = false;
+    confirmState.value.resolve = null;
+    if (typeof resolve === 'function') {
+        resolve(value);
+    }
+}
 
 const search = ref('');
 const statusFilter = ref('');
@@ -51,6 +82,14 @@ async function saveCourt(court) {
     actionError.value = '';
 
     if (isWorking.value) return;
+
+    const ok = await requestConfirm({
+        title: 'Save changes?',
+        message: `Update details for "${court.name}"?`,
+        confirmText: 'Save',
+    });
+    if (!ok) return;
+
     isWorking.value = true;
 
     try {
@@ -141,6 +180,15 @@ async function setCourtStatus(court, status) {
     actionError.value = '';
 
     if (isWorking.value) return;
+
+    const verb = status === 'ACTIVE' ? 'activate' : 'deactivate';
+    const ok = await requestConfirm({
+        title: `Confirm ${verb}`,
+        message: `Are you sure you want to ${verb} "${court.name}"?`,
+        confirmText: verb === 'activate' ? 'Activate' : 'Deactivate',
+    });
+    if (!ok) return;
+
     isWorking.value = true;
 
     try {
@@ -162,9 +210,13 @@ async function deleteCourt(court) {
 
     if (isWorking.value) return;
 
-    if (!window.confirm(`Permanently delete "${court.name}"? This cannot be undone.`)) {
-        return;
-    }
+    const ok = await requestConfirm({
+        title: 'Delete court?',
+        message: `Permanently delete "${court.name}"? This cannot be undone.`,
+        confirmText: 'Delete',
+        confirmVariant: 'danger',
+    });
+    if (!ok) return;
 
     isWorking.value = true;
 
@@ -345,6 +397,16 @@ onMounted(() => {
                 </table>
             </div>
         </section>
+
+        <ConfirmDialog
+            :open="confirmState.open"
+            :title="confirmState.title"
+            :message="confirmState.message"
+            :confirm-text="confirmState.confirmText"
+            :confirm-variant="confirmState.confirmVariant"
+            @confirm="resolveConfirm(true)"
+            @cancel="resolveConfirm(false)"
+        />
     </main>
 </template>
 

@@ -31,6 +31,64 @@ class AvailabilityController extends Controller
 
         $firebaseUid = $request->attributes->get('firebase_uid');
 
+        $tz = 'Africa/Johannesburg';
+        $now = now($tz);
+        $today = $now->format('Y-m-d');
+
+        $isPastDate = is_string($date) && $date < $today;
+        $isToday = is_string($date) && $date === $today;
+
+        $pastSlotIds = [];
+        foreach ($slots as $slot) {
+            if ($isPastDate) {
+                $pastSlotIds[$slot->id] = true;
+                continue;
+            }
+
+            if (! $isToday) {
+                continue;
+            }
+
+            $start = $slot->startTime ?? null;
+            if (! is_string($start) || $start === '') {
+                continue;
+            }
+
+            try {
+                $slotStart = \Illuminate\Support\Carbon::parse($date . ' ' . $start, $tz);
+                if ($slotStart->lessThanOrEqualTo($now)) {
+                    $pastSlotIds[$slot->id] = true;
+                }
+            } catch (\Throwable) {
+                // If parsing fails, do not block the slot here.
+            }
+        }
+
+        $userBusySlotIds = [];
+        if ($firebaseUid) {
+            foreach ($booked as $b) {
+                $slotId = $b->timeSlot['id'] ?? null;
+                if (! is_string($slotId) || $slotId === '') {
+                    continue;
+                }
+
+                $busy = ($b->createdBy['firebaseUid'] ?? null) === $firebaseUid;
+
+                if (! $busy) {
+                    foreach ($b->players as $p) {
+                        if (($p->user['firebaseUid'] ?? null) === $firebaseUid) {
+                            $busy = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($busy) {
+                    $userBusySlotIds[$slotId] = true;
+                }
+            }
+        }
+
         // Index confirmed bookings by "courtId:timeSlotId" for O(1) lookups.
         $index = [];
         foreach ($booked as $b) {
@@ -47,6 +105,9 @@ class AvailabilityController extends Controller
                 $key     = $court->id . ':' . $slot->id;
                 $booking = $index[$key] ?? null;
 
+                $slotIsPast = isset($pastSlotIds[$slot->id]);
+                $userBusy = isset($userBusySlotIds[$slot->id]);
+
                 if (! $booking) {
                     if ($court->status !== 'ACTIVE') {
                         $cells[] = [
@@ -54,6 +115,34 @@ class AvailabilityController extends Controller
                             'time_slot_id' => $slot->id,
                             'state'        => 'UNAVAILABLE',
                             'label'        => 'Inactive',
+                            'can_book'     => false,
+                            'can_join'     => false,
+                            'is_mine'      => false,
+                            'booking_id'   => null,
+                        ];
+                        continue;
+                    }
+
+                    if ($slotIsPast) {
+                        $cells[] = [
+                            'court_id'     => $court->id,
+                            'time_slot_id' => $slot->id,
+                            'state'        => 'UNAVAILABLE',
+                            'label'        => '—',
+                            'can_book'     => false,
+                            'can_join'     => false,
+                            'is_mine'      => false,
+                            'booking_id'   => null,
+                        ];
+                        continue;
+                    }
+
+                    if ($userBusy) {
+                        $cells[] = [
+                            'court_id'     => $court->id,
+                            'time_slot_id' => $slot->id,
+                            'state'        => 'UNAVAILABLE',
+                            'label'        => 'Unavailable',
                             'can_book'     => false,
                             'can_join'     => false,
                             'is_mine'      => false,
@@ -123,7 +212,7 @@ class AvailabilityController extends Controller
                     }
                 }
 
-                $canJoin = $state === 'OPEN' && ! $isMine;
+                $canJoin = $state === 'OPEN' && ! $isMine && ! $slotIsPast && ! $userBusy;
 
                 $cells[] = [
                     'court_id'     => $court->id,
