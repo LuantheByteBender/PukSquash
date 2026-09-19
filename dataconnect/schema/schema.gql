@@ -170,7 +170,7 @@ type BookingPlayer @table {
 #   UNIQUE(coach_id, availability_date, time_slot_id)
 # ------------------------------------------------------------
 
-type CoachAvailability @table {
+type CoachAvailability @table(key: ["coach", "timeSlot", "availabilityDate"]) {
   # id: UUID! @default(expr: "uuidV4()")
 
   # FK → User (must have role = COACH)
