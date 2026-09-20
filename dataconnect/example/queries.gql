@@ -396,6 +396,23 @@ query GetConfirmedBookingForCoachSlot(
   }
 }
 
+query GetConfirmedBookingsForCoachDate(
+  $coachId: UUID!
+  $bookingDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      coachId: { eq: $coachId }
+      bookingDate: { eq: $bookingDate }
+      status: { eq: "CONFIRMED" }
+    }
+  ) {
+    id
+    timeSlotId
+  }
+}
+
 # Confirmed private-coaching bookings assigned to one Coach.
 query GetConfirmedBookingsByCoach($coachId: UUID!)
 @auth(level: NO_ACCESS) {

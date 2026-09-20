@@ -104,47 +104,49 @@ onUnmounted(() => {
 
         <form id="signup-form" @submit.prevent="register">
 
-            <!-- Input section: Email & Password -->
-            <section id="signup-section">
-                <div class="input-fields">
-                    <label for="email">Email</label>
-                    <input
-                        id="email"
-                        v-model="email"
-                        type="email"
-                        placeholder="NWU email"
-                        autocomplete="email"
-                        required
-                    >
+            <div class="auth-card">
+                <!-- Input section: Email & Password -->
+                <section id="signup-section">
+                    <div class="input-fields">
+                        <label for="email">Email</label>
+                        <input
+                            id="email"
+                            v-model="email"
+                            type="email"
+                            placeholder="NWU email"
+                            autocomplete="email"
+                            required
+                        >
 
-                    <label for="password">Password</label>
-                    <input
-                        id="password"
-                        v-model="password"
-                        type="password"
-                        placeholder="Password"
-                        autocomplete="new-password"
-                        required
-                    >
-                </div>
-            </section>
+                        <label for="password">Password</label>
+                        <input
+                            id="password"
+                            v-model="password"
+                            type="password"
+                            placeholder="Password"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+                </section>
 
-            <!-- Page buttons -->
-            <section id="buttons-section">
-                <div class="signUp-buttons">
-                    <button type="submit" :disabled="submitting || isWaitingForVerification">
-                        Register
-                    </button>
-                </div>
+                <!-- Page buttons -->
+                <section id="buttons-section">
+                    <div class="signUp-buttons">
+                        <button type="submit" :disabled="submitting || isWaitingForVerification">
+                            Register
+                        </button>
+                    </div>
 
-                <p v-if="message" role="status" aria-live="polite">
-                    {{ message }}
-                </p>
+                    <p v-if="message" role="status" aria-live="polite">
+                        {{ message }}
+                    </p>
 
-                <p v-if="isWaitingForVerification" role="status" aria-live="polite">
-                    Waiting for email verification...
-                </p>
-            </section>
+                    <p v-if="isWaitingForVerification" role="status" aria-live="polite">
+                        Waiting for email verification...
+                    </p>
+                </section>
+            </div>
         </form>
 
     </main>
@@ -219,6 +221,15 @@ header h1 {
     min-height: 0;
 }
 
+.auth-card {
+    width: min(100%, 26rem);
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    border-radius: 0.9rem;
+    background: rgb(255 255 255 / 0.92);
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.28);
+    color: #17121d;
+}
+
 /* Input section */
 
 #signup-section {
@@ -235,7 +246,7 @@ header h1 {
 }
 
 .input-fields label {
-    color: white;
+    color: inherit;
     font-size: 1rem;
     font-weight: 700;
 }
@@ -246,23 +257,21 @@ header h1 {
     margin-bottom: 0.75rem;
     padding: 0.7rem 0.8rem;
     box-sizing: border-box;
-    border: 1px solid white;
+    border: 1px solid rgb(23 18 29 / 0.28);
     border-radius: 0.4rem;
-    color: white;
-    background: rgb(20 20 20 / 0.72);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    color: #17121d;
+    background: white;
     font: inherit;
 }
 
 .input-fields input::placeholder {
-    color: rgb(255 255 255 / 0.8);
+    color: rgb(23 18 29 / 0.55);
 }
 
 .input-fields input:focus {
-    outline: 2px solid white;
+    outline: 2px solid rgb(23 18 29 / 0.65);
     outline-offset: 2px;
-    background: rgb(20 20 20 / 0.86);
+    background: white;
 }
 
 /* Signup buttons */
@@ -272,7 +281,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    margin-top: 3rem;
+    margin-top: 1.5rem;
 }
 
 .signUp-buttons {
@@ -306,7 +315,7 @@ header h1 {
 
 #buttons-section p {
     margin: 0.75rem 0 0;
-    color: white;
+    color: inherit;
     text-align: center;
     max-width: 28rem;
 }

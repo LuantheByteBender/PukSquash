@@ -59,6 +59,11 @@ const routes = [
         meta: { requiresRole: 'COACH' },
     },
     {
+        path: '/coach/notice-board',
+        name: 'coach-notice-board',
+        component: () => import('../pages/CoachNoticeBoardPage.vue'),
+    },
+    {
         path: '/coach/profile',
         name: 'coach-profile',
         redirect: { name: 'user-profile' },
@@ -80,6 +85,11 @@ const routes = [
         name: 'admin-courts',
         component: () => import('../pages/ManageCourtsPage.vue'),
         meta: { requiresRole: 'ADMIN' },
+    },
+    {
+        path: '/admin/courts',
+        name: 'manage-courts',
+        component: () => import('../pages/ManageCourtsPage.vue'),
     },
     {
         path: '/profile',

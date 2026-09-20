@@ -1,535 +1,214 @@
-<script setup>
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-
-import { http } from '../services/http.js';
-import { useToast } from '../composables/useToast.js';
-import ConfirmDialog from '../components/ConfirmDialog.vue';
-
-const router = useRouter();
-const toast = useToast();
-
-const courts = ref([]);
-const isLoading = ref(false);
-const loadError = ref('');
-const actionError = ref('');
-const isWorking = ref(false);
-
-const editingCourtId = ref(null);
-const draftName = ref('');
-const draftDescription = ref('');
-
-const confirmState = ref({
-    open: false,
-    title: 'Confirm',
-    message: '',
-    confirmText: 'Confirm',
-    confirmVariant: 'primary',
-    resolve: null,
-});
-
-function requestConfirm({ title, message, confirmText, confirmVariant }) {
-    confirmState.value.open = true;
-    confirmState.value.title = title ?? 'Confirm';
-    confirmState.value.message = message ?? '';
-    confirmState.value.confirmText = confirmText ?? 'Confirm';
-    confirmState.value.confirmVariant = confirmVariant ?? 'primary';
-
-    return new Promise((resolve) => {
-        confirmState.value.resolve = resolve;
-    });
-}
-
-function resolveConfirm(value) {
-    const resolve = confirmState.value.resolve;
-    confirmState.value.open = false;
-    confirmState.value.resolve = null;
-    if (typeof resolve === 'function') {
-        resolve(value);
-    }
-}
-
-const search = ref('');
-const statusFilter = ref('');
-
-const nameDraft = ref('');
-const statusDraft = ref('ACTIVE');
-
-const statusOptions = ['ACTIVE', 'INACTIVE'];
-
-function normalizeCourt(court) {
-    return {
-        id: court.id,
-        name: court.name ?? 'Unknown court',
-        description: court.description ?? '',
-        status: court.status ?? 'INACTIVE',
-    };
-}
-
-function startEdit(court) {
-    editingCourtId.value = court.id;
-    draftName.value = court.name;
-    draftDescription.value = court.description ?? '';
-}
-
-function cancelEdit() {
-    editingCourtId.value = null;
-    draftName.value = '';
-    draftDescription.value = '';
-}
-
-async function saveCourt(court) {
-    actionError.value = '';
-
-    if (isWorking.value) return;
-
-    const ok = await requestConfirm({
-        title: 'Save changes?',
-        message: `Update details for "${court.name}"?`,
-        confirmText: 'Save',
-    });
-    if (!ok) return;
-
-    isWorking.value = true;
-
-    try {
-        const updated = await http.put(`/admin/courts/${court.id}`, {
-            name: draftName.value.trim(),
-            description: draftDescription.value.trim() || null,
-        });
-
-        const normalized = normalizeCourt(updated ?? { ...court, name: draftName.value, description: draftDescription.value });
-        courts.value = courts.value.map((row) => (row.id === court.id ? normalized : row));
-        cancelEdit();
-        toast.success('Court updated.');
-    } catch (error) {
-        console.error('Failed to update court:', error);
-        actionError.value = 'Unable to update court. Please try again.';
-        toast.error(actionError.value);
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-async function loadCourts() {
-    isLoading.value = true;
-    loadError.value = '';
-    actionError.value = '';
-
-    try {
-        const response = await http.get('/admin/courts');
-        const payload = Array.isArray(response)
-            ? response
-            : Array.isArray(response?.courts)
-                ? response.courts
-                : [];
-
-        courts.value = payload.map(normalizeCourt);
-    } catch (error) {
-        console.error('Failed to load courts:', error);
-        loadError.value = 'Unable to load courts right now. Please try again.';
-        courts.value = [];
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-const filteredCourts = computed(() => {
-    const query = search.value.trim().toLowerCase();
-
-    return courts.value.filter((court) => {
-        const matchesQuery = !query || court.name.toLowerCase().includes(query);
-        const matchesStatus = !statusFilter.value || court.status === statusFilter.value;
-
-        return matchesQuery && matchesStatus;
-    });
-});
-
-async function createCourt() {
-    actionError.value = '';
-
-    const name = nameDraft.value.trim();
-    if (!name) {
-        actionError.value = 'Please provide a court name.';
-        return;
-    }
-
-    if (isWorking.value) return;
-    isWorking.value = true;
-
-    try {
-        await http.post('/admin/courts', {
-            name,
-            status: statusDraft.value,
-        });
-
-        nameDraft.value = '';
-        statusDraft.value = 'ACTIVE';
-        await loadCourts();
-        toast.success('Court created.');
-    } catch (error) {
-        console.error('Failed to create court:', error);
-        actionError.value = 'Unable to create court. Please try again.';
-        toast.error(actionError.value);
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-async function setCourtStatus(court, status) {
-    actionError.value = '';
-
-    if (isWorking.value) return;
-
-    const verb = status === 'ACTIVE' ? 'activate' : 'deactivate';
-    const ok = await requestConfirm({
-        title: `Confirm ${verb}`,
-        message: `Are you sure you want to ${verb} "${court.name}"?`,
-        confirmText: verb === 'activate' ? 'Activate' : 'Deactivate',
-    });
-    if (!ok) return;
-
-    isWorking.value = true;
-
-    try {
-        const updated = await http.put(`/admin/courts/${court.id}`, { status });
-        const normalized = normalizeCourt(updated ?? { ...court, status });
-        courts.value = courts.value.map((row) => (row.id === court.id ? normalized : row));
-        toast.success(`Court ${status === 'ACTIVE' ? 'activated' : 'deactivated'}.`);
-    } catch (error) {
-        console.error('Failed to update court status:', error);
-        actionError.value = 'Unable to update court status. Please try again.';
-        toast.error(actionError.value);
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-async function deleteCourt(court) {
-    actionError.value = '';
-
-    if (isWorking.value) return;
-
-    const ok = await requestConfirm({
-        title: 'Delete court?',
-        message: `Permanently delete "${court.name}"? This cannot be undone.`,
-        confirmText: 'Delete',
-        confirmVariant: 'danger',
-    });
-    if (!ok) return;
-
-    isWorking.value = true;
-
-    try {
-        await http.delete(`/admin/courts/${court.id}`);
-        courts.value = courts.value.filter((row) => row.id !== court.id);
-        toast.success('Court deleted.');
-    } catch (error) {
-        console.error('Failed to delete court:', error);
-        actionError.value = 'Unable to delete court. Please try again.';
-        toast.error(actionError.value);
-    } finally {
-        isWorking.value = false;
-    }
-}
-
-onMounted(() => {
-    loadCourts();
-});
-</script>
-
 <template>
-    <main class="page manage-courts-page">
-        <header class="page-header">
-            <div>
-                <p class="eyebrow">Administration</p>
-                <h1 class="page-title">Manage Courts</h1>
-            </div>
+  <div class="p-8 max-w-6xl mx-auto">
+    <!-- Header & Action Bar -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Manage Courts</h1>
+        <p class="text-sm text-gray-500 mt-1">View, add, edit, and toggle facility court availability.</p>
+      </div>
+      <button 
+        @click="openAddModal" 
+        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow-sm transition-colors"
+      >
+        <span class="text-lg leading-none">+</span> Add New Court
+      </button>
+    </div>
 
-            <button type="button" class="btn btn-secondary" @click="router.push('/admin/dashboard')">
-                Back to Dashboard
-            </button>
-        </header>
+    <!-- Search & Filter Bar -->
+    <div class="mb-5">
+      <input 
+        v-model="searchQuery" 
+        type="text" 
+        placeholder="Search court name..." 
+        class="w-full sm:w-72 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+      />
+    </div>
 
-        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
-        <p v-else-if="actionError" class="alert alert-error">{{ actionError }}</p>
-
-        <section class="card">
-            <h2 class="section-title">Add Court</h2>
-
-            <div class="row form-row">
-                <label class="field">
-                    <span class="label">Court name</span>
-                    <input v-model="nameDraft" type="text" placeholder="e.g. Court 1" />
-                </label>
-
-                <label class="field">
-                    <span class="label">Status</span>
-                    <select v-model="statusDraft">
-                        <option v-for="status in statusOptions" :key="status" :value="status">
-                            {{ status }}
-                        </option>
-                    </select>
-                </label>
-
-                <button type="button" class="btn" :disabled="isWorking" @click="createCourt">
-                    {{ isWorking ? 'Working...' : 'Create' }}
+    <!-- Courts Data Table -->
+    <div class="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th class="px-6 py-3.5">ID</th>
+            <th class="px-6 py-3.5">Court Name</th>
+            <th class="px-6 py-3.5">Type</th>
+            <th class="px-6 py-3.5">Status</th>
+            <th class="px-6 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
+          <tr v-for="court in filteredCourts" :key="court.id" class="hover:bg-gray-50/80 transition-colors">
+            <td class="px-6 py-4 font-mono text-gray-400">#{{ court.id }}</td>
+            <td class="px-6 py-4 font-semibold text-gray-900">{{ court.name }}</td>
+            <td class="px-6 py-4 text-gray-600">{{ court.type }}</td>
+            <td class="px-6 py-4">
+              <span 
+                :class="court.is_active ? 'bg-green-50 text-green-700 ring-1 ring-green-200' : 'bg-red-50 text-red-700 ring-1 ring-red-200'"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+              >
+                <span :class="court.is_active ? 'bg-green-500' : 'bg-red-500'" class="w-1.5 h-1.5 rounded-full"></span>
+                {{ court.is_active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex justify-end items-center gap-2">
+                <!-- 1. EDIT BUTTON -->
+                <button 
+                  @click="openEditModal(court)" 
+                  class="text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                >
+                  Edit
                 </button>
-            </div>
-        </section>
+                <!-- 2. TOGGLE STATUS BUTTON -->
+                <button 
+                  @click="toggleStatus(court)" 
+                  class="text-xs font-medium text-gray-600 border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                >
+                  Toggle Status
+                </button>
+                <!-- DELETE BUTTON -->
+                <button 
+                  @click="deleteCourt(court.id)" 
+                  class="text-xs font-medium text-red-600 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="filteredCourts.length === 0">
+            <td colspan="5" class="px-6 py-16 text-center">
+              <p class="text-gray-500 text-sm">No courts found.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-        <section class="card">
-            <div class="row table-controls">
-                <label class="field grow">
-                    <span class="label">Court name</span>
-                    <input v-model="search" type="text" placeholder="Search courts..." />
-                </label>
-
-                <label class="field">
-                    <span class="label">Status</span>
-                    <select v-model="statusFilter">
-                        <option value="">All statuses</option>
-                        <option v-for="status in statusOptions" :key="status" :value="status">
-                            {{ status }}
-                        </option>
-                    </select>
-                </label>
-            </div>
-
-            <p v-if="isLoading" class="muted">Loading courts...</p>
-
-            <div class="table-wrap" v-else>
-                <table class="courts-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Name</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="court in filteredCourts" :key="court.id">
-                            <td>
-                                <template v-if="editingCourtId === court.id">
-                                    <div class="edit-fields">
-                                        <input v-model="draftName" type="text" />
-                                        <input v-model="draftDescription" type="text" placeholder="Description (optional)" />
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <div class="court-name">
-                                        <strong>{{ court.name }}</strong>
-                                        <span v-if="court.description" class="muted court-description">{{ court.description }}</span>
-                                    </div>
-                                </template>
-                            </td>
-                            <td>
-                                <span class="pill" :class="court.status === 'ACTIVE' ? '' : 'pill-grey'">
-                                    {{ court.status }}
-                                </span>
-                            </td>
-                            <td class="actions">
-                                <template v-if="editingCourtId === court.id">
-                                    <button
-                                        type="button"
-                                        class="btn btn-secondary btn-sm"
-                                        :disabled="isWorking"
-                                        @click="saveCourt(court)"
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="btn btn-secondary btn-sm"
-                                        :disabled="isWorking"
-                                        @click="cancelEdit"
-                                    >
-                                        Cancel
-                                    </button>
-                                </template>
-                                <template v-else>
-                                    <button
-                                        type="button"
-                                        class="btn btn-secondary btn-sm"
-                                        :disabled="isWorking"
-                                        @click="startEdit(court)"
-                                    >
-                                        Edit
-                                    </button>
-
-                                <button
-                                    v-if="court.status !== 'ACTIVE'"
-                                    type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    :disabled="isWorking"
-                                    @click="setCourtStatus(court, 'ACTIVE')"
-                                >
-                                    Activate
-                                </button>
-                                <button
-                                    v-else
-                                    type="button"
-                                    class="btn btn-secondary btn-sm"
-                                    :disabled="isWorking"
-                                    @click="setCourtStatus(court, 'INACTIVE')"
-                                >
-                                    Deactivate
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="btn btn-danger btn-sm"
-                                    :disabled="isWorking"
-                                    @click="deleteCourt(court)"
-                                >
-                                    Delete
-                                </button>
-                                </template>
-                            </td>
-                        </tr>
-
-                        <tr v-if="filteredCourts.length === 0">
-                            <td colspan="3" class="muted empty">
-                                No courts found.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <ConfirmDialog
-            :open="confirmState.open"
-            :title="confirmState.title"
-            :message="confirmState.message"
-            :confirm-text="confirmState.confirmText"
-            :confirm-variant="confirmState.confirmVariant"
-            @confirm="resolveConfirm(true)"
-            @cancel="resolveConfirm(false)"
-        />
-    </main>
+    <!-- Create / Edit Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-7">
+        <h2 class="text-lg font-bold text-gray-900 mb-5">
+          {{ isEditing ? 'Edit Court' : 'Add New Court' }}
+        </h2>
+        <form @submit.prevent="saveCourt" class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Court Name</label>
+            <input 
+              v-model="courtForm.name" 
+              type="text" 
+              required 
+              placeholder="e.g. Court 4 (Glass)" 
+              class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Court Type</label>
+            <select 
+              v-model="courtForm.type" 
+              class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow bg-white"
+            >
+              <option value="Glass Wall">Glass Wall</option>
+              <option value="Standard">Standard</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-3 pt-3">
+            <button 
+              type="button" 
+              @click="closeModal" 
+              class="px-4 py-2.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+            >
+              {{ isEditing ? 'Update Court' : 'Save Court' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-.manage-courts-page {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding-top: 1.5rem;
+<script setup>
+import { ref, computed } from 'vue'
+
+// Modal & State Controls
+const showModal = ref(false)
+const isEditing = ref(false)
+const searchQuery = ref('')
+const editingCourtId = ref(null)
+
+// Reactive Sample Data
+const courts = ref([
+  { id: 1, name: 'Court 1 (Glass)', type: 'Glass Wall', is_active: true },
+  { id: 2, name: 'Court 2 (Standard)', type: 'Standard', is_active: true },
+  { id: 3, name: 'Court 3 (Standard)', type: 'Standard', is_active: false },
+])
+
+// Form Data Object
+const courtForm = ref({
+  name: '',
+  type: 'Standard'
+})
+
+// Search Filter Computation
+const filteredCourts = computed(() => {
+  return courts.value.filter(court => 
+    court.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
+// Modal Actions
+function openAddModal() {
+  isEditing.value = false
+  editingCourtId.value = null
+  courtForm.value = { name: '', type: 'Standard' }
+  showModal.value = true
 }
 
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+function openEditModal(court) {
+  isEditing.value = true
+  editingCourtId.value = court.id
+  courtForm.value = { name: court.name, type: court.type }
+  showModal.value = true
 }
 
-.eyebrow {
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--ps-brand);
+function closeModal() {
+  showModal.value = false
 }
 
-.page-title {
-    margin: 0.25rem 0 0;
-    font-size: clamp(2rem, 4vw, 2.5rem);
-    line-height: 1.1;
+// 1. CREATE & EDIT COURT HANDLER
+function saveCourt() {
+  if (isEditing.value) {
+    // Edit existing court
+    const target = courts.value.find(c => c.id === editingCourtId.value)
+    if (target) {
+      target.name = courtForm.value.name
+      target.type = courtForm.value.type
+    }
+  } else {
+    // Create new court
+    courts.value.push({
+      id: courts.value.length ? Math.max(...courts.value.map(c => c.id)) + 1 : 1,
+      name: courtForm.value.name,
+      type: courtForm.value.type,
+      is_active: true
+    })
+  }
+  closeModal()
 }
 
-.section-title {
-    margin: 0 0 0.85rem;
-    font-size: 1.05rem;
-    font-weight: 700;
+// 2. TOGGLE ACTIVE / INACTIVE HANDLER
+function toggleStatus(court) {
+  court.is_active = !court.is_active
 }
 
-.form-row {
-    align-items: flex-end;
+// DELETE HANDLER
+function deleteCourt(id) {
+  courts.value = courts.value.filter(c => c.id !== id)
 }
-
-.table-controls {
-    align-items: flex-end;
-    margin-bottom: 1rem;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-width: 220px;
-}
-
-.field.grow {
-    flex: 1;
-    min-width: 260px;
-}
-
-.label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--ps-text-muted);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.table-wrap {
-    overflow-x: auto;
-}
-
-.courts-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 560px;
-}
-
-.courts-table th {
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ps-text-muted);
-    padding: 0.75rem 0.7rem;
-    border-bottom: 1px solid var(--ps-border-soft);
-}
-
-.courts-table td {
-    padding: 0.75rem 0.7rem;
-    border-bottom: 1px solid var(--ps-border-soft);
-}
-
-.actions {
-    width: 240px;
-}
-
-.courts-table td.actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.edit-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    min-width: 240px;
-}
-
-.court-name {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-}
-
-.court-description {
-    font-size: 0.85rem;
-}
-
-.empty {
-    padding: 1rem 0.7rem;
-}
-</style>
+</script>

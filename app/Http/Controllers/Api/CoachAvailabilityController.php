@@ -81,9 +81,10 @@ class CoachAvailabilityController extends Controller
         }
 
         // retrieve the IDs of all active time slots from SQL Connect.
+        $activeTimeSlots = $this->timeSlots->listActive();
         $activeTimeSlotIds = array_map(
             fn ($timeSlot) => $timeSlot->id,
-            $this->timeSlots->listActive(),
+            $activeTimeSlots,
         );
 
         // find submitted IDs that do not belong to active time slots.
@@ -105,7 +106,7 @@ class CoachAvailabilityController extends Controller
             $currentTime = now()->format('H:i:s');
 
             $slotStartTimes = [];
-            foreach ($this->timeSlots->listActive() as $ts) {
+            foreach ($activeTimeSlots as $ts) {
                 $slotStartTimes[$ts->id] = $ts->startTime;
             }
 
@@ -129,25 +130,58 @@ class CoachAvailabilityController extends Controller
         $createdTimeSlotIds = [];
         $existingTimeSlotIds = [];
 
+        $rowsToCreate = [];
+
+        $existingAvailability = $this->availability->getForCoachAndDate(
+            $user->id,
+            $validated['availability_date'],
+        );
+
+        $existingAvailabilitySlotIds = [];
+        foreach ($existingAvailability as $slot) {
+            $timeSlotId = $slot->timeSlot['id'] ?? null;
+
+            if (! $timeSlotId) {
+                continue;
+            }
+
+            $existingAvailabilitySlotIds[$timeSlotId] = true;
+        }
+
         foreach ($validated['time_slot_ids'] as $timeSlotId) {
             // do not create a duplicate Coach/date/time-slot row.
-            if ($this->availability->isCoachAvailable(
-                $validated['availability_date'],
-                $timeSlotId,
-                $user->id, )) {
+            if (isset($existingAvailabilitySlotIds[$timeSlotId])) {
                 $existingTimeSlotIds[] = $timeSlotId;
 
                 continue;
             }
 
-            // create one CoachAvailability row for this selected time slot.
-            $this->availability->create(
-                $user->id,
-                $timeSlotId,
-                $validated['availability_date'],
-            );
+            $rowsToCreate[] = [
+                'coachId' => $user->id,
+                'timeSlotId' => $timeSlotId,
+                'availabilityDate' => $validated['availability_date'],
+            ];
+        }
 
-            $createdTimeSlotIds[] = $timeSlotId;
+        if (! empty($rowsToCreate)) {
+            $results = $this->availability->createMany($rowsToCreate);
+
+            foreach ($results as $index => $result) {
+                $timeSlotId = $rowsToCreate[$index]['timeSlotId'];
+
+                if (! ($result['ok'] ?? false)) {
+                    $error = strtolower((string) ($result['error'] ?? ''));
+
+                    if (str_contains($error, 'unique') || str_contains($error, 'duplicate')) {
+                        $existingTimeSlotIds[] = $timeSlotId;
+                        continue;
+                    }
+
+                    throw new \RuntimeException((string) ($result['error'] ?? 'Failed to publish coach availability.'));
+                }
+
+                $createdTimeSlotIds[] = $timeSlotId;
+            }
         }
 
         return response()->json([
@@ -271,17 +305,19 @@ class CoachAvailabilityController extends Controller
             $validated['availability_date'],
         );
 
+        $confirmedTimeSlotIds = $this->availability->listConfirmedBookingTimeSlotIdsForDate(
+            $user->id,
+            $validated['availability_date'],
+        );
+        $confirmedTimeSlotIdSet = array_fill_keys($confirmedTimeSlotIds, true);
+
         // convert the DTO objects into arrays and check for confirmed bookings
-        $result = array_map(function ($slot) use ($user, $validated) {
+        $result = array_map(function ($slot) use ($confirmedTimeSlotIdSet) {
             $arr = $slot->toArray();
             $timeSlotId = $slot->timeSlot['id'] ?? null;
 
             $arr['has_confirmed_booking'] = $timeSlotId
-                ? $this->availability->hasConfirmedBooking(
-                    $user->id,
-                    $validated['availability_date'],
-                    $timeSlotId,
-                )
+                ? isset($confirmedTimeSlotIdSet[$timeSlotId])
                 : false;
 
             return $arr;

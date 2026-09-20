@@ -34,6 +34,18 @@ class CoachAvailabilityRepository
         ]);
     }
 
+    public function createMany(array $rows): array
+    {
+        return $this->client->executeMany(
+            'CreateCoachAvailability',
+            array_map(fn (array $row) => [
+                'coachId' => $row['coachId'],
+                'timeSlotId' => $row['timeSlotId'],
+                'availabilityDate' => $row['availabilityDate'],
+            ], $rows),
+        );
+    }
+
     public function isCoachAvailable(string $availabilityDate, string $timeSlotId, string $coachId): bool
     {
         $data = $this->client->execute('IsCoachAvailable', [
@@ -118,5 +130,28 @@ class CoachAvailabilityRepository
 
         // true means a booking exists, so removal must be blocked
         return ! empty($data['bookings'] ?? []);
+    }
+
+    public function listConfirmedBookingTimeSlotIdsForDate(
+        string $coachId,
+        string $availabilityDate,
+    ): array {
+        $data = $this->client->execute('GetConfirmedBookingsForCoachDate', [
+            'coachId' => $coachId,
+            'bookingDate' => $availabilityDate,
+        ]);
+
+        $ids = [];
+        foreach (($data['bookings'] ?? []) as $row) {
+            $timeSlotId = $row['timeSlotId'] ?? null;
+
+            if (! $timeSlotId) {
+                continue;
+            }
+
+            $ids[$timeSlotId] = true;
+        }
+
+        return array_keys($ids);
     }
 }
