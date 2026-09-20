@@ -77,6 +77,15 @@ async function signOut() {
                     </RouterLink>
 
                     <RouterLink
+                        :to="{ name: 'notice-board' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Coach Notice Board
+                    </RouterLink>
+
+                    <RouterLink
                         v-if="role === 'COACH'"
                         :to="{ name: 'coach-bookings' }"
                         class="menu-item"

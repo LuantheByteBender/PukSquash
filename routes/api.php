@@ -37,6 +37,9 @@ Route::middleware('firebase.auth')->group(function () {
     // Coach availability
     Route::get('/coaches/available', [CoachAvailabilityController::class, 'index']);
 
+    // Coach availability Notice Board
+    Route::get('/notice-board/coaches', [CoachAvailabilityController::class, 'noticeBoard']);
+
     Route::middleware('admin')->group(function () {
         Route::get('/admin/users', [AdminUserController::class, 'index']);
         Route::get('/admin/users/{id}', [AdminUserController::class, 'show']);
