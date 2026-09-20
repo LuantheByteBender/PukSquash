@@ -80,6 +80,24 @@ class CoachAvailabilityRepository
     }
 
     /**
+    * Get all published Coach availability for the Notice Board
+    * on a selected date.
+    *
+    * @return CoachAvailabilityDTO[]
+    */
+    public function getNoticeBoardForDate(string $availabilityDate): array
+    {
+        $data = $this->client->execute('GetCoachAvailabilityNoticeBoard', [
+            'availabilityDate' => $availabilityDate,
+        ]);
+        
+        return array_map(
+            fn (array $row) => CoachAvailabilityDTO::fromGraphQL($row),
+            $data['coachAvailabilities'] ?? [],
+        );
+    }
+
+    /**
      * remove one Coach's published availability using its composite key
      */
     public function deleteForCoachAndSlot(

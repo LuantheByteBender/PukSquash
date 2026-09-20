@@ -33,6 +33,13 @@ const routes = [
         meta: { chrome: false },
     },
 
+    {
+        path: '/auth-test',
+        name: 'auth-test',
+        component: () => import('../pages/AuthTest.vue'),
+        meta: { chrome: false },
+    },
+
     // Booking feature
     {
         path: '/book',
@@ -94,6 +101,12 @@ const routes = [
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         redirect: { name: 'home' },
+    },
+
+    {
+        path: '/notice-board',
+        name: 'notice-board',
+        component: () => import('../pages/CoachNoticeBoardPage.vue'),
     },
 ];
 

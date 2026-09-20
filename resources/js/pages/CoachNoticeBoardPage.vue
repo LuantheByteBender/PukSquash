@@ -1,54 +1,166 @@
 <template>
-  <div class="notice-board">
-    <div class="header">
+  <div class="p-8 max-w-7xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div
+      class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-gray-200"
+    >
       <div>
-        <p class="header-eyebrow">Squash Coaching</p>
-        <h1 class="header-title">Coach Notice Board</h1>
-        <p class="header-subtitle">Choose a date, then expand a time to see which coaches are available.</p>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+          Coach Availability Notice Board
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Browse active squash coaches and check available training slots.
+        </p>
       </div>
+
+      <span
+        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200"
+      >
+        <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+        Live Schedule
+      </span>
     </div>
 
-    <div class="date-nav">
-      <button class="date-arrow" @click="shiftDate(-1)" title="Previous day">&larr;</button>
-      <div class="date-center">
+    <!-- Filter Controls -->
+    <div
+      class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+    >
+      <!-- Date -->
+      <div>
+        <label
+          class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2"
+        >
+          Select Date
+        </label>
+
         <input
           v-model="selectedDate"
           type="date"
-          class="date-input"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
         />
         <p class="date-pretty">{{ formattedSelectedDate }}</p>
       </div>
       <button class="date-arrow" @click="shiftDate(1)" title="Next day">&rarr;</button>
     </div>
 
-    <div class="layout-section">
-      <div class="toolbar">
-        <p class="toolbar-hint">Tap a time slot to expand.</p>
-        <LoadingSpinner v-if="loading" label="Refreshing…" />
+      <!-- Time Slot -->
+      <div>
+        <label
+          class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2"
+        >
+          Filter Time Slot
+        </label>
+
+        <select
+          v-model="selectedTimeSlot"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-shadow"
+        >
+          <option value="ALL">All Available Times</option>
+
+          <option
+            v-for="time in availableTimeSlots"
+            :key="time"
+            :value="time"
+          >
+            {{ time }}
+          </option>
+        </select>
       </div>
 
-      <div v-if="loadError" class="error-card">
-        {{ loadError }}
+      <!-- Reset -->
+      <div>
+        <button
+          type="button"
+          @click="resetFilters"
+          class="w-full px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          Reset Filters
+        </button>
       </div>
 
-      <div v-if="!loading && visibleTimeSlots.length === 0" class="empty-state">
-        <span class="empty-icon">&#128197;</span>
-        <p>No coaches have published availability for this date.</p>
+    <!-- Available Coaches -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-gray-900">
+          Available Coaches ({{ formattedSelectedDate }})
+        </h2>
+
+        <span class="text-xs text-gray-500">
+          {{ filteredCoaches.length }} Coaches Available
+        </span>
       </div>
 
-      <div v-else class="timeline">
-        <div v-for="(slot, idx) in visibleTimeSlots" :key="slot.id" class="tl-row">
-          <div class="tl-gutter">
-            <div :class="['tl-dot', { 'tl-dot-active': expandedSlotIds.has(slot.id) }]"></div>
-            <div v-if="idx < visibleTimeSlots.length - 1" class="tl-line"></div>
-          </div>
+      <!-- Loading State -->
+      <div
+        v-if="loading"
+        class="bg-white border border-gray-200 rounded-xl p-12 text-center"
+      >
+        <p class="text-gray-500 text-sm">
+          Loading coach availability...
+        </p>
+      </div>
 
-          <div :class="['tl-card', { 'tl-card-open': expandedSlotIds.has(slot.id) }]">
-            <button class="tl-header" @click="toggleSlot(slot.id)">
-              <div class="tl-header-left">
-                <span class="tl-time">{{ slotLabel(slot) }}</span>
-                <span class="tl-count">
-                  {{ slotCount(slot.id) }}
+      <!-- Error State -->
+      <div
+        v-else-if="errorMessage"
+        class="bg-white border border-red-200 rounded-xl p-6 text-center"
+      >
+        <p class="text-red-600 text-sm">
+          {{ errorMessage }}
+        </p>
+      </div>
+
+      <!-- Coach Cards -->
+      <div
+        v-else-if="filteredCoaches.length > 0"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <div
+          v-for="coach in filteredCoaches"
+          :key="coach.id"
+          class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+        >
+          <div>
+            <!-- Coach Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-gray-900">
+                  {{ coach.name }}
+                </h3>
+
+                <p class="text-xs text-gray-500">
+                  {{ coach.specialization }}
+                </p>
+              </div>
+
+              <span
+                class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20"
+              >
+                Active
+              </span>
+            </div>
+
+            <!-- Published Time Slots -->
+            <div class="mb-6">
+              <p
+                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              >
+                Published Slots:
+              </p>
+
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="time in coach.availableSlots"
+                  :key="time"
+                  :class="
+                    selectedTimeSlot === time
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  "
+                  class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer"
+                  @click="selectedTimeSlot = time"
+                >
+                  {{ time }}
                 </span>
               </div>
               <span :class="['tl-chevron', { 'tl-chevron-open': expandedSlotIds.has(slot.id) }]">&#9662;</span>
@@ -71,7 +183,26 @@
               <p v-if="coachesForSlotId(slot.id).length === 0" class="empty-inline">No coaches at this time.</p>
             </div>
           </div>
+
+          <!-- Booking Button -->
+          <button
+            type="button"
+            @click="selectCoachForBooking(coach)"
+            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+          >
+            Book Private Session
+          </button>
         </div>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-else
+        class="bg-white border border-gray-200 rounded-xl p-12 text-center"
+      >
+        <p class="text-gray-500 text-sm">
+          No coaches are available for the selected date and time slot.
+        </p>
       </div>
     </div>
   </div>
@@ -79,13 +210,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-
-import LoadingSpinner from '../components/LoadingSpinner.vue'
-import { bookingService } from '../features/booking/bookingService.js'
 import { http } from '../services/http.js'
 
 // Default to today's date (YYYY-MM-DD)
 const today = new Date().toISOString().split('T')[0]
+
 const selectedDate = ref(today)
 
 const timeSlots = ref([])
@@ -117,467 +246,106 @@ function shiftDate(days) {
   selectedDate.value = `${y}-${m}-${day}`
 }
 
-// Formatted Date string display
+const coaches = ref([])
+const loading = ref(false)
+const errorMessage = ref('')
+
+// Display selected date in a readable format
 const formattedSelectedDate = computed(() => {
-  if (!selectedDate.value) return ''
+  if (!selectedDate.value) {
+    return ''
+  }
+
   const dateObj = new Date(`${selectedDate.value}T00:00:00`)
-  return dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+
+  return dateObj.toLocaleDateString('en-ZA', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
 })
 
-// Avatar color palette
-const avatarColors = [
-  'avatar-blue', 'avatar-violet', 'avatar-amber', 'avatar-emerald', 'avatar-rose',
-]
-function avatarColor(id) {
-  const str = String(id ?? '')
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0
-  }
-  return avatarColors[hash % avatarColors.length]
-}
+// Build the time-slot filter from the real Notice Board data
+const availableTimeSlots = computed(() => {
+  const slots = new Set()
 
-const hhmm = (value) => String(value || '').slice(0, 5)
+  coaches.value.forEach(coach => {
+    coach.availableSlots.forEach(slot => {
+      slots.add(slot)
+    })
+  })
 
-function slotLabel(slot) {
-  return `${hhmm(slot?.start_time)}–${hhmm(slot?.end_time)}`
-}
+  return Array.from(slots)
+})
 
-// Initials helper
-function initials(name) {
-  const cleaned = String(name || 'Coach').replace(/^Coach\s+/i, '')
-  const parts = cleaned.split(' ').filter(Boolean)
-  const letters = parts.map(w => w[0]).join('')
-  return letters.toUpperCase().slice(0, 2) || 'C'
-}
-
-const expandedSlotIds = ref(new Set())
-
-function toggleSlot(slotId) {
-  if (expandedSlotIds.value.has(slotId)) {
-    expandedSlotIds.value.delete(slotId)
-  } else {
-    expandedSlotIds.value.add(slotId)
-  }
-}
-
-function coachesForSlotId(slotId) {
-  return coachesBySlotId.value[slotId]?.coaches ?? []
-}
-
-function slotCount(slotId) {
-  if (loading.value && !(slotId in coachesBySlotId.value)) {
-    return '…'
+// Filter coaches by selected time slot
+const filteredCoaches = computed(() => {
+  if (selectedTimeSlot.value === 'ALL') {
+    return coaches.value
   }
 
-  const count = coachesForSlotId(slotId).length
-  return `${count} coach${count !== 1 ? 'es' : ''}`
-}
+  return coaches.value.filter(coach =>
+    coach.availableSlots.includes(selectedTimeSlot.value)
+  )
+})
 
-async function loadTimeSlots() {
-  loadingTimeSlots.value = true
-  loadError.value = ''
+// Load published coach availability from Laravel
+async function loadNoticeBoard() {
+  if (!selectedDate.value) {
+    coaches.value = []
+    return
+  }
+
+  loading.value = true
+  errorMessage.value = ''
 
   try {
-    const slots = await http.get('/time-slots')
-    timeSlots.value = (Array.isArray(slots) ? slots : []).slice().sort(
-      (a, b) => (a?.display_order ?? 0) - (b?.display_order ?? 0)
+    const result = await http.get(
+      `/notice-board/coaches?date=${selectedDate.value}`
     )
-  } catch (e) {
-    timeSlots.value = []
-    loadError.value = e?.message ?? String(e)
+
+    coaches.value = (result.data ?? []).map(coach => ({
+      id: coach.coach_id,
+      name: coach.coach_name,
+      specialization: 'Squash Coach',
+
+      availableSlots: (coach.time_slots ?? []).map(
+        slot => `${slot.start_time} - ${slot.end_time}`
+      )
+    }))
+  } catch (error) {
+    coaches.value = []
+
+    errorMessage.value =
+      error.message || 'Unable to load coach availability.'
   } finally {
-    loadingTimeSlots.value = false
+    loading.value = false
   }
 }
 
-let loadToken = 0
-async function loadCoachesForDate() {
-  const token = ++loadToken
-  loadingCoaches.value = true
-  loadError.value = ''
-  expandedSlotIds.value = new Set()
-
-  try {
-    const date = selectedDate.value
-    const slots = timeSlots.value
-
-    const results = await Promise.all(
-      slots.map(async (slot) => {
-        try {
-          const coaches = await bookingService.availableCoaches(date, slot.id)
-          return [slot.id, Array.isArray(coaches) ? coaches : []]
-        } catch (e) {
-          return [slot.id, []]
-        }
-      })
-    )
-
-    if (token !== loadToken) return
-
-    const map = {}
-    for (const [slotId, coaches] of results) {
-      map[slotId] = { coaches }
-    }
-    coachesBySlotId.value = map
-  } catch (e) {
-    if (token !== loadToken) return
-    coachesBySlotId.value = {}
-    loadError.value = e?.message ?? String(e)
-  } finally {
-    if (token !== loadToken) return
-    loadingCoaches.value = false
-  }
+// Reset filters to today
+function resetFilters() {
+  selectedDate.value = today
+  selectedTimeSlot.value = 'ALL'
 }
 
-watch(selectedDate, async () => {
-  if (!timeSlots.value.length) return
-  await loadCoachesForDate()
-})
-
-onMounted(async () => {
-  await loadTimeSlots()
-  await loadCoachesForDate()
-})
-
-function selectCoachForBooking(coach, slot) {
-  const coachName = coach?.name || 'Coach'
-  alert(`Proceeding to Private Coach Session booking for ${coachName} on ${selectedDate.value} at ${slotLabel(slot)}`)
+// Booking is not connected yet.
+// Keep this temporary action until booking integration is implemented.
+function selectCoachForBooking(coach) {
+  alert(
+    `Proceeding to Private Coach Session booking for ${coach.name} on ${selectedDate.value}`
+  )
 }
+
+// Reload Notice Board whenever the selected date changes
+watch(selectedDate, () => {
+  selectedTimeSlot.value = 'ALL'
+  loadNoticeBoard()
+})
+
+// Initial load
+onMounted(() => {
+  loadNoticeBoard()
+})
 </script>
-
-<style scoped>
-/* ─── Page shell ─── */
-.notice-board {
-  max-width: 56rem;
-  margin: 0 auto;
-  padding: 2rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ─── Header ─── */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-.header-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6366f1;
-}
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #111827;
-  line-height: 1.2;
-  margin-top: 0.15rem;
-}
-.header-subtitle {
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
-/* ─── Tab bar ─── */
-/* ─── Toolbar ─── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-.toolbar-hint {
-  font-size: 0.82rem;
-  color: #6b7280;
-}
-
-.error-card {
-  background: #fff;
-  border: 1px solid #fecaca;
-  color: #991b1b;
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  font-size: 0.85rem;
-}
-
-/* ─── Date nav ─── */
-.date-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 0.6rem 0.85rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
-}
-.date-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-size: 0.9rem;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-.date-arrow:hover {
-  background: #eef2ff;
-  border-color: #c7d2fe;
-  color: #4338ca;
-}
-.date-center {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-}
-.date-input {
-  padding: 0.35rem 0.5rem;
-  font-size: 0.8rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.15s;
-  color: #374151;
-}
-.date-input:focus {
-  border-color: #818cf8;
-  box-shadow: 0 0 0 2px rgb(99 102 241 / 0.15);
-}
-.date-pretty {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-}
-
-/* ─── Layout section (shared wrapper) ─── */
-.layout-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* ─── Section helpers ─── */
- 
-
-/* ─── Avatar ─── */
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-.avatar:hover { transform: scale(1.08); }
-.avatar-lg { width: 48px; height: 48px; font-size: 0.85rem; }
-.avatar-blue { background: #dbeafe; color: #2563eb; }
-.avatar-violet { background: #ede9fe; color: #7c3aed; }
-.avatar-amber { background: #fef3c7; color: #b45309; }
-.avatar-emerald { background: #d1fae5; color: #059669; }
-.avatar-rose { background: #ffe4e6; color: #e11d48; }
-
-/* ─── Active pill ─── */
-/* ─── Coach name ─── */
-.coach-name { font-size: 0.85rem; font-weight: 700; color: #111827; line-height: 1.2; }
-
-/* ─── Buttons ─── */
-.btn-book-sm {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #fff;
-  background: #4f46e5;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-.btn-book-sm:hover {
-  background: #4338ca;
-  box-shadow: 0 2px 8px rgb(79 70 229 / 0.25);
-}
-
-/* ─── Empty states ─── */
-.empty-state {
-  background: #fff;
-  border: 1px dashed #d1d5db;
-  border-radius: 14px;
-  padding: 3rem 1.5rem;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 0.85rem;
-}
-.empty-icon {
-  display: block;
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-.empty-inline {
-  font-size: 0.78rem;
-  color: #9ca3af;
-  text-align: center;
-  padding: 0.75rem 0;
-}
-
-/* ─── Coach row (shared by A & C) ─── */
-.coach-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
-  border-radius: 10px;
-  padding: 0.6rem 0.75rem;
-  transition: background 0.15s, border-color 0.15s;
-}
-.coach-row:hover {
-  background: #eef2ff;
-  border-color: #e0e7ff;
-}
-.coach-row-left {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-width: 0;
-}
-
-/* ═══════════════════════════════════════════════ */
-/* LAYOUT A — Timeline                            */
-/* ═══════════════════════════════════════════════ */
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-.tl-row {
-  display: flex;
-  gap: 0.75rem;
-  min-height: 0;
-}
-.tl-gutter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 18px;
-  flex-shrink: 0;
-  padding-top: 1rem;
-}
-.tl-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2.5px solid #c7d2fe;
-  background: #fff;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  z-index: 1;
-}
-.tl-dot-active {
-  border-color: #4f46e5;
-  background: #4f46e5;
-  box-shadow: 0 0 0 4px rgb(79 70 229 / 0.15);
-}
-.tl-line {
-  flex: 1;
-  width: 2px;
-  background: #e5e7eb;
-  margin: 4px 0;
-}
-.tl-card {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  margin-bottom: 0.6rem;
-  overflow: hidden;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.tl-card:hover {
-  border-color: #c7d2fe;
-}
-.tl-card-open {
-  border-color: #a5b4fc;
-  box-shadow: 0 2px 12px rgb(99 102 241 / 0.08);
-}
-.tl-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s;
-}
-.tl-header:hover {
-  background: #f9fafb;
-}
-.tl-header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.tl-time {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #111827;
-}
-.tl-count {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: #9ca3af;
-  background: #f3f4f6;
-  padding: 0.12rem 0.45rem;
-  border-radius: 9999px;
-}
-.tl-chevron {
-  font-size: 0.7rem;
-  color: #9ca3af;
-  transition: transform 0.25s ease;
-}
-.tl-chevron-open {
-  transform: rotate(180deg);
-  color: #4f46e5;
-}
-.tl-body {
-  padding: 0 1rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 0.6rem;
-}
-
-/* ─── Responsive ─── */
-@media (max-width: 640px) {
-  .notice-board { padding: 1.25rem 0.75rem; }
-  .header-title { font-size: 1.25rem; }
-  .date-pretty { display: none; }
-}
-</style>
