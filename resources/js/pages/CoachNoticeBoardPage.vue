@@ -38,7 +38,10 @@
           type="date"
           class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
         />
+        <p class="date-pretty">{{ formattedSelectedDate }}</p>
       </div>
+      <button class="date-arrow" @click="shiftDate(1)" title="Next day">&rarr;</button>
+    </div>
 
       <!-- Time Slot -->
       <div>
@@ -74,7 +77,6 @@
           Reset Filters
         </button>
       </div>
-    </div>
 
     <!-- Available Coaches -->
     <div class="space-y-4">
@@ -161,6 +163,24 @@
                   {{ time }}
                 </span>
               </div>
+              <span :class="['tl-chevron', { 'tl-chevron-open': expandedSlotIds.has(slot.id) }]">&#9662;</span>
+            </button>
+
+            <div v-if="expandedSlotIds.has(slot.id)" class="tl-body">
+              <div
+                v-for="coach in coachesForSlotId(slot.id)"
+                :key="coach.id"
+                class="coach-row"
+              >
+                <div class="coach-row-left">
+                  <div :class="['avatar', avatarColor(coach.id)]">{{ initials(coach.name) }}</div>
+                  <div>
+                    <p class="coach-name">{{ coach.name || 'Coach' }}</p>
+                  </div>
+                </div>
+                <button class="btn-book-sm" @click="selectCoachForBooking(coach, slot)">Book</button>
+              </div>
+              <p v-if="coachesForSlotId(slot.id).length === 0" class="empty-inline">No coaches at this time.</p>
             </div>
           </div>
 
@@ -196,7 +216,35 @@ import { http } from '../services/http.js'
 const today = new Date().toISOString().split('T')[0]
 
 const selectedDate = ref(today)
-const selectedTimeSlot = ref('ALL')
+
+const timeSlots = ref([])
+const coachesBySlotId = ref({})
+
+const loadingTimeSlots = ref(false)
+const loadingCoaches = ref(false)
+const loadError = ref('')
+
+const loading = computed(() => loadingTimeSlots.value || loadingCoaches.value)
+
+const visibleTimeSlots = computed(() => {
+  if (loadingCoaches.value) {
+    return timeSlots.value
+  }
+
+  return timeSlots.value.filter((slot) => {
+    const coaches = coachesBySlotId.value[slot?.id]?.coaches ?? []
+    return coaches.length > 0
+  })
+})
+
+function shiftDate(days) {
+  const d = new Date(`${selectedDate.value}T00:00:00`)
+  d.setDate(d.getDate() + days)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  selectedDate.value = `${y}-${m}-${day}`
+}
 
 const coaches = ref([])
 const loading = ref(false)
