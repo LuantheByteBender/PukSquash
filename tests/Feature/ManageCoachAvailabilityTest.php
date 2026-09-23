@@ -97,7 +97,13 @@ class ManageCoachAvailabilityTest extends TestCase
                     ->once()
                     ->with($coach->id, $date)
                     ->andReturn([$availability]);
+
+                $mock->shouldReceive('listConfirmedBookingTimeSlotIdsForDate')
+                    ->once()
+                    ->with($coach->id, $date)
+                    ->andReturn([]);
             }
+
         );
 
         // A supplied coach ID must not override the signed-in Coach.
@@ -131,6 +137,11 @@ class ManageCoachAvailabilityTest extends TestCase
             CoachAvailabilityRepository::class,
             function ($mock) use ($coach, $date) {
                 $mock->shouldReceive('getForCoachAndDate')
+                    ->once()
+                    ->with($coach->id, $date)
+                    ->andReturn([]);
+
+                $mock->shouldReceive('listConfirmedBookingTimeSlotIdsForDate')
                     ->once()
                     ->with($coach->id, $date)
                     ->andReturn([]);

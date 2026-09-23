@@ -8,6 +8,7 @@ use App\Http\Middleware\FirebaseAuth;
 use App\Repositories\CoachAvailabilityRepository;
 use App\Repositories\TimeSlotRepository;
 use App\Repositories\UserRepository;
+use App\DataTransferObjects\CoachAvailabilityDTO;
 use Tests\TestCase;
 
 class PublishCoachAvailabilityTest extends TestCase
@@ -312,21 +313,29 @@ class PublishCoachAvailabilityTest extends TestCase
 
         $date = now()->addDay()->format('Y-m-d');
 
-        // Availability does not exist yet, so saving must happen exactly once.
+        // No existing availability, so create the selected slot.
         $this->mock(
             CoachAvailabilityRepository::class,
             function ($mock) use ($user, $date) {
                 $slotId = '00000000000000000000000000000006';
 
-                $mock->shouldReceive('isCoachAvailable')
+                $mock->shouldReceive('getForCoachAndDate')
                     ->once()
-                    ->with($date, $slotId, $user->id)
-                    ->andReturn(false);
+                    ->with($user->id, $date)
+                    ->andReturn([]);
 
-                $mock->shouldReceive('create')
+                $mock->shouldReceive('createMany')
                     ->once()
-                    ->with($user->id, $slotId, $date)
-                    ->andReturnNull();
+                    ->with([
+                        [
+                            'coachId' => $user->id,
+                            'timeSlotId' => $slotId,
+                            'availabilityDate' => $date,
+                        ],
+                    ])
+                    ->andReturn([
+                        ['ok' => true],
+                    ]);
             }
         );
 
@@ -415,13 +424,27 @@ class PublishCoachAvailabilityTest extends TestCase
             function ($mock) use ($user, $date) {
                 $slotId = '00000000000000000000000000000006';
 
-                // Simulate an availability record that already exists.
-                $mock->shouldReceive('isCoachAvailable')
-                    ->once()
-                    ->with($date, $slotId, $user->id)
-                    ->andReturn(true);
+                $availability = new CoachAvailabilityDTO(
+                    id: $user->id.':'.$date.':'.$slotId,
+                    availabilityDate: $date,
+                    createdAt: now()->toIso8601String(),
+                    coach: [
+                        'id' => $user->id,
+                        'fullName' => $user->fullName,
+                    ],
+                    timeSlot: [
+                        'id' => $slotId,
+                        'startTime' => '08:00',
+                        'endTime' => '09:00',
+                    ],
+                );
 
-                // The controller must skip saving this record again.
+                $mock->shouldReceive('getForCoachAndDate')
+                    ->once()
+                    ->with($user->id, $date)
+                    ->andReturn([$availability]);
+
+                $mock->shouldNotReceive('createMany');
                 $mock->shouldNotReceive('create');
             }
         );
