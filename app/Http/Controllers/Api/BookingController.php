@@ -121,6 +121,21 @@ class BookingController extends Controller
             }
         }
 
+        // A coach cannot teach on two courts during the same time slot.
+        if (
+            $bookingType === 'PRIVATE_COACH'
+            && $this->coachAvailability->hasConfirmedBooking(
+                $coachId,
+                $request->input('booking_date'),
+                $request->input('time_slot_id'),
+            )
+        ) {
+            return response()->json([
+                'message' => 'Selected coach already has a booking for this time slot.',
+                'code' => 'COACH_ALREADY_BOOKED',
+            ], 409);
+        }
+
         // Create the booking.
         $result = $this->bookings->create([
             'courtId'         => $request->input('court_id'),
