@@ -157,6 +157,7 @@ function describe(court, slot, cell) {
        than the cell, and they do not travel with a sticky column. */
     border-collapse: separate;
     border-spacing: 0;
+    table-layout: fixed;
     min-width: 640px;
 }
 
@@ -171,6 +172,12 @@ thead th {
     font-weight: 650;
     color: var(--ps-text);
     text-align: center;
+}
+
+.court-head,
+.cell-td {
+    width: 150px;
+    min-width: 150px;
 }
 
 .court-head .pill {
@@ -234,6 +241,7 @@ thead th {
     font-size: 0.78rem;
     line-height: 1.15;
     text-align: center;
+    word-break: break-word;
 }
 
 .clickable {
@@ -333,6 +341,12 @@ thead th {
     .cell {
         min-height: 42px;
         font-size: 0.72rem;
+    }
+
+    .court-head,
+    .cell-td {
+        width: 118px;
+        min-width: 118px;
     }
 
     /* Narrower frozen column so more courts fit beside it, and a soft shadow so
