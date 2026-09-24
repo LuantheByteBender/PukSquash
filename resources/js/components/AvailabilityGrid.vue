@@ -17,6 +17,7 @@ const props = defineProps({
     courts: { type: Array, required: true },
     timeSlots: { type: Array, required: true },
     cells: { type: Array, required: true },
+    selectedKeys: { type: Array, default: null },
     /** "courtId:slotId" of a cell currently being submitted. */
     busyKey: { type: String, default: null },
 });
@@ -24,6 +25,8 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 
 const keyFor = (courtId, slotId) => `${courtId}:${slotId}`;
+
+const selectedKeySet = computed(() => new Set(props.selectedKeys || []));
 
 const index = computed(() => {
     const map = new Map();
@@ -99,6 +102,7 @@ function describe(court, slot, cell) {
                                 `state-${cellAt(court.id, slot.id).state.toLowerCase()}`,
                                 {
                                     mine: cellAt(court.id, slot.id).is_mine,
+                                    selected: selectedKeySet.has(keyFor(court.id, slot.id)),
                                     clickable: isActionable(cellAt(court.id, slot.id)),
                                 },
                             ]"
@@ -302,6 +306,10 @@ thead th {
    outline rather than a colour, which stays legible on every cell state. */
 .mine {
     box-shadow: inset 0 0 0 2px var(--ps-text);
+}
+
+.selected {
+    box-shadow: inset 0 0 0 2px var(--ps-brand);
 }
 
 .tag {

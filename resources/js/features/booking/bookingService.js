@@ -63,4 +63,16 @@ export const bookingService = {
     cancelBooking(bookingId) {
         return http.post(`/bookings/${bookingId}/cancel`);
     },
+
+    coachTeamPracticeAvailability(date) {
+        return http.get(`/coach/team-practice/availability${query({ date })}`);
+    },
+
+    createTeamPractice(selections) {
+        return http.post('/coach/team-practices', { selections });
+    },
+
+    myTeamPractices(date) {
+        return http.get(`/coach/team-practices${query({ date })}`);
+    },
 };
