@@ -59,6 +59,12 @@ const routes = [
         meta: { requiresRole: 'COACH' },
     },
     {
+        path: '/coach/team-practice',
+        name: 'coach-team-practice',
+        component: () => import('../pages/CoachTeamPracticeBookingPage.vue'),
+        meta: { requiresRole: 'COACH' },
+    },
+    {
         path: '/coach/notice-board',
         name: 'coach-notice-board',
         component: () => import('../pages/CoachNoticeBoardPage.vue'),
@@ -85,11 +91,6 @@ const routes = [
         name: 'admin-courts',
         component: () => import('../pages/ManageCourtsPage.vue'),
         meta: { requiresRole: 'ADMIN' },
-    },
-    {
-        path: '/admin/courts',
-        name: 'manage-courts',
-        component: () => import('../pages/ManageCourtsPage.vue'),
     },
     {
         path: '/profile',

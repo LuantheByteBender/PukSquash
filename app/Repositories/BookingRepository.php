@@ -71,6 +71,25 @@ class BookingRepository
         return $this->client->execute('CreateBooking', $params);
     }
 
+    public function createMany(array $rows): array
+    {
+        return $this->client->executeMany(
+            'CreateBooking',
+            array_map(
+                fn (array $row) => [
+                    'courtId'     => $row['courtId'],
+                    'timeSlotId'  => $row['timeSlotId'],
+                    'createdById' => $row['createdById'],
+                    'coachId'     => $row['coachId'] ?? null,
+                    'bookingDate' => $row['bookingDate'],
+                    'bookingType' => $row['bookingType'],
+                    'bookedAt'    => $row['bookedAt'],
+                ],
+                $rows,
+            ),
+        );
+    }
+
     public function cancel(string $id): void
     {
         $this->client->execute('CancelBooking', [
@@ -125,6 +144,18 @@ class BookingRepository
     {
         $data = $this->client->execute('GetConfirmedBookingsByCoach', [
             'coachId' => $coachId,
+        ]);
+
+        return array_map(
+            fn (array $row) => BookingDTO::fromGraphQL($row),
+            $data['bookings'] ?? [],
+        );
+    }
+    public function getTeamPracticeByCoachAndDate(string $coachId, string $bookingDate): array
+    {
+        $data = $this->client->execute('GetTeamPracticeBookingsByCoachDate', [
+            'coachId' => $coachId,
+            'bookingDate' => $bookingDate,
         ]);
 
         return array_map(

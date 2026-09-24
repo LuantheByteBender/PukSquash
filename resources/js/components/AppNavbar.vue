@@ -100,6 +100,16 @@ async function signOut() {
                     </RouterLink>
 
                     <RouterLink
+                        v-if="role === 'COACH'"
+                        :to="{ name: 'coach-team-practice' }"
+                        class="menu-item"
+                        role="menuitem"
+                        @click="open = false"
+                    >
+                        Team practice booking
+                    </RouterLink>
+
+                    <RouterLink
                         v-if="role === 'ADMIN'"
                         :to="{ name: 'admin-dashboard' }"
                         class="menu-item"

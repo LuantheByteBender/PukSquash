@@ -257,6 +257,38 @@ query GetBookingsForTimeSlot($bookingDate: Date!, $timeSlotId: UUID!)
   }
 }
 
+query GetTeamPracticeBookingsByCoachDate($coachId: UUID!, $bookingDate: Date!)
+@auth(level: NO_ACCESS) {
+  bookings(
+    where: {
+      createdById: { eq: $coachId }
+      bookingDate: { eq: $bookingDate }
+      bookingType: { eq: "TEAM_PRACTICE" }
+      status: { eq: "CONFIRMED" }
+    }
+  ) {
+    id
+    bookingDate
+    bookingType
+    status
+    bookedAt
+    cancelledAt
+    createdAt
+
+    court { id name }
+    timeSlot { id startTime endTime }
+    createdBy { id fullName email }
+    coach { id fullName email }
+
+    bookingPlayers_on_booking {
+      id
+      playerPosition
+      joinedAt
+      user { id fullName email }
+    }
+  }
+}
+
 # Bookings created by a specific user (My Bookings screen).
 query GetBookingsByUser($userId: UUID!, $status: String)
 @auth(level: NO_ACCESS) {
