@@ -1,208 +1,98 @@
 <template>
-  <div class="p-8 max-w-7xl mx-auto space-y-8">
-    <!-- Header Section -->
-    <div
-      class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-gray-200"
-    >
+  <div class="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
+    <div class="flex items-start justify-between gap-4 flex-wrap pb-5 border-b border-gray-200">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
-          Coach Availability Notice Board
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">
-          Browse active squash coaches and check available training slots.
-        </p>
+        <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Squash coaching</p>
+        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight mt-1">Coach Notice Board</h1>
+        <p class="text-sm text-gray-500 mt-1">Pick a date, then expand a time slot to see which coaches are available.</p>
       </div>
-
-      <span
-        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200"
-      >
-        <span class="h-2 w-2 rounded-full bg-blue-600"></span>
-        Live Schedule
-      </span>
     </div>
 
-    <!-- Filter Controls -->
-    <div
-      class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
-    >
-      <!-- Date -->
-      <div>
-        <label
-          class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2"
-        >
-          Select Date
-        </label>
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3">
+      <button
+        type="button"
+        class="h-9 w-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 text-gray-700 transition-colors"
+        title="Previous day"
+        @click="shiftDate(-1)"
+      >
+        &larr;
+      </button>
 
+      <div class="flex-1 min-w-0 flex items-center gap-3">
         <input
           v-model="selectedDate"
           type="date"
-          class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+          class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
         />
-        <p class="date-pretty">{{ formattedSelectedDate }}</p>
+        <p class="text-sm font-semibold text-gray-700 truncate">{{ formattedSelectedDate }}</p>
       </div>
-      <button class="date-arrow" @click="shiftDate(1)" title="Next day">&rarr;</button>
+
+      <button
+        type="button"
+        class="h-9 w-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 text-gray-700 transition-colors"
+        title="Next day"
+        @click="shiftDate(1)"
+      >
+        &rarr;
+      </button>
     </div>
 
-      <!-- Time Slot -->
-      <div>
-        <label
-          class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2"
-        >
-          Filter Time Slot
-        </label>
-
-        <select
-          v-model="selectedTimeSlot"
-          class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-shadow"
-        >
-          <option value="ALL">All Available Times</option>
-
-          <option
-            v-for="time in availableTimeSlots"
-            :key="time"
-            :value="time"
-          >
-            {{ time }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Reset -->
-      <div>
-        <button
-          type="button"
-          @click="resetFilters"
-          class="w-full px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          Reset Filters
-        </button>
-      </div>
-
-    <!-- Available Coaches -->
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold text-gray-900">
-          Available Coaches ({{ formattedSelectedDate }})
-        </h2>
-
-        <span class="text-xs text-gray-500">
-          {{ filteredCoaches.length }} Coaches Available
-        </span>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600">Available coaches</h2>
+        <span v-if="loading" class="text-xs text-gray-400">Refreshing…</span>
       </div>
 
-      <!-- Loading State -->
-      <div
-        v-if="loading"
-        class="bg-white border border-gray-200 rounded-xl p-12 text-center"
-      >
-        <p class="text-gray-500 text-sm">
-          Loading coach availability...
-        </p>
+      <div v-if="errorMessage" class="bg-white border border-red-200 rounded-xl p-4 text-sm text-red-700">
+        {{ errorMessage }}
       </div>
 
-      <!-- Error State -->
-      <div
-        v-else-if="errorMessage"
-        class="bg-white border border-red-200 rounded-xl p-6 text-center"
-      >
-        <p class="text-red-600 text-sm">
-          {{ errorMessage }}
-        </p>
+      <div v-else-if="!loading && coaches.length === 0" class="bg-white border border-gray-200 rounded-xl p-10 text-center">
+        <p class="text-sm text-gray-500">No coaches have published availability for this date.</p>
       </div>
 
-      <!-- Coach Cards -->
-      <div
-        v-else-if="filteredCoaches.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        <div
-          v-for="coach in filteredCoaches"
-          :key="coach.id"
-          class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-        >
-          <div>
-            <!-- Coach Header -->
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="text-base font-bold text-gray-900">
-                  {{ coach.name }}
-                </h3>
-
-                <p class="text-xs text-gray-500">
-                  {{ coach.specialization }}
-                </p>
-              </div>
-
-              <span
-                class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20"
-              >
-                Active
-              </span>
-            </div>
-
-            <!-- Published Time Slots -->
-            <div class="mb-6">
-              <p
-                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
-              >
-                Published Slots:
-              </p>
-
-              <div class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="time in coach.availableSlots"
-                  :key="time"
-                  :class="
-                    selectedTimeSlot === time
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  "
-                  class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer"
-                  @click="selectedTimeSlot = time"
-                >
-                  {{ time }}
-                </span>
-              </div>
-              <span :class="['tl-chevron', { 'tl-chevron-open': expandedSlotIds.has(slot.id) }]">&#9662;</span>
-            </button>
-
-            <div v-if="expandedSlotIds.has(slot.id)" class="tl-body">
-              <div
-                v-for="coach in coachesForSlotId(slot.id)"
-                :key="coach.id"
-                class="coach-row"
-              >
-                <div class="coach-row-left">
-                  <div :class="['avatar', avatarColor(coach.id)]">{{ initials(coach.name) }}</div>
-                  <div>
-                    <p class="coach-name">{{ coach.name || 'Coach' }}</p>
-                  </div>
-                </div>
-                <button class="btn-book-sm" @click="selectCoachForBooking(coach, slot)">Book</button>
-              </div>
-              <p v-if="coachesForSlotId(slot.id).length === 0" class="empty-inline">No coaches at this time.</p>
-            </div>
-          </div>
-
-          <!-- Booking Button -->
+      <div v-else class="space-y-3">
+        <div v-for="coach in coaches" :key="coach.id" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <button
             type="button"
-            @click="selectCoachForBooking(coach)"
-            class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+            class="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+            @click="toggleCoach(coach.id)"
           >
-            Book Private Session
-          </button>
-        </div>
-      </div>
+            <div class="flex items-center gap-3 min-w-0">
+              <div
+                class="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                :class="avatarClass(coach.id)"
+              >
+                {{ initials(coach.name) }}
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-gray-900 truncate">{{ coach.name || 'Coach' }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ coach.time_slots.length }} slot{{ coach.time_slots.length !== 1 ? 's' : '' }}</p>
+              </div>
+            </div>
 
-      <!-- Empty State -->
-      <div
-        v-else
-        class="bg-white border border-gray-200 rounded-xl p-12 text-center"
-      >
-        <p class="text-gray-500 text-sm">
-          No coaches are available for the selected date and time slot.
-        </p>
+            <span
+              class="text-xs text-gray-400 transition-transform"
+              :class="isCoachExpanded(coach.id) ? 'rotate-180 text-indigo-600' : ''"
+            >
+              &#9662;
+            </span>
+          </button>
+
+          <div v-if="isCoachExpanded(coach.id)" class="border-t border-gray-100 px-4 py-3">
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="slot in coach.time_slots"
+                :key="slot.id"
+                type="button"
+                class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                @click="selectCoachForBooking(coach, slot)"
+              >
+                {{ slotLabel(slot) }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -210,141 +100,110 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { http } from '../services/http.js'
 
-// Default to today's date (YYYY-MM-DD)
+import { http, query } from '../services/http.js'
+
 const today = new Date().toISOString().split('T')[0]
-
 const selectedDate = ref(today)
 
-const timeSlots = ref([])
-const coachesBySlotId = ref({})
+const coaches = ref([])
+const loading = ref(false)
+const errorMessage = ref('')
 
-const loadingTimeSlots = ref(false)
-const loadingCoaches = ref(false)
-const loadError = ref('')
-
-const loading = computed(() => loadingTimeSlots.value || loadingCoaches.value)
-
-const visibleTimeSlots = computed(() => {
-  if (loadingCoaches.value) {
-    return timeSlots.value
-  }
-
-  return timeSlots.value.filter((slot) => {
-    const coaches = coachesBySlotId.value[slot?.id]?.coaches ?? []
-    return coaches.length > 0
-  })
-})
+const expandedCoachIds = ref({})
 
 function shiftDate(days) {
   const d = new Date(`${selectedDate.value}T00:00:00`)
   d.setDate(d.getDate() + days)
+
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   selectedDate.value = `${y}-${m}-${day}`
 }
 
-const coaches = ref([])
-const loading = ref(false)
-const errorMessage = ref('')
-
-// Display selected date in a readable format
 const formattedSelectedDate = computed(() => {
-  if (!selectedDate.value) {
-    return ''
-  }
-
+  if (!selectedDate.value) return ''
   const dateObj = new Date(`${selectedDate.value}T00:00:00`)
-
-  return dateObj.toLocaleDateString('en-ZA', {
-    weekday: 'short',
-    month: 'short',
+  return dateObj.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
     year: 'numeric'
   })
 })
 
-// Build the time-slot filter from the real Notice Board data
-const availableTimeSlots = computed(() => {
-  const slots = new Set()
+const hhmm = (value) => String(value || '').slice(0, 5)
+function slotLabel(slot) {
+  return `${hhmm(slot?.start_time)}–${hhmm(slot?.end_time)}`
+}
 
-  coaches.value.forEach(coach => {
-    coach.availableSlots.forEach(slot => {
-      slots.add(slot)
-    })
-  })
+function initials(name) {
+  const cleaned = String(name || 'Coach').replace(/^Coach\s+/i, '')
+  const parts = cleaned.split(' ').filter(Boolean)
+  const letters = parts.map(w => w[0]).join('')
+  return letters.toUpperCase().slice(0, 2) || 'C'
+}
 
-  return Array.from(slots)
-})
-
-// Filter coaches by selected time slot
-const filteredCoaches = computed(() => {
-  if (selectedTimeSlot.value === 'ALL') {
-    return coaches.value
+const avatarPalette = [
+  'bg-blue-100 text-blue-700',
+  'bg-indigo-100 text-indigo-700',
+  'bg-amber-100 text-amber-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',
+]
+function avatarClass(id) {
+  const str = String(id ?? '')
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0
   }
+  return avatarPalette[hash % avatarPalette.length]
+}
 
-  return coaches.value.filter(coach =>
-    coach.availableSlots.includes(selectedTimeSlot.value)
-  )
-})
+function isCoachExpanded(coachId) {
+  return Boolean(expandedCoachIds.value[coachId])
+}
 
-// Load published coach availability from Laravel
+function toggleCoach(coachId) {
+  expandedCoachIds.value = {
+    ...expandedCoachIds.value,
+    [coachId]: !expandedCoachIds.value[coachId],
+  }
+}
+
+let loadToken = 0
 async function loadNoticeBoard() {
-  if (!selectedDate.value) {
-    coaches.value = []
-    return
-  }
-
+  const token = ++loadToken
   loading.value = true
   errorMessage.value = ''
+  expandedCoachIds.value = {}
 
   try {
-    const result = await http.get(
-      `/notice-board/coaches?date=${selectedDate.value}`
-    )
+    const res = await http.get(`/notice-board/coaches${query({ date: selectedDate.value })}`)
+    if (token !== loadToken) return
 
-    coaches.value = (result.data ?? []).map(coach => ({
-      id: coach.coach_id,
-      name: coach.coach_name,
-      specialization: 'Squash Coach',
-
-      availableSlots: (coach.time_slots ?? []).map(
-        slot => `${slot.start_time} - ${slot.end_time}`
-      )
-    }))
-  } catch (error) {
+    const data = Array.isArray(res?.data) ? res.data : []
+    coaches.value = data
+  } catch (e) {
+    if (token !== loadToken) return
     coaches.value = []
-
-    errorMessage.value =
-      error.message || 'Unable to load coach availability.'
+    errorMessage.value = e?.message ?? 'Unable to load coach availability.'
   } finally {
+    if (token !== loadToken) return
     loading.value = false
   }
 }
 
-// Reset filters to today
-function resetFilters() {
-  selectedDate.value = today
-  selectedTimeSlot.value = 'ALL'
+function selectCoachForBooking(coach, slot) {
+  const coachName = coach?.name || 'Coach'
+  alert(`Proceeding to Private Coach Session booking for ${coachName} on ${selectedDate.value} at ${slotLabel(slot)}`)
 }
 
-// Booking is not connected yet.
-// Keep this temporary action until booking integration is implemented.
-function selectCoachForBooking(coach) {
-  alert(
-    `Proceeding to Private Coach Session booking for ${coach.name} on ${selectedDate.value}`
-  )
-}
-
-// Reload Notice Board whenever the selected date changes
 watch(selectedDate, () => {
-  selectedTimeSlot.value = 'ALL'
   loadNoticeBoard()
 })
 
-// Initial load
 onMounted(() => {
   loadNoticeBoard()
 })

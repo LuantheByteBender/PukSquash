@@ -29,6 +29,31 @@ class AvailabilityController extends Controller
         $slots   = $snapshot['timeSlots'];
         $booked  = $snapshot['bookings'];
 
+        usort(
+            $courts,
+            static function ($a, $b) {
+                $aName = is_object($a) ? ($a->name ?? '') : '';
+                $bName = is_object($b) ? ($b->name ?? '') : '';
+
+                preg_match('/\d+/', (string) $aName, $aMatch);
+                preg_match('/\d+/', (string) $bName, $bMatch);
+
+                $aNum = isset($aMatch[0]) ? (int) $aMatch[0] : null;
+                $bNum = isset($bMatch[0]) ? (int) $bMatch[0] : null;
+
+                if ($aNum !== null && $bNum !== null && $aNum !== $bNum) {
+                    return $aNum <=> $bNum;
+                }
+
+                return strnatcasecmp((string) $aName, (string) $bName);
+            }
+        );
+
+        usort(
+            $slots,
+            static fn ($a, $b) => ($a->displayOrder ?? PHP_INT_MAX) <=> ($b->displayOrder ?? PHP_INT_MAX)
+        );
+
         $firebaseUid = $request->attributes->get('firebase_uid');
 
         $tz = 'Africa/Johannesburg';
