@@ -5,7 +5,6 @@ import { bookingService } from '../features/booking/bookingService.js';
 import { useToast } from '../composables/useToast.js';
 import { useAccount } from '../composables/useAccount.js';
 import BookingCard from '../components/BookingCard.vue';
-import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 const toast = useToast();
 
@@ -135,9 +134,8 @@ const hhmm = (time) => (time || '').slice(0, 5);
             </button>
         </div>
 
-        <div v-if="loading" class="card centred">
-            <LoadingSpinner />
-        </div>
+        <!-- One spinner only (bug #10): the app-wide overlay shows while loading. -->
+        <template v-if="loading"></template>
 
         <p v-else-if="error" class="alert alert-error">{{ error }}</p>
 

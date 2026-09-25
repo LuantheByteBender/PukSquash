@@ -14,7 +14,6 @@ import { useToast } from '../composables/useToast.js';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
 import GridLegend from '../components/GridLegend.vue';
 import BookingDialog from '../components/BookingDialog.vue';
-import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 const toast = useToast();
 
@@ -197,9 +196,9 @@ const gridEmpty = computed(
             </div>
         </div>
 
-        <div v-if="loading && !data" class="card centred">
-            <LoadingSpinner label="Checking availability…" />
-        </div>
+        <!-- One spinner only (bug #10): every API call already shows the app-wide
+             "Loading…" overlay from App.vue, so this page adds no spinner of its own. -->
+        <template v-if="loading && !data"></template>
 
         <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
@@ -207,7 +206,6 @@ const gridEmpty = computed(
             <div class="card">
                 <div class="grid-head">
                     <h2>{{ prettyDate }}</h2>
-                    <LoadingSpinner v-if="loading" label="refreshing" />
                 </div>
 
                 <p v-if="gridEmpty" class="muted empty">

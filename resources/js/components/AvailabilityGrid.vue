@@ -151,17 +151,11 @@ function describe(court, slot, cell) {
                                     })
                             "
                         >
-                            <span
-                                v-if="busyKey === keyFor(court.id, slot.id)"
-                                class="dot-spinner"
-                                aria-hidden="true"
-                            ></span>
+                            <!-- No per-cell spinner (bug #10): the app-wide overlay already
+                                 shows while the booking is submitted; the cell is just disabled. -->
+                            <span class="cell-label">{{ displayLabel(cellAt(court.id, slot.id)) }}</span>
 
-                            <template v-else>
-                                <span class="cell-label">{{ displayLabel(cellAt(court.id, slot.id)) }}</span>
-
-                                <span v-if="cellAt(court.id, slot.id).can_join" class="tag tag-join">Join</span>
-                            </template>
+                            <span v-if="cellAt(court.id, slot.id).can_join" class="tag tag-join">Join</span>
                         </component>
                     </td>
                 </tr>
@@ -378,21 +372,6 @@ thead th {
 
 .tag-join {
     background: rgba(17, 75, 134, 0.12);
-}
-
-.dot-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--ps-border);
-    border-top-color: var(--ps-brand);
-    border-radius: 50%;
-    animation: ps-spin 0.7s linear infinite;
-}
-
-@keyframes ps-spin {
-    to {
-        transform: rotate(360deg);
-    }
 }
 
 @media (max-width: 600px) {

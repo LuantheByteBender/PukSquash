@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
-import LoadingSpinner from '../components/LoadingSpinner.vue';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
 import GridLegend from '../components/GridLegend.vue';
 import { bookingService, ApiConflict } from '../features/booking/bookingService.js';
@@ -270,9 +269,9 @@ onMounted(loadAvailability);
 
         <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
-        <div v-if="loading && !Object.keys(availability).length" class="card centred">
-            <LoadingSpinner label="Checking availability…" />
-        </div>
+        <!-- One spinner only (bug #10): the app-wide overlay shows while the dates
+             load, instead of an extra spinner here and one per date card. -->
+        <template v-if="loading && !Object.keys(availability).length"></template>
 
         <div v-else>
             <GridLegend show-selected class="tp-legend" />
@@ -280,7 +279,6 @@ onMounted(loadAvailability);
             <div v-for="date in selectedDates" :key="date" class="card grid-card">
                 <div class="grid-head">
                     <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
-                    <LoadingSpinner v-if="loading" label="refreshing" />
                 </div>
 
                 <p v-if="!availability[date]?.courts?.length || !availability[date]?.time_slots?.length" class="muted empty">
