@@ -51,6 +51,29 @@ function cellAt(courtId, slotId) {
 
 const isActionable = (cell) => Boolean(cell.can_book || cell.can_join);
 
+/**
+ * The backend sends every cell that cannot be booked as UNAVAILABLE and tells
+ * the reasons apart only by label: "Inactive" (court switched off), "—" (the slot
+ * has already started) and "Unavailable" (you already hold a court at this hour).
+ * These get their own look so a student does not read "you are booked on
+ * another court" as "every court is gone". Presentation only — the backend still
+ * decides what can be booked.
+ */
+function visualState(cell) {
+    if (cell.state !== 'UNAVAILABLE') return cell.state.toLowerCase();
+    if (cell.label === 'Unavailable') return 'busy';
+    if (cell.label === '—') return 'past';
+
+    return 'unavailable';
+}
+
+const VISUAL_LABELS = {
+    busy: 'Booked elsewhere',
+    past: 'Past',
+};
+
+const displayLabel = (cell) => VISUAL_LABELS[visualState(cell)] || cell.label;
+
 const hhmm = (time) => (time || '').slice(0, 5);
 
 const STATE_DESCRIPTIONS = {
@@ -62,9 +85,15 @@ const STATE_DESCRIPTIONS = {
     UNAVAILABLE: 'unavailable',
 };
 
+const VISUAL_DESCRIPTIONS = {
+    busy: 'unavailable, you already have a booking at this time',
+    past: 'unavailable, this time has passed',
+};
+
 function describe(court, slot, cell) {
     const when = `${hhmm(slot.start_time)} to ${hhmm(slot.end_time)}`;
-    const what = STATE_DESCRIPTIONS[cell.state] || cell.state;
+    const what =
+        VISUAL_DESCRIPTIONS[visualState(cell)] || STATE_DESCRIPTIONS[cell.state] || cell.state;
 
     return `${court.name}, ${when}, ${what}`;
 }
@@ -99,7 +128,7 @@ function describe(court, slot, cell) {
                             :is="isActionable(cellAt(court.id, slot.id)) ? 'button' : 'div'"
                             class="cell"
                             :class="[
-                                `state-${cellAt(court.id, slot.id).state.toLowerCase()}`,
+                                `state-${visualState(cellAt(court.id, slot.id))}`,
                                 {
                                     mine: cellAt(court.id, slot.id).is_mine,
                                     selected: selectedKeySet.has(keyFor(court.id, slot.id)),
@@ -129,7 +158,7 @@ function describe(court, slot, cell) {
                             ></span>
 
                             <template v-else>
-                                <span class="cell-label">{{ cellAt(court.id, slot.id).label }}</span>
+                                <span class="cell-label">{{ displayLabel(cellAt(court.id, slot.id)) }}</span>
 
                                 <span v-if="cellAt(court.id, slot.id).can_join" class="tag tag-join">Join</span>
                             </template>
@@ -142,13 +171,17 @@ function describe(court, slot, cell) {
 </template>
 
 <style scoped>
-/* The grid scrolls sideways on a phone, and the Time column is the only thing
-   that says which row you are looking at. It is frozen to the left edge, and the
-   "Time" header corner is frozen in both directions so the two never come apart.
-   Every frozen cell needs an opaque background — a transparent one lets the
-   scrolling court columns show through it. */
+/* Frozen panes. The grid scrolls inside its own box in both directions, so the
+   court-name header row stays pinned to the top and the Time column stays pinned
+   to the left however far you scroll. (With only sideways scrolling here, the
+   header row's `position: sticky` had nothing to stick to and scrolled away with
+   the page.) The "Time" corner is frozen in both directions so the two never
+   come apart. Every frozen cell needs an opaque background — a transparent one
+   lets the scrolling court columns show through it. */
 .grid-wrap {
-    overflow-x: auto;
+    overflow: auto;
+    max-height: min(70vh, 640px);
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     border: 1px solid var(--ps-border-soft);
     border-radius: var(--ps-radius);
@@ -171,6 +204,7 @@ thead th {
     z-index: 2;
     background: var(--ps-surface);
     border-bottom: 1px solid var(--ps-border);
+    box-shadow: 0 1px 0 var(--ps-border);
     padding: 0.55rem 0.4rem;
     font-size: 0.8rem;
     font-weight: 650;
@@ -231,6 +265,10 @@ thead th {
 }
 
 .cell {
+    /* border-box so read-only cells (rendered as <div>) are the same width as
+       bookable ones (<button>, which is border-box by default) and do not spill
+       into the neighbouring column. */
+    box-sizing: border-box;
     width: 100%;
     min-height: 46px;
     display: flex;
@@ -300,6 +338,18 @@ thead th {
     background: var(--ps-inactive);
     border-color: var(--ps-inactive-bd);
     color: var(--ps-inactive-ink);
+}
+
+.state-busy {
+    background: var(--ps-busy);
+    border-color: var(--ps-busy-bd);
+    color: var(--ps-busy-ink);
+}
+
+.state-past {
+    background: var(--ps-past);
+    border-color: var(--ps-past-bd);
+    color: var(--ps-past-ink);
 }
 
 /* The approved wireframe marks the student's own booking with a bold dark

@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
+import GridLegend from '../components/GridLegend.vue';
 import { bookingService, ApiConflict } from '../features/booking/bookingService.js';
 import { useToast } from '../composables/useToast.js';
 
@@ -274,6 +275,8 @@ onMounted(loadAvailability);
         </div>
 
         <div v-else>
+            <GridLegend show-selected class="tp-legend" />
+
             <div v-for="date in selectedDates" :key="date" class="card grid-card">
                 <div class="grid-head">
                     <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
@@ -371,6 +374,10 @@ onMounted(loadAvailability);
     display: grid;
     place-items: center;
     padding: 2rem 1rem;
+}
+
+.tp-legend {
+    margin-top: 1rem;
 }
 
 .grid-card {
