@@ -9,7 +9,6 @@
  */
 import { ref, watch, computed } from 'vue';
 import { bookingService } from '../features/booking/bookingService.js';
-import LoadingSpinner from './LoadingSpinner.vue';
 
 const props = defineProps({
     court: { type: Object, required: true },
@@ -175,7 +174,8 @@ const sessionTypes = [
                 <div v-if="type === 'PRIVATE_COACH'" class="coach">
                     <label for="coach-select">Available coach</label>
 
-                    <LoadingSpinner v-if="loadingCoaches" label="Checking who is available…" />
+                    <!-- Text only (bug #10): the app-wide overlay is the spinner. -->
+                    <p v-if="loadingCoaches" class="muted">Checking who is available…</p>
 
                     <p v-else-if="coachError" class="alert alert-error">{{ coachError }}</p>
 
