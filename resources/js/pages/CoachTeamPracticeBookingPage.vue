@@ -267,35 +267,9 @@ onMounted(loadAvailability);
             </div>
         </div>
 
-        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
-
-        <!-- One spinner only (bug #10): the app-wide overlay shows while the dates
-             load, instead of an extra spinner here and one per date card. -->
-        <template v-if="loading && !Object.keys(availability).length"></template>
-
-        <div v-else>
-            <GridLegend show-selected class="tp-legend" />
-
-            <div v-for="date in selectedDates" :key="date" class="card grid-card">
-                <div class="grid-head">
-                    <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
-                </div>
-
-                <p v-if="!availability[date]?.courts?.length || !availability[date]?.time_slots?.length" class="muted empty">
-                    No courts are open for booking on this date.
-                </p>
-
-                <AvailabilityGrid
-                    v-else
-                    :courts="availability[date].courts"
-                    :time-slots="availability[date].time_slots"
-                    :cells="availability[date].cells"
-                    :selected-keys="selectedKeysByDate[date]"
-                    @select="({ court, slot, cell }) => toggleSelection(date, court, slot, cell)"
-                />
-            </div>
-        </div>
-
+        <!-- Bug #4: the selections sit directly under the "Review & confirm" card,
+             so a coach sees what they picked next to the button that books it,
+             instead of having to scroll past every date's grid. -->
         <div class="card review" v-if="selectionCount">
             <div class="review-head">
                 <h2>Selected reservations</h2>
@@ -324,6 +298,35 @@ onMounted(loadAvailability);
         <div class="card" v-if="lastBookedIds.length">
             <h2>Latest team practice booking</h2>
             <p class="muted">Created {{ lastBookedIds.length }} bookings.</p>
+        </div>
+
+        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
+
+        <!-- One spinner only (bug #10): the app-wide overlay shows while the dates
+             load, instead of an extra spinner here and one per date card. -->
+        <template v-if="loading && !Object.keys(availability).length"></template>
+
+        <div v-else>
+            <GridLegend show-selected class="tp-legend" />
+
+            <div v-for="date in selectedDates" :key="date" class="card grid-card">
+                <div class="grid-head">
+                    <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
+                </div>
+
+                <p v-if="!availability[date]?.courts?.length || !availability[date]?.time_slots?.length" class="muted empty">
+                    No courts are open for booking on this date.
+                </p>
+
+                <AvailabilityGrid
+                    v-else
+                    :courts="availability[date].courts"
+                    :time-slots="availability[date].time_slots"
+                    :cells="availability[date].cells"
+                    :selected-keys="selectedKeysByDate[date]"
+                    @select="({ court, slot, cell }) => toggleSelection(date, court, slot, cell)"
+                />
+            </div>
         </div>
 
         <ConfirmDialog
@@ -422,6 +425,10 @@ onMounted(loadAvailability);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    /* A long selection scrolls inside the card rather than pushing the grids
+       far down the page. */
+    max-height: 260px;
+    overflow-y: auto;
 }
 
 .review-row {
