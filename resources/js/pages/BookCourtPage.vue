@@ -215,6 +215,10 @@ const gridEmpty = computed(
                 </p>
 
                 <template v-else>
+                    <!-- Legend sits above the grid, and the grid scrolls inside its
+                         own box, so the key stays on screen while you scan the slots. -->
+                    <GridLegend class="legend-above" />
+
                     <AvailabilityGrid
                         :courts="data.courts"
                         :time-slots="data.time_slots"
@@ -222,8 +226,6 @@ const gridEmpty = computed(
                         :busy-key="busyKey"
                         @select="onSelect"
                     />
-
-                    <GridLegend />
                 </template>
             </div>
         </template>
@@ -289,6 +291,10 @@ const gridEmpty = computed(
     display: grid;
     place-items: center;
     padding: 2rem 1rem;
+}
+
+.legend-above {
+    margin-bottom: 0.75rem;
 }
 
 .empty {

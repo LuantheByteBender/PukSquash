@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TimeSlotController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminCourtController;
+use App\Http\Controllers\Api\TeamPracticeController;
 use Illuminate\Support\Facades\Route;
    
     // Admin
@@ -60,4 +61,8 @@ Route::middleware('firebase.auth')->group(function () {
     Route::put('/coach/availability', [CoachAvailabilityController::class, 'publish']);
     Route::get('/coach/availability', [CoachAvailabilityController::class, 'mine']);
     Route::delete('/coach/availability', [CoachAvailabilityController::class, 'destroy']);
+
+    Route::get('/coach/team-practice/availability', [TeamPracticeController::class, 'availability']);
+    Route::post('/coach/team-practices', [TeamPracticeController::class, 'store']);
+    Route::get('/coach/team-practices', [TeamPracticeController::class, 'mine']);
 });

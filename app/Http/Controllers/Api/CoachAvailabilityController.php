@@ -213,14 +213,13 @@ class CoachAvailabilityController extends Controller
         $availability = $this->availability->getNoticeBoardForDate(
             $validated['date']
         );
-        
+
         $coaches = [];
-        
+
         foreach ($availability as $item) {
             $coach = $item->coach;
             $timeSlot = $item->timeSlot;
-            
-            // Ignore incomplete relationship data.
+
             if (
                 ! $coach ||
                 empty($coach['id']) ||
@@ -231,44 +230,50 @@ class CoachAvailabilityController extends Controller
                 ($timeSlot['isActive'] ?? false) !== true
             ) {
                 continue;
-        }
-            
+            }
+
             $coachId = $coach['id'];
-            
-            // Create the Coach entry the first time we encounter this Coach.
+            $slotId = $timeSlot['id'];
+
             if (! isset($coaches[$coachId])) {
                 $coaches[$coachId] = [
-                    'coach_id' => $coachId,
-                    'coach_name' => $coach['fullName'] ?? null,
-                    'availability_date' => $item->availabilityDate,
+                    'id' => $coachId,
+                    'name' => $coach['fullName'] ?? $coach['name'] ?? null,
                     'time_slots' => [],
                 ];
             }
-            
-            // Add this published time slot to the Coach.
-            $coaches[$coachId]['time_slots'][] = [
-                'id' => $timeSlot['id'],
+
+            $coaches[$coachId]['time_slots'][$slotId] = [
+                'id' => $slotId,
                 'start_time' => $timeSlot['startTime'] ?? null,
                 'end_time' => $timeSlot['endTime'] ?? null,
                 'display_order' => $timeSlot['displayOrder'] ?? null,
             ];
         }
-        
-        // Keep each Coach's slots in their configured display order.
-        foreach ($coaches as &$coach) {
+
+        foreach ($coaches as &$coachRow) {
+            $coachRow['time_slots'] = array_values($coachRow['time_slots']);
+
             usort(
-                $coach['time_slots'],
+                $coachRow['time_slots'],
                 fn (array $a, array $b) =>
                 ($a['display_order'] ?? PHP_INT_MAX)
                 <=>
                 ($b['display_order'] ?? PHP_INT_MAX)
             );
         }
-        unset($coach);
-        
+        unset($coachRow);
+
+        $payload = array_values($coaches);
+        usort(
+            $payload,
+            fn (array $a, array $b) =>
+            strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''))
+        );
+
         return response()->json([
             'date' => $validated['date'],
-            'data' => array_values($coaches),
+            'data' => $payload,
         ]);
     }
 

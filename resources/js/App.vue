@@ -63,30 +63,44 @@ const showChrome = computed(() => route.meta.chrome !== false);
     /* Booking cell states. Six states need six distinguishable hues, and each
        cell also carries a text label — colour alone never carries the meaning.
        LOCKED is deliberately a pinker plum so it is not mistaken for the brand
-       purple used by navigation and buttons. */
-    --ps-available: #ffffff;
-    --ps-available-bd: #b3d9be;
-    --ps-available-ink: #1d6b34;
+       purple used by navigation and buttons.
+       The fills are deliberately stronger than a pale tint so the states can be
+       told apart at a glance in both the grid and the legend; every ink colour
+       keeps at least 4.5:1 contrast on its fill. */
+    --ps-available: #d7f0de;
+    --ps-available-bd: #8cc79c;
+    --ps-available-ink: #1a5e2e;
 
-    --ps-open: #eaf2ff;
-    --ps-open-bd: #9dc4f0;
-    --ps-open-ink: #114b86;
+    --ps-open: #cfe2fb;
+    --ps-open-bd: #7eaee4;
+    --ps-open-ink: #0f437a;
 
-    --ps-full: #eeeef1;
-    --ps-full-bd: #c9c9d2;
-    --ps-full-ink: #4f4d59;
+    --ps-full: #d9d9e0;
+    --ps-full-bd: #a9a9b6;
+    --ps-full-ink: #3f3d48;
 
-    --ps-locked: #fbeef8;
-    --ps-locked-bd: #ddb0d4;
-    --ps-locked-ink: #7a2f6d;
+    --ps-locked: #f4d6ec;
+    --ps-locked-bd: #cc8fc0;
+    --ps-locked-ink: #6b2860;
 
-    --ps-coach: #fff4e5;
-    --ps-coach-bd: #f0c48a;
-    --ps-coach-ink: #8a5209;
+    --ps-coach: #fde0b8;
+    --ps-coach-bd: #e3a553;
+    --ps-coach-ink: #774607;
 
-    --ps-inactive: #f3f2f5;
-    --ps-inactive-bd: #e0dce6;
-    --ps-inactive-ink: #9b95a4;
+    /* Grey family for cells that cannot be booked, split three ways so the
+       reason is visible: the court is inactive, the slot has already started,
+       or you already have a booking somewhere else at that hour. */
+    --ps-inactive: #e4e1e8;
+    --ps-inactive-bd: #c4bfcc;
+    --ps-inactive-ink: #5f5968;
+
+    --ps-past: #f0eef3;
+    --ps-past-bd: #dcd8e2;
+    --ps-past-ink: #6f6979;
+
+    --ps-busy: #e6dcf2;
+    --ps-busy-bd: #b39ccf;
+    --ps-busy-ink: #4f2f6e;
 
     --ps-danger: #b3261e;
     --ps-danger-bg: #fdecea;
