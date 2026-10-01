@@ -107,6 +107,22 @@ export interface DeleteCoachAvailabilityForSlotVariables {
   availabilityDate: DateString;
 }
 
+export interface DeleteCourtData {
+  court_delete?: Court_Key | null;
+}
+
+export interface DeleteCourtVariables {
+  id: UUIDString;
+}
+
+export interface DeleteUserData {
+  user_delete?: User_Key | null;
+}
+
+export interface DeleteUserVariables {
+  id: UUIDString;
+}
+
 export interface GetAvailabilityDataData {
   courts: ({
     id: UUIDString;
@@ -138,8 +154,14 @@ export interface GetAvailabilityDataData {
       id: UUIDString;
     } & TimeSlot_Key;
     createdBy: {
+      id: UUIDString;
       firebaseUid: string;
-    };
+      fullName: string;
+    } & User_Key;
+    coach?: {
+      id: UUIDString;
+      fullName: string;
+    } & User_Key;
     bookingPlayers_on_booking: ({
       id: UUIDString;
       playerPosition: number;
@@ -505,6 +527,18 @@ export interface GetConfirmedBookingsByCoachVariables {
   coachId: UUIDString;
 }
 
+export interface GetConfirmedBookingsForCoachDateData {
+  bookings: ({
+    id: UUIDString;
+    timeSlotId: UUIDString;
+  } & Booking_Key)[];
+}
+
+export interface GetConfirmedBookingsForCoachDateVariables {
+  coachId: UUIDString;
+  bookingDate: DateString;
+}
+
 export interface GetCourtData {
   court?: {
     id: UUIDString;
@@ -518,6 +552,52 @@ export interface GetCourtData {
 
 export interface GetCourtVariables {
   id: UUIDString;
+}
+
+export interface GetTeamPracticeBookingsByCoachDateData {
+  bookings: ({
+    id: UUIDString;
+    bookingDate: DateString;
+    bookingType: string;
+    status: string;
+    bookedAt: TimestampString;
+    cancelledAt?: TimestampString | null;
+    createdAt: TimestampString;
+    court: {
+      id: UUIDString;
+      name: string;
+    } & Court_Key;
+    timeSlot: {
+      id: UUIDString;
+      startTime: string;
+      endTime: string;
+    } & TimeSlot_Key;
+    createdBy: {
+      id: UUIDString;
+      fullName: string;
+      email: string;
+    } & User_Key;
+    coach?: {
+      id: UUIDString;
+      fullName: string;
+      email: string;
+    } & User_Key;
+    bookingPlayers_on_booking: ({
+      id: UUIDString;
+      playerPosition: number;
+      joinedAt: TimestampString;
+      user: {
+        id: UUIDString;
+        fullName: string;
+        email: string;
+      } & User_Key;
+    } & BookingPlayer_Key)[];
+  } & Booking_Key)[];
+}
+
+export interface GetTeamPracticeBookingsByCoachDateVariables {
+  coachId: UUIDString;
+  bookingDate: DateString;
 }
 
 export interface GetUserByFirebaseUidData {
@@ -598,9 +678,38 @@ export interface ListActiveTimeSlotsData {
   } & TimeSlot_Key)[];
 }
 
+export interface ListAllCourtsData {
+  courts: ({
+    id: UUIDString;
+    name: string;
+    description?: string | null;
+    status: string;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+  } & Court_Key)[];
+}
+
+export interface ListAllUsersData {
+  users: ({
+    id: UUIDString;
+    firebaseUid: string;
+    studentNumber?: string | null;
+    fullName: string;
+    email: string;
+    role: string;
+    status: string;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+  } & User_Key)[];
+}
+
 export interface TimeSlot_Key {
   id: UUIDString;
   __typename?: 'TimeSlot_Key';
+}
+
+export interface UpdateCourtData {
+  court_update?: Court_Key | null;
 }
 
 export interface UpdateCourtStatusData {
@@ -612,6 +721,17 @@ export interface UpdateCourtStatusVariables {
   status: string;
 }
 
+export interface UpdateCourtVariables {
+  id: UUIDString;
+  name?: string | null;
+  description?: string | null;
+  status?: string | null;
+}
+
+export interface UpdateUserData {
+  user_update?: User_Key | null;
+}
+
 export interface UpdateUserProfileData {
   user_updateMany: number;
 }
@@ -620,6 +740,12 @@ export interface UpdateUserProfileVariables {
   firebaseUid: string;
   fullName: string;
   studentNumber?: string | null;
+}
+
+export interface UpdateUserVariables {
+  id: UUIDString;
+  role?: string | null;
+  status?: string | null;
 }
 
 export interface UpsertUserData {
@@ -664,6 +790,30 @@ export const updateUserProfileRef: UpdateUserProfileRef;
 export function updateUserProfile(vars: UpdateUserProfileVariables): MutationPromise<UpdateUserProfileData, UpdateUserProfileVariables>;
 export function updateUserProfile(dc: DataConnect, vars: UpdateUserProfileVariables): MutationPromise<UpdateUserProfileData, UpdateUserProfileVariables>;
 
+interface UpdateUserRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateUserVariables): MutationRef<UpdateUserData, UpdateUserVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateUserVariables): MutationRef<UpdateUserData, UpdateUserVariables>;
+  operationName: string;
+}
+export const updateUserRef: UpdateUserRef;
+
+export function updateUser(vars: UpdateUserVariables): MutationPromise<UpdateUserData, UpdateUserVariables>;
+export function updateUser(dc: DataConnect, vars: UpdateUserVariables): MutationPromise<UpdateUserData, UpdateUserVariables>;
+
+interface DeleteUserRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteUserVariables): MutationRef<DeleteUserData, DeleteUserVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteUserVariables): MutationRef<DeleteUserData, DeleteUserVariables>;
+  operationName: string;
+}
+export const deleteUserRef: DeleteUserRef;
+
+export function deleteUser(vars: DeleteUserVariables): MutationPromise<DeleteUserData, DeleteUserVariables>;
+export function deleteUser(dc: DataConnect, vars: DeleteUserVariables): MutationPromise<DeleteUserData, DeleteUserVariables>;
+
 interface CreateCourtRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateCourtVariables): MutationRef<CreateCourtData, CreateCourtVariables>;
@@ -687,6 +837,30 @@ export const updateCourtStatusRef: UpdateCourtStatusRef;
 
 export function updateCourtStatus(vars: UpdateCourtStatusVariables): MutationPromise<UpdateCourtStatusData, UpdateCourtStatusVariables>;
 export function updateCourtStatus(dc: DataConnect, vars: UpdateCourtStatusVariables): MutationPromise<UpdateCourtStatusData, UpdateCourtStatusVariables>;
+
+interface UpdateCourtRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateCourtVariables): MutationRef<UpdateCourtData, UpdateCourtVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateCourtVariables): MutationRef<UpdateCourtData, UpdateCourtVariables>;
+  operationName: string;
+}
+export const updateCourtRef: UpdateCourtRef;
+
+export function updateCourt(vars: UpdateCourtVariables): MutationPromise<UpdateCourtData, UpdateCourtVariables>;
+export function updateCourt(dc: DataConnect, vars: UpdateCourtVariables): MutationPromise<UpdateCourtData, UpdateCourtVariables>;
+
+interface DeleteCourtRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteCourtVariables): MutationRef<DeleteCourtData, DeleteCourtVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteCourtVariables): MutationRef<DeleteCourtData, DeleteCourtVariables>;
+  operationName: string;
+}
+export const deleteCourtRef: DeleteCourtRef;
+
+export function deleteCourt(vars: DeleteCourtVariables): MutationPromise<DeleteCourtData, DeleteCourtVariables>;
+export function deleteCourt(dc: DataConnect, vars: DeleteCourtVariables): MutationPromise<DeleteCourtData, DeleteCourtVariables>;
 
 interface CreateTimeSlotRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -916,6 +1090,18 @@ export const getBookingsForTimeSlotRef: GetBookingsForTimeSlotRef;
 export function getBookingsForTimeSlot(vars: GetBookingsForTimeSlotVariables, options?: ExecuteQueryOptions): QueryPromise<GetBookingsForTimeSlotData, GetBookingsForTimeSlotVariables>;
 export function getBookingsForTimeSlot(dc: DataConnect, vars: GetBookingsForTimeSlotVariables, options?: ExecuteQueryOptions): QueryPromise<GetBookingsForTimeSlotData, GetBookingsForTimeSlotVariables>;
 
+interface GetTeamPracticeBookingsByCoachDateRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetTeamPracticeBookingsByCoachDateVariables): QueryRef<GetTeamPracticeBookingsByCoachDateData, GetTeamPracticeBookingsByCoachDateVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetTeamPracticeBookingsByCoachDateVariables): QueryRef<GetTeamPracticeBookingsByCoachDateData, GetTeamPracticeBookingsByCoachDateVariables>;
+  operationName: string;
+}
+export const getTeamPracticeBookingsByCoachDateRef: GetTeamPracticeBookingsByCoachDateRef;
+
+export function getTeamPracticeBookingsByCoachDate(vars: GetTeamPracticeBookingsByCoachDateVariables, options?: ExecuteQueryOptions): QueryPromise<GetTeamPracticeBookingsByCoachDateData, GetTeamPracticeBookingsByCoachDateVariables>;
+export function getTeamPracticeBookingsByCoachDate(dc: DataConnect, vars: GetTeamPracticeBookingsByCoachDateVariables, options?: ExecuteQueryOptions): QueryPromise<GetTeamPracticeBookingsByCoachDateData, GetTeamPracticeBookingsByCoachDateVariables>;
+
 interface GetBookingsByUserRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: GetBookingsByUserVariables): QueryRef<GetBookingsByUserData, GetBookingsByUserVariables>;
@@ -964,6 +1150,30 @@ export const isCoachAvailableRef: IsCoachAvailableRef;
 export function isCoachAvailable(vars: IsCoachAvailableVariables, options?: ExecuteQueryOptions): QueryPromise<IsCoachAvailableData, IsCoachAvailableVariables>;
 export function isCoachAvailable(dc: DataConnect, vars: IsCoachAvailableVariables, options?: ExecuteQueryOptions): QueryPromise<IsCoachAvailableData, IsCoachAvailableVariables>;
 
+interface ListAllUsersRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListAllUsersData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListAllUsersData, undefined>;
+  operationName: string;
+}
+export const listAllUsersRef: ListAllUsersRef;
+
+export function listAllUsers(options?: ExecuteQueryOptions): QueryPromise<ListAllUsersData, undefined>;
+export function listAllUsers(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListAllUsersData, undefined>;
+
+interface ListAllCourtsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<ListAllCourtsData, undefined>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect): QueryRef<ListAllCourtsData, undefined>;
+  operationName: string;
+}
+export const listAllCourtsRef: ListAllCourtsRef;
+
+export function listAllCourts(options?: ExecuteQueryOptions): QueryPromise<ListAllCourtsData, undefined>;
+export function listAllCourts(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<ListAllCourtsData, undefined>;
+
 interface GetCoachAvailabilityForDateRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: GetCoachAvailabilityForDateVariables): QueryRef<GetCoachAvailabilityForDateData, GetCoachAvailabilityForDateVariables>;
@@ -987,6 +1197,18 @@ export const getConfirmedBookingForCoachSlotRef: GetConfirmedBookingForCoachSlot
 
 export function getConfirmedBookingForCoachSlot(vars: GetConfirmedBookingForCoachSlotVariables, options?: ExecuteQueryOptions): QueryPromise<GetConfirmedBookingForCoachSlotData, GetConfirmedBookingForCoachSlotVariables>;
 export function getConfirmedBookingForCoachSlot(dc: DataConnect, vars: GetConfirmedBookingForCoachSlotVariables, options?: ExecuteQueryOptions): QueryPromise<GetConfirmedBookingForCoachSlotData, GetConfirmedBookingForCoachSlotVariables>;
+
+interface GetConfirmedBookingsForCoachDateRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetConfirmedBookingsForCoachDateVariables): QueryRef<GetConfirmedBookingsForCoachDateData, GetConfirmedBookingsForCoachDateVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetConfirmedBookingsForCoachDateVariables): QueryRef<GetConfirmedBookingsForCoachDateData, GetConfirmedBookingsForCoachDateVariables>;
+  operationName: string;
+}
+export const getConfirmedBookingsForCoachDateRef: GetConfirmedBookingsForCoachDateRef;
+
+export function getConfirmedBookingsForCoachDate(vars: GetConfirmedBookingsForCoachDateVariables, options?: ExecuteQueryOptions): QueryPromise<GetConfirmedBookingsForCoachDateData, GetConfirmedBookingsForCoachDateVariables>;
+export function getConfirmedBookingsForCoachDate(dc: DataConnect, vars: GetConfirmedBookingsForCoachDateVariables, options?: ExecuteQueryOptions): QueryPromise<GetConfirmedBookingsForCoachDateData, GetConfirmedBookingsForCoachDateVariables>;
 
 interface GetConfirmedBookingsByCoachRef {
   /* Allow users to create refs without passing in DataConnect */

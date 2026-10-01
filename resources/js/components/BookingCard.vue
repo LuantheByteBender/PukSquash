@@ -95,14 +95,21 @@ const opponent = computed(() => {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.8rem 1rem;
+    padding: 0.85rem 1.1rem;
     background: var(--ps-surface);
     border: 1px solid var(--ps-border-soft);
     border-radius: var(--ps-radius);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.booking:hover {
+    box-shadow: var(--ps-shadow);
+    transform: translateY(-2px);
+    border-color: rgba(108, 62, 148, 0.15);
 }
 
 .booking.cancelled {
-    opacity: 0.65;
+    opacity: 0.55;
 }
 
 .when {
@@ -111,22 +118,24 @@ const opponent = computed(() => {
     align-items: center;
     justify-content: center;
     min-width: 84px;
-    padding: 0.35rem 0.5rem;
-    background: var(--ps-brand-tint);
+    padding: 0.4rem 0.6rem;
+    background: linear-gradient(135deg, rgba(242, 236, 247, 0.8) 0%, rgba(242, 236, 247, 1) 100%);
     border-radius: var(--ps-radius-sm);
+    border: 1px solid rgba(221, 207, 233, 0.4);
 }
 
 .date {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--ps-brand);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
 }
 
 .time {
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 650;
+    color: var(--ps-text);
 }
 
 .body {
@@ -141,8 +150,12 @@ const opponent = computed(() => {
     flex-wrap: wrap;
 }
 
+.row strong {
+    font-weight: 700;
+}
+
 .sub {
-    font-size: 0.83rem;
+    font-size: 0.8rem;
     margin: 0.2rem 0 0;
     color: var(--ps-text-muted);
 }

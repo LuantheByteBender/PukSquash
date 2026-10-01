@@ -1,12 +1,15 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { loginUser } from '../features/auth/authService';
-import { refreshAccount } from '../composables/useAccount.js';
+import { loginUser, logoutUser } from '../features/auth/authService';
+import { refreshAccount, clearAccount } from '../composables/useAccount.js';
+import { useToast } from '../composables/useToast.js';
 
 const router = useRouter();
 const route = useRoute();
+
+const toast = useToast();
 
 const email = ref('');
 const password = ref('');
@@ -22,9 +25,66 @@ if (typeof statePassword === 'string' && statePassword) {
     password.value = statePassword;
 }
 
+async function finishLoginFlow(result, redirect) {
+    message.value = `Logged in successfully as ${result.user.email}`;
+
+    try {
+        const profile = await refreshAccount();
+        const role = profile?.role ?? null;
+
+        if (role) {
+            message.value = `Logged in successfully as ${result.user.email} (${role})`;
+        }
+
+        toast.success(`Welcome back, ${result.user.email}!`);
+
+        if (redirect) {
+            await router.push(redirect);
+            return;
+        }
+
+        if (role === 'COACH') {
+            await router.push({ name: 'coach-bookings' });
+            return;
+        }
+
+        await router.push({ name: 'book' });
+    } catch (error) {
+        if (error?.status === 403 && error?.code === 'REGISTRATION_PAYMENT_REQUIRED') {
+            toast.info('Please complete registration payment.');
+            await router.push(
+                redirect
+                    ? { name: 'registration-payment', query: { redirect } }
+                    : { name: 'registration-payment' }
+            );
+            return;
+        }
+
+        if (error?.status === 401) {
+            try {
+                await logoutUser();
+            } catch {
+            }
+            clearAccount();
+            toast.error(error.message);
+            return;
+        }
+
+        toast.error(error?.message ?? 'Unable to complete login.');
+    }
+}
+
 async function login() {
+    if (isLoggingIn.value) return;
+
     message.value = '';
     isLoggingIn.value = true;
+    const loginToastId = toast.loading('Signing in…');
+    const startedAt = Date.now();
+
+    const redirect = typeof route.query.redirect === 'string' && route.query.redirect
+        ? route.query.redirect
+        : null;
 
     try {
         const result = await loginUser(
@@ -33,34 +93,21 @@ async function login() {
         );
 
         if (!result.user.emailVerified) {
-            message.value =
-                'Please verify your email before logging in.';
+            message.value = 'Please verify your email before logging in.';
+            toast.warn(message.value);
             return;
         }
 
-        message.value =
-            `Logged in successfully as ${result.user.email}`;
-
-        try {
-            const profile = await refreshAccount();
-            const role = profile?.role ?? null;
-
-            if (role) {
-                message.value = `Logged in successfully as ${result.user.email} (${role})`;
-            }
-
-            if (role === 'COACH') {
-                await router.push({ name: 'coach-bookings' });
-            } else {
-                await router.push({ name: 'book' });
-            }
-        } catch (error) {
-            message.value = error.message;
-            return;
-        }
+        await finishLoginFlow(result, redirect);
     } catch (error) {
-        message.value = error.message;
+        toast.error(error?.message ?? 'Unable to sign in.');
     } finally {
+        const elapsed = Date.now() - startedAt;
+        const minMs = 900;
+        if (elapsed < minMs) {
+            await new Promise((resolve) => setTimeout(resolve, minMs - elapsed));
+        }
+        toast.dismiss(loginToastId);
         isLoggingIn.value = false;
     }
 }
@@ -70,6 +117,18 @@ async function login() {
 
 <template>
     <main class="login-page">
+
+        <div class="brand-mark">
+            <span class="brand-mark__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="8" rx="5" ry="7"></ellipse>
+                    <line x1="12" y1="1" x2="12" y2="15"></line>
+                    <line x1="7" y1="8" x2="17" y2="8"></line>
+                    <line x1="12" y1="15" x2="12" y2="22"></line>
+                </svg>
+            </span>
+            <span>PukSquash</span>
+        </div>
 
         <!-- Background image of entire page -->
         <div class="background-image">
@@ -154,11 +213,44 @@ async function login() {
     isolation: isolate;
 }
 
+.brand-mark {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    z-index: 2;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.brand-mark__icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+}
+
 .background-image {
     position: absolute;
     inset: 0;
     z-index: -1;
     background-color: #17121d;
+}
+
+.background-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(108, 62, 148, 0.3) 0%, rgba(23, 18, 29, 0.4) 50%, rgba(61, 33, 84, 0.35) 100%);
+    z-index: 1;
 }
 
 .background-image img {
@@ -167,7 +259,7 @@ async function login() {
     height: 100%;
     object-fit: cover;
     object-position: center;
-    opacity: 0.72;
+    opacity: 0.65;
 }
 
 @media (max-width: 768px) {
@@ -176,12 +268,12 @@ async function login() {
     }
 
     .screen-header img {
-        width: clamp(13rem, 50vw, 18rem);
-        height: clamp(13rem, 50vw, 18rem);
+        width: clamp(10rem, 45vw, 15rem);
+        height: clamp(10rem, 45vw, 15rem);
     }
 
     .screen-header h1 {
-        font-size: clamp(2.75rem, 9vw, 3.75rem);
+        font-size: clamp(2.25rem, 9vw, 3.25rem);
     }
 }
 
@@ -202,48 +294,70 @@ async function login() {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    animation: login-slide-down 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .screen-header img {
-    width: clamp(12rem, 40vw, 20rem);
-    height: clamp(12rem, 40vw, 20rem);
+    width: clamp(10rem, 35vw, 16rem);
+    height: clamp(10rem, 35vw, 16rem);
     object-fit: contain;
-    transform: translateY(-1.5rem);
+    transform: translateY(-1rem);
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
 }
 
 .screen-header h1 {
     margin: -0.5rem 0 0;
     color: white;
-    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-size: clamp(2rem, 5.5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
     line-height: 1.1;
-    transform: translateY(-4rem);
+    transform: translateY(-3.5rem);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .login-content {
     align-items: center;
     min-height: 0;
+    animation: login-slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.15s both;
 }
 
 .auth-card {
-    width: min(100%, 26rem);
-    padding: clamp(1.25rem, 3vw, 1.75rem);
-    border-radius: 0.9rem;
-    background: rgb(255 255 255 / 0.92);
-    box-shadow: 0 18px 40px rgb(0 0 0 / 0.28);
-    color: #17121d;
+    width: min(100%, 24rem);
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    color: #1c1922;
 }
 
 .auth-card a {
-    color: inherit;
+    color: #6c3e94;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.auth-card a:hover {
+    color: #56306f;
+}
+
+.auth-card a u {
+    text-decoration: none;
+    border-bottom: 1.5px solid currentColor;
+    padding-bottom: 1px;
 }
 
 @media (min-width: 769px) {
     #topscreen {
-        transform: translateY(clamp(-5rem, -7vh, -2.5rem));
+        transform: translateY(clamp(-4.5rem, -6vh, -2rem));
     }
 
     .login-content {
-        transform: translateY(clamp(-5rem, -7vh, -2.5rem));
+        transform: translateY(clamp(-4.5rem, -6vh, -2rem));
     }
 }
 
@@ -251,42 +365,49 @@ async function login() {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .login-fields label {
-    color: inherit;
-    font-size: 1rem;
+    color: #1c1922;
+    font-size: 0.82rem;
     font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .login-fields input {
     width: 100%;
     min-height: 2.75rem;
-    margin-bottom: 0.75rem;
-    padding: 0.7rem 0.8rem;
+    margin-bottom: 0.6rem;
+    padding: 0.7rem 0.85rem;
     box-sizing: border-box;
-    border: 1px solid rgb(23 18 29 / 0.28);
-    border-radius: 0.4rem;
-    color: #17121d;
-    background: white;
+    border: 1.5px solid rgba(23, 18, 29, 0.18);
+    border-radius: 10px;
+    color: #1c1922;
+    background: rgba(255, 255, 255, 0.8);
     font: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .login-fields input::placeholder {
-    color: rgb(23 18 29 / 0.55);
+    color: rgba(23, 18, 29, 0.4);
 }
 
 .login-fields input:focus {
-    outline: 2px solid rgb(23 18 29 / 0.65);
-    outline-offset: 2px;
+    outline: none;
+    border-color: #6c3e94;
+    box-shadow: 0 0 0 3px rgba(108, 62, 148, 0.15);
     background: white;
 }
 
 .login-message {
-    margin: 0.25rem 0 0;
+    margin: 0.5rem 0 0;
     color: inherit;
     text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 .login-buttons {
@@ -295,32 +416,55 @@ async function login() {
     justify-content: center;
     gap: 0.75rem;
     width: 100%;
+    margin-top: 0.25rem;
 }
 
 .login-buttons button {
     flex: 1 1 auto;
     width: 100%;
-    min-height: 2.75rem;
-    padding: 0.7rem 1rem;
-    border: 1px solid white;
-    border-radius: 0.4rem;
+    min-height: 2.85rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 10px;
     color: white;
-    background-color: rgb(108, 61, 145);
+    background: linear-gradient(135deg, #7b4fa6 0%, #6C3D91 50%, #56306f 100%);
     font: inherit;
+    font-size: 0.95rem;
     font-weight: 700;
+    letter-spacing: 0.01em;
     cursor: pointer;
-    transition: background-color 180ms ease, transform 180ms ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(108, 61, 145, 0.3);
 }
 
-.login-buttons button:hover:not(:disabled),
-.login-buttons button:focus-visible {
-    background-color: rgb(84, 43, 117);
+.login-buttons button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.login-buttons button:hover:not(:disabled)::after {
+    opacity: 1;
+}
+
+.login-buttons button:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 61, 145, 0.4);
+}
+
+.login-buttons button:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(108, 61, 145, 0.25);
 }
 
 .login-buttons button:disabled {
     cursor: wait;
-    opacity: 0.7;
+    opacity: 0.65;
 }
 
 @media (max-width: 30rem) {
@@ -333,5 +477,14 @@ async function login() {
     }
 }
 
+@keyframes login-slide-down {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes login-slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 </style>

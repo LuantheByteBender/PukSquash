@@ -5,14 +5,20 @@ import {
     sendEmailVerification,
 } from 'firebase/auth';
 
-import { auth } from '../../services/firebase.js';
-import { startLoading, stopLoading } from '../../services/loading.js';
+async function getAuthInstance() {
+    try {
+        const { auth } = await import('../../services/firebase.js');
+        return auth;
+    } catch {
+        throw new Error('Firebase authentication is unavailable. Check the VITE_FIREBASE_* values in .env.');
+    }
+}
 
 function normalizeEmail(email) {
     return String(email ?? '').trim();
 }
 
-function friendlyAuthError(error) {
+export function friendlyAuthError(error) {
     const code = error?.code;
 
     if (
@@ -21,6 +27,10 @@ function friendlyAuthError(error) {
         code === 'auth/user-not-found'
     ) {
         return 'Incorrect email or password.';
+    }
+
+    if (code === 'auth/requires-recent-login') {
+        return 'For security reasons, please sign in again and retry.';
     }
 
     if (code === 'auth/too-many-requests') {
@@ -47,9 +57,8 @@ function friendlyAuthError(error) {
 }
 
 export async function registerUser(email, password) {
-    startLoading();
-
     try {
+        const auth = await getAuthInstance();
         const result = await createUserWithEmailAndPassword(
             auth,
             normalizeEmail(email),
@@ -61,15 +70,12 @@ export async function registerUser(email, password) {
         return result;
     } catch (error) {
         throw new Error(friendlyAuthError(error));
-    } finally {
-        stopLoading();
     }
 }
 
 export async function loginUser(email, password) {
-    startLoading();
-
     try {
+        const auth = await getAuthInstance();
         return await signInWithEmailAndPassword(
             auth,
             normalizeEmail(email),
@@ -77,15 +83,10 @@ export async function loginUser(email, password) {
         );
     } catch (error) {
         throw new Error(friendlyAuthError(error));
-    } finally {
-        stopLoading();
     }
 }
 
 export function logoutUser() {
-    startLoading();
-
-    return signOut(auth).finally(() => {
-        stopLoading();
-    });
+    return getAuthInstance()
+        .then((auth) => signOut(auth));
 }

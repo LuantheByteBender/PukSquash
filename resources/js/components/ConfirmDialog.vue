@@ -53,31 +53,45 @@ function confirmClass() {
     inset: 0;
     z-index: 80;
     padding: 1rem;
-    background: rgba(24, 14, 33, 0.55);
+    background: rgba(23, 18, 29, 0.55);
+    backdrop-filter: blur(4px);
     display: grid;
     place-items: center;
+    animation: confirm-fade-in 0.2s ease;
 }
 
 .dialog {
-    max-width: 520px;
+    max-width: 480px;
     width: 100%;
-    background: var(--ps-surface);
-    border-radius: var(--ps-radius);
-    padding: 1.1rem;
+    background: var(--ps-surface-elevated, #fff);
+    border-radius: var(--ps-radius-lg, 16px);
+    padding: 1.5rem;
     border: 1px solid var(--ps-border-soft);
-    box-shadow: 0 10px 30px rgba(24, 14, 33, 0.25);
+    box-shadow: var(--ps-shadow-xl);
+    animation: confirm-scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .dialog h2 {
-    margin: 0 0 0.5rem;
-    font-size: 1.15rem;
+    margin: 0 0 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .actions {
     display: flex;
     gap: 0.6rem;
     justify-content: flex-end;
-    margin-top: 1rem;
+    margin-top: 1.25rem;
     flex-wrap: wrap;
+}
+
+@keyframes confirm-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes confirm-scale-in {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
 }
 </style>

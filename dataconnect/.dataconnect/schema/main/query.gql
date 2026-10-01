@@ -19,6 +19,39 @@ extend type Query {
     first: Booking_FirstRow
   ): Booking @fdc_generated(from: "Booking", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `BookingPlayer` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  bookingPlayer(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BookingPlayer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BookingPlayer_FirstRow
+  ): BookingPlayer @fdc_generated(from: "BookingPlayer", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CoachAvailability` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  coachAvailability(
+    """
+    The key used to identify the object.
+    """
+    key: CoachAvailability_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CoachAvailability_FirstRow
+  ): CoachAvailability @fdc_generated(from: "CoachAvailability", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Court` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   court(
@@ -38,18 +71,32 @@ extend type Query {
     first: Court_FirstRow
   ): Court @fdc_generated(from: "Court", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `TimeSlot` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  timeSlot(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TimeSlot_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TimeSlot_FirstRow
+  ): TimeSlot @fdc_generated(from: "TimeSlot", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   user(
     """
     The unique ID of the object.
     """
-    id: String
-
-    """
-    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
-    """
-    id_expr: String_Expr
+    id: UUID
 
     """
     The key used to identify the object.
@@ -96,6 +143,74 @@ extend type Query {
     having: Booking_Having
   ): [Booking!]! @fdc_generated(from: "Booking", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `BookingPlayer` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  bookingPlayers(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: BookingPlayer_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [BookingPlayer_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: BookingPlayer_Having
+  ): [BookingPlayer!]! @fdc_generated(from: "BookingPlayer", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CoachAvailability` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  coachAvailabilities(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CoachAvailability_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CoachAvailability_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CoachAvailability_Having
+  ): [CoachAvailability!]! @fdc_generated(from: "CoachAvailability", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `Court` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   courts(
@@ -129,6 +244,40 @@ extend type Query {
     """
     having: Court_Having
   ): [Court!]! @fdc_generated(from: "Court", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `TimeSlot` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  timeSlots(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: TimeSlot_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [TimeSlot_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: TimeSlot_Having
+  ): [TimeSlot!]! @fdc_generated(from: "TimeSlot", purpose: QUERY_MULTIPLE)
   """
   ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

@@ -1,100 +1,91 @@
 <template>
-  <div class="p-6 sm:p-8 max-w-5xl mx-auto space-y-6">
-    <div class="flex items-start justify-between gap-4 flex-wrap pb-5 border-b border-gray-200">
+  <div class="page notice-board">
+    <div class="page-head">
       <div>
-        <p class="text-xs font-bold uppercase tracking-widest text-indigo-600">Squash coaching</p>
-        <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight mt-1">Coach Notice Board</h1>
-        <p class="text-sm text-gray-500 mt-1">Pick a date, then expand a time slot to see which coaches are available.</p>
+        <p class="eyebrow">Squash coaching</p>
+        <h1>Coach Notice Board</h1>
+        <p class="muted">Pick a date, then expand a time slot to see which coaches are available.</p>
       </div>
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex items-center gap-3">
+    <div class="card datebar-card">
       <button
         type="button"
-        class="h-9 w-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 text-gray-700 transition-colors"
+        class="btn btn-secondary btn-sm day-btn"
         title="Previous day"
+        :disabled="selectedDate <= today"
         @click="shiftDate(-1)"
       >
-        &larr;
+        ‹
       </button>
 
-      <div class="flex-1 min-w-0 flex items-center gap-3">
+      <div class="datebar-mid">
         <input
           v-model="selectedDate"
           type="date"
-          class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
+          :min="today"
         />
-        <p class="text-sm font-semibold text-gray-700 truncate">{{ formattedSelectedDate }}</p>
+        <p class="date-label">{{ formattedSelectedDate }}</p>
       </div>
 
       <button
         type="button"
-        class="h-9 w-9 rounded-lg border border-gray-200 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-200 text-gray-700 transition-colors"
+        class="btn btn-secondary btn-sm day-btn"
         title="Next day"
         @click="shiftDate(1)"
       >
-        &rarr;
+        ›
       </button>
     </div>
 
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600">Available coaches</h2>
-        <span v-if="loading" class="text-xs text-gray-400">Refreshing…</span>
+    <section class="coaches-section">
+      <div class="section-head">
+        <h2 class="section-title">Available coaches</h2>
+        <span v-if="loading" class="faint">Refreshing…</span>
       </div>
 
-      <div v-if="errorMessage" class="bg-white border border-red-200 rounded-xl p-4 text-sm text-red-700">
-        {{ errorMessage }}
+      <p v-if="errorMessage" class="alert alert-error">{{ errorMessage }}</p>
+
+      <div v-else-if="!loading && coaches.length === 0" class="card empty-card">
+        <p class="muted">No coaches have published availability for this date.</p>
       </div>
 
-      <div v-else-if="!loading && coaches.length === 0" class="bg-white border border-gray-200 rounded-xl p-10 text-center">
-        <p class="text-sm text-gray-500">No coaches have published availability for this date.</p>
-      </div>
-
-      <div v-else class="space-y-3">
-        <div v-for="coach in coaches" :key="coach.id" class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <div v-else class="coach-list">
+        <div v-for="coach in coaches" :key="coach.id" class="card coach-card">
           <button
             type="button"
-            class="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+            class="coach-toggle"
             @click="toggleCoach(coach.id)"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <div
-                class="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                :class="avatarClass(coach.id)"
-              >
+            <div class="coach-info">
+              <div class="coach-avatar" :class="avatarClass(coach.id)">
                 {{ initials(coach.name) }}
               </div>
-              <div class="min-w-0">
-                <p class="text-sm font-bold text-gray-900 truncate">{{ coach.name || 'Coach' }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ coach.time_slots.length }} slot{{ coach.time_slots.length !== 1 ? 's' : '' }}</p>
+              <div class="coach-meta">
+                <p class="coach-name">{{ coach.name || 'Coach' }}</p>
+                <p class="coach-slots muted">{{ coach.time_slots.length }} slot{{ coach.time_slots.length !== 1 ? 's' : '' }}</p>
               </div>
             </div>
 
-            <span
-              class="text-xs text-gray-400 transition-transform"
-              :class="isCoachExpanded(coach.id) ? 'rotate-180 text-indigo-600' : ''"
-            >
-              &#9662;
+            <span class="caret" :class="{ 'caret--open': isCoachExpanded(coach.id) }">
+              ▾
             </span>
           </button>
 
-          <div v-if="isCoachExpanded(coach.id)" class="border-t border-gray-100 px-4 py-3">
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="slot in coach.time_slots"
-                :key="slot.id"
-                type="button"
-                class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
-                @click="selectCoachForBooking(coach, slot)"
-              >
-                {{ slotLabel(slot) }}
-              </button>
-            </div>
+          <div v-if="isCoachExpanded(coach.id)" class="slot-panel">
+            <button
+              v-for="slot in coach.time_slots"
+              :key="slot.id"
+              type="button"
+              class="slot-chip"
+              @click="selectCoachForBooking(coach, slot)"
+            >
+              {{ slotLabel(slot) }}
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -119,7 +110,11 @@ function shiftDate(days) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-  selectedDate.value = `${y}-${m}-${day}`
+  const iso = `${y}-${m}-${day}`
+
+  if (iso < today) return
+
+  selectedDate.value = iso
 }
 
 const formattedSelectedDate = computed(() => {
@@ -146,11 +141,11 @@ function initials(name) {
 }
 
 const avatarPalette = [
-  'bg-blue-100 text-blue-700',
-  'bg-indigo-100 text-indigo-700',
-  'bg-amber-100 text-amber-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',
+  'avatar--blue',
+  'avatar--purple',
+  'avatar--amber',
+  'avatar--green',
+  'avatar--rose',
 ]
 function avatarClass(id) {
   const str = String(id ?? '')
@@ -208,3 +203,230 @@ onMounted(() => {
   loadNoticeBoard()
 })
 </script>
+
+<style scoped>
+.notice-board {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.page-head {
+    margin-bottom: 0;
+}
+
+.page-head h1 {
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.page-head p {
+    margin: 0;
+}
+
+.eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ps-brand);
+}
+
+.datebar-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--ps-surface);
+    padding: 0.35rem;
+    border-radius: var(--ps-radius);
+    border: 1px solid var(--ps-border-soft);
+    box-shadow: var(--ps-shadow-sm);
+}
+
+.datebar-mid {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.datebar-mid input {
+    width: auto;
+    min-width: 150px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.datebar-mid input:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.date-label {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 650;
+    color: var(--ps-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.coaches-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ps-text-muted);
+}
+
+.empty-card {
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+.coach-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.coach-card {
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coach-card:hover {
+    box-shadow: var(--ps-shadow);
+    border-color: rgba(108, 62, 148, 0.15);
+}
+
+.coach-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.15rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    transition: background 0.15s ease;
+}
+
+.coach-toggle:hover {
+    background: rgba(108, 62, 148, 0.04);
+}
+
+.coach-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.coach-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.avatar--blue { background: #dbeafe; color: #1e40af; }
+.avatar--purple { background: var(--ps-brand-tint); color: var(--ps-brand); }
+.avatar--amber { background: #fef3c7; color: #92400e; }
+.avatar--green { background: #d1fae5; color: #065f46; }
+.avatar--rose { background: #ffe4e6; color: #9f1239; }
+
+.coach-meta {
+    min-width: 0;
+}
+
+.coach-name {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--ps-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.coach-slots {
+    margin: 0.1rem 0 0;
+    font-size: 0.78rem;
+}
+
+.caret {
+    font-size: 0.85rem;
+    color: var(--ps-text-faint);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+}
+
+.caret--open {
+    transform: rotate(180deg);
+    color: var(--ps-brand);
+}
+
+.slot-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.8rem 1.15rem;
+    border-top: 1px solid var(--ps-border-soft);
+    background: rgba(242, 236, 247, 0.2);
+}
+
+.slot-chip {
+    padding: 0.4rem 0.75rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    border-radius: var(--ps-radius-sm);
+    background: var(--ps-brand-tint);
+    color: var(--ps-brand);
+    border: 1px solid #ddcfe9;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slot-chip:hover {
+    background: #e8ddf3;
+    border-color: var(--ps-brand-light);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(108, 62, 148, 0.1);
+}
+
+.slot-chip:active {
+    transform: translateY(0) scale(0.97);
+}
+</style>

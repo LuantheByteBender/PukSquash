@@ -1,15 +1,48 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import AppNavbar from './components/AppNavbar.vue';
 import AppToast from './components/AppToast.vue';
 import { usingMockBookings } from './features/booking/bookingService.js';
-import { isLoading } from './services/loading.js';
+import { useAuth } from './composables/useAuth.js';
 
 /* The landing, login and sign-up screens are full-bleed designs of their own, so
    they opt out of the application chrome via `meta.chrome: false`. */
 const route = useRoute();
+const router = useRouter();
 const showChrome = computed(() => route.meta.chrome !== false);
+
+const booting = ref(true);
+
+function waitForTruthy(source) {
+    if (source.value) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+        let stop = () => {};
+        const timeout = setTimeout(() => {
+            stop();
+            console.warn('[PukSquash] Timed out waiting for auth readiness during boot.');
+            resolve();
+        }, 7000);
+
+        stop = watch(source, (value) => {
+            if (!value) return;
+            clearTimeout(timeout);
+            stop();
+            resolve();
+        });
+    });
+}
+
+onMounted(async () => {
+    const { ready } = useAuth();
+    await waitForTruthy(ready);
+    await router.isReady();
+    booting.value = false;
+});
 </script>
 
 <template>
@@ -19,15 +52,24 @@ const showChrome = computed(() => route.meta.chrome !== false);
             real booking.
         </p>
 
-        <AppNavbar v-if="showChrome" />
+        <AppNavbar v-if="showChrome && !booting" />
 
-        <main>
-            <RouterView />
+        <main v-if="!booting || !showChrome">
+            <RouterView v-slot="{ Component }">
+                <Transition name="page-fade" mode="out-in">
+                    <component :is="Component" />
+                </Transition>
+            </RouterView>
         </main>
 
         <AppToast />
 
-        <div v-if="isLoading" class="app-loading" aria-busy="true" aria-live="polite">
+        <div
+            v-if="booting && showChrome"
+            class="app-loading app-loading--boot"
+            aria-busy="true"
+            aria-live="polite"
+        >
             <div class="app-loading__panel">
                 <div class="app-loading__spinner" aria-hidden="true" />
                 <p class="app-loading__text">Loading…</p>
@@ -51,11 +93,17 @@ const showChrome = computed(() => route.meta.chrome !== false);
     --ps-brand-dark: #56306f;
     --ps-brand-light: #8b67ab;
     --ps-brand-tint: #f2ecf7;
+    --ps-brand-glow: rgba(108, 62, 148, 0.18);
 
-    --ps-bg: #f6f5f8;
-    --ps-surface: #ffffff;
-    --ps-border: #dcd8e2;
-    --ps-border-soft: #e9e5ee;
+    --ps-brand-gradient: linear-gradient(135deg, #7b4fa6 0%, #6C3D91 30%, #512d6e 70%, #3d2154 100%);
+    --ps-brand-gradient-hover: linear-gradient(135deg, #8b5fb6 0%, #7b4fa6 30%, #6C3D91 70%, #512d6e 100%);
+    --ps-bg-gradient: linear-gradient(135deg, rgba(108, 61, 145, 0.12) 0%, rgba(81, 45, 110, 0.08) 50%, rgba(61, 33, 84, 0.06) 100%);
+
+    --ps-bg: #f0eaf6;
+    --ps-surface: #faf8fd;
+    --ps-surface-elevated: #ffffff;
+    --ps-border: #d5cee0;
+    --ps-border-soft: #e4dded;
     --ps-text: #1c1922;
     --ps-text-muted: #5d5766;
     --ps-text-faint: #8b8595;
@@ -109,24 +157,89 @@ const showChrome = computed(() => route.meta.chrome !== false);
     --ps-warn: #8a5209;
     --ps-warn-bg: #fff4e5;
 
-    --ps-radius: 10px;
-    --ps-radius-sm: 6px;
+    --ps-radius: 12px;
+    --ps-radius-sm: 8px;
+    --ps-radius-lg: 16px;
+
+    --ps-shadow-sm: 0 1px 3px rgba(108, 62, 148, 0.06), 0 1px 2px rgba(108, 62, 148, 0.04);
+    --ps-shadow: 0 4px 12px rgba(108, 62, 148, 0.08), 0 2px 4px rgba(108, 62, 148, 0.04);
+    --ps-shadow-lg: 0 8px 28px rgba(108, 62, 148, 0.12), 0 4px 8px rgba(108, 62, 148, 0.06);
+    --ps-shadow-xl: 0 16px 48px rgba(108, 62, 148, 0.16), 0 6px 12px rgba(108, 62, 148, 0.08);
+
+    --ps-sidebar-width: 280px;
+    --ps-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --ps-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --ps-transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 body {
     margin: 0;
     background: var(--ps-bg);
+    background-image: var(--ps-bg-gradient);
     color: var(--ps-text);
-    font-family: 'Instrument Sans', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+::selection {
+    background: rgba(108, 62, 148, 0.2);
+    color: var(--ps-text);
 }
 
 .shell {
     min-height: 100vh;
+    position: relative;
     display: flex;
     flex-direction: column;
+}
+
+.shell::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.25;
+    background-image:
+        radial-gradient(ellipse 600px 600px at 15% 20%, rgba(108, 62, 148, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 500px at 85% 30%, rgba(139, 103, 171, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 400px at 50% 80%, rgba(108, 62, 148, 0.05) 0%, transparent 70%);
+    animation: ps-bg-drift 30s ease-in-out infinite alternate;
+}
+
+.shell::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.18;
+    background-image:
+        radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(1px 1px at 78% 26%, rgba(255, 255, 255, 0.45) 0, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(1px 1px at 64% 82%, rgba(255, 255, 255, 0.4) 0, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(1px 1px at 28% 74%, rgba(255, 255, 255, 0.35) 0, rgba(255, 255, 255, 0) 60%),
+        radial-gradient(2px 2px at 42% 36%, rgba(255, 255, 255, 0.22) 0, rgba(255, 255, 255, 0) 55%),
+        radial-gradient(2px 2px at 86% 66%, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0) 55%);
+    background-repeat: repeat;
+    background-size: 420px 420px;
+    filter: blur(0.2px);
+    animation: ps-stars-drift 22s linear infinite;
+}
+
+.shell > * {
+    position: relative;
+    z-index: 1;
 }
 
 .shell > main {
@@ -135,28 +248,35 @@ body {
 
 .dev-banner {
     margin: 0;
-    padding: 0.4rem 1rem;
+    padding: 0.45rem 1rem;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: var(--ps-warn);
     background: var(--ps-warn-bg);
     border-bottom: 1px solid #f0d5ab;
+    letter-spacing: 0.01em;
 }
 
 /* Shared layout and control classes used by the booking screens. */
 .page {
     max-width: 1120px;
     margin: 0 auto;
-    padding: 1.5rem 1rem 4rem;
+    padding: 1.5rem 1.25rem 4rem;
 }
 
 .card {
     background: var(--ps-surface);
-    border: 1px solid var(--ps-border-soft);
+    border: 1px solid rgba(224, 214, 235, 0.7);
     border-radius: var(--ps-radius);
-    box-shadow: 0 1px 2px rgba(24, 18, 33, 0.05), 0 1px 3px rgba(24, 18, 33, 0.07);
-    padding: 1.1rem;
+    box-shadow: var(--ps-shadow-sm);
+    padding: 1.25rem;
+    transition: box-shadow var(--ps-transition), transform var(--ps-transition), border-color var(--ps-transition);
+}
+
+.card:hover {
+    box-shadow: var(--ps-shadow);
+    border-color: rgba(224, 214, 235, 1);
 }
 
 .row {
@@ -179,9 +299,11 @@ body {
     appearance: none;
     border: 1px solid transparent;
     border-radius: var(--ps-radius-sm);
-    padding: 0.55rem 0.9rem;
+    padding: 0.55rem 1rem;
     font: inherit;
     font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.01em;
     cursor: pointer;
     background: var(--ps-brand);
     color: #fff;
@@ -189,11 +311,34 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.12s ease;
+    gap: 0.4rem;
+    transition: all var(--ps-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 60%);
+    opacity: 0;
+    transition: opacity var(--ps-transition-fast);
+}
+
+.btn:hover:not(:disabled)::after {
+    opacity: 1;
 }
 
 .btn:hover:not(:disabled) {
     background: var(--ps-brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 62, 148, 0.25);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    box-shadow: none;
 }
 
 .btn:disabled {
@@ -204,11 +349,17 @@ body {
 .btn-secondary {
     background: var(--ps-surface);
     color: var(--ps-text);
-    border-color: var(--ps-border);
+    border-color: #d4c9e2;
+}
+
+.btn-secondary::after {
+    display: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #f2eff5;
+    background: var(--ps-brand-tint);
+    border-color: var(--ps-brand-light);
+    box-shadow: 0 2px 8px rgba(108, 62, 148, 0.1);
 }
 
 .btn-danger {
@@ -217,12 +368,14 @@ body {
 
 .btn-danger:hover:not(:disabled) {
     background: #8f1e17;
+    box-shadow: 0 4px 12px rgba(179, 38, 30, 0.25);
 }
 
 .btn-sm {
-    padding: 0.35rem 0.6rem;
+    padding: 0.35rem 0.65rem;
     min-height: 32px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    border-radius: var(--ps-radius-sm);
 }
 
 input[type='date'],
@@ -231,13 +384,26 @@ input[type='email'],
 input[type='password'],
 select {
     width: 100%;
-    padding: 0.55rem 0.65rem;
+    padding: 0.6rem 0.75rem;
     font: inherit;
+    font-size: 0.9rem;
     color: var(--ps-text);
     background: var(--ps-surface);
-    border: 1px solid var(--ps-border);
+    border: 1.5px solid #d4c9e2;
     border-radius: var(--ps-radius-sm);
-    min-height: 40px;
+    min-height: 42px;
+    transition: border-color var(--ps-transition), box-shadow var(--ps-transition), background var(--ps-transition);
+}
+
+input[type='date']:focus,
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+select:focus {
+    border-color: var(--ps-brand);
+    box-shadow: 0 0 0 3px var(--ps-brand-glow);
+    background: #fff;
+    outline: none;
 }
 
 input:focus-visible,
@@ -245,15 +411,23 @@ select:focus-visible,
 button:focus-visible,
 a:focus-visible {
     outline: 3px solid var(--ps-brand-light);
-    outline-offset: 1px;
+    outline-offset: 2px;
+}
+
+input::placeholder {
+    color: var(--ps-text-faint);
 }
 
 .alert {
-    padding: 0.7rem 0.85rem;
+    padding: 0.75rem 1rem;
     border-radius: var(--ps-radius-sm);
     border: 1px solid;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .alert-error {
@@ -269,12 +443,14 @@ a:focus-visible {
 }
 
 .pill {
-    display: inline-block;
-    padding: 0.12rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
     border-radius: 999px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
     background: var(--ps-brand-tint);
     color: var(--ps-brand);
     border: 1px solid #ddcfe9;
@@ -323,41 +499,133 @@ a:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(23, 18, 29, 0.55);
+    background: rgba(23, 18, 29, 0.6);
+    backdrop-filter: blur(4px);
     pointer-events: all;
+    animation: ps-fade-in 0.2s ease;
+}
+
+.app-loading--boot {
+    background: radial-gradient(1200px 800px at 50% 35%, rgba(108, 62, 148, 0.22) 0%, rgba(18, 8, 32, 0.98) 55%, rgba(10, 4, 20, 0.99) 100%);
+    backdrop-filter: none;
 }
 
 .app-loading__panel {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.85rem;
-    padding: 1.1rem 1.25rem;
-    background: rgba(255, 255, 255, 0.92);
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: rgba(255, 255, 255, 0.95);
     color: var(--ps-text);
-    border-radius: var(--ps-radius);
+    border-radius: var(--ps-radius-lg);
     border: 1px solid var(--ps-border-soft);
-    box-shadow: 0 6px 20px rgba(24, 18, 33, 0.2);
-    min-width: 180px;
+    box-shadow: var(--ps-shadow-xl);
+    min-width: 200px;
+    animation: ps-scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .app-loading__text {
     margin: 0;
     font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
 }
 
 .app-loading__spinner {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 999px;
-    border: 4px solid rgba(108, 62, 148, 0.25);
+    border: 3.5px solid rgba(108, 62, 148, 0.15);
     border-top-color: var(--ps-brand);
-    animation: ps-spin 0.9s linear infinite;
+    animation: ps-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes ps-spin {
     to {
         transform: rotate(360deg);
     }
+}
+
+@keyframes ps-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ps-scale-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ps-bg-drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-30px, 20px, 0) scale(1.02); }
+    100% { transform: translate3d(20px, -10px, 0) scale(1); }
+}
+
+@keyframes ps-stars-drift {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+    to {
+        transform: translate3d(-120px, 140px, 0);
+    }
+}
+
+@keyframes ps-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ── Route transition ─────────────────────────── */
+.page-fade-enter-active {
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-fade-leave-active {
+    transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-fade-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.page-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-4px);
+}
+
+/* ── Reduced motion ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .shell::before,
+    .shell::after {
+        animation: none;
+    }
+}
+
+/* ── Scrollbar styling ────────────────────────── */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(108, 62, 148, 0.18);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(108, 62, 148, 0.3);
 }
 </style>

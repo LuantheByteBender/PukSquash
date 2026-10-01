@@ -3,19 +3,40 @@
 namespace App\Repositories;
 
 use App\DataTransferObjects\UserDTO;
-use App\Services\SqlConnectClient;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class UserRepository
 {
-    public function __construct(
-        private SqlConnectClient $client,
-    ) {}
+    private function dtoFromRow(object $row): UserDTO
+    {
+        return new UserDTO(
+            id:            (string) $row->id,
+            firebaseUid:   (string) ($row->firebase_uid ?? ''),
+            studentNumber: $row->student_number ?? null,
+            fullName:      (string) ($row->full_name ?? ''),
+            email:         (string) ($row->email ?? ''),
+            phoneNumber:   Schema::hasColumn('users', 'phone_number')
+                ? ($row->phone_number ?? null)
+                : null,
+            role:          (string) ($row->role ?? 'USER'),
+            status:        (string) ($row->status ?? 'ACTIVE'),
+            createdAt:     (string) ($row->created_at ?? ''),
+            updatedAt:     (string) ($row->updated_at ?? ''),
+        );
+    }
 
     private function forgetCachedUser(UserDTO $user): void
     {
         Cache::forget('sqlconnect_user_id_' . $user->id);
         Cache::forget('sqlconnect_user_firebase_uid_' . $user->firebaseUid);
+    }
+
+    private function forgetCachedFirebaseUid(string $firebaseUid): void
+    {
+        Cache::forget('sqlconnect_user_firebase_uid_' . $firebaseUid);
     }
 
     public function findByFirebaseUid(string $firebaseUid): ?UserDTO
@@ -27,17 +48,15 @@ class UserRepository
             return $cached;
         }
 
-        $data = $this->client->execute('GetUserByFirebaseUid', [
-            'firebaseUid' => $firebaseUid,
-        ]);
+        $row = DB::table('users')
+            ->where('firebase_uid', $firebaseUid)
+            ->first();
 
-        $users = $data['users'] ?? [];
-
-        if (empty($users)) {
+        if (! $row) {
             return null;
         }
 
-        $dto = UserDTO::fromGraphQL($users[0]);
+        $dto = $this->dtoFromRow($row);
         Cache::put($key, $dto, now()->addMinutes(10));
 
         return $dto;
@@ -52,15 +71,15 @@ class UserRepository
             return $cached;
         }
 
-        $data = $this->client->execute('GetUserById', [
-            'id' => $id,
-        ]);
+        $row = DB::table('users')
+            ->where('id', $id)
+            ->first();
 
-        if (empty($data['user'])) {
+        if (! $row) {
             return null;
         }
 
-        $dto = UserDTO::fromGraphQL($data['user']);
+        $dto = $this->dtoFromRow($row);
         Cache::put($key, $dto, now()->addMinutes(10));
 
         return $dto;
@@ -68,36 +87,76 @@ class UserRepository
 
     public function upsert(array $params): void
     {
-        $params = array_merge([
-            'studentNumber' => null,
-            'role'          => 'USER',
-            'status'        => 'ACTIVE',
-        ], $params);
+        $firebaseUid = (string) ($params['firebaseUid'] ?? $params['firebase_uid'] ?? '');
+        if ($firebaseUid === '') {
+            throw new \InvalidArgumentException('firebaseUid is required.');
+        }
 
-        try {
-            $this->client->execute('UpsertUser', $params);
-        } catch (\Throwable $exception) {
-            $message = $exception->getMessage();
+        $now = now();
 
-            if (
-                stripos($message, 'already exists') !== false
-                || stripos($message, 'duplicate key') !== false
-                || stripos($message, 'unique') !== false
-            ) {
-                return;
+        $existing = DB::table('users')
+            ->where('firebase_uid', $firebaseUid)
+            ->first();
+
+        if ($existing) {
+            $existingDto = $this->dtoFromRow($existing);
+            $this->forgetCachedUser($existingDto);
+
+            $updates = [
+                'email'          => $params['email'] ?? $existing->email ?? null,
+                'student_number' => $params['studentNumber'] ?? $params['student_number'] ?? $existing->student_number ?? null,
+                'full_name'      => $params['fullName'] ?? $params['full_name'] ?? $existing->full_name ?? null,
+                'role'           => $params['role'] ?? $existing->role ?? 'USER',
+                'status'         => $params['status'] ?? $existing->status ?? 'ACTIVE',
+                'updated_at'     => $now,
+            ];
+
+            if (Schema::hasColumn('users', 'phone_number')) {
+                $updates['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? $existing->phone_number ?? null;
             }
 
-            throw $exception;
+            DB::table('users')
+                ->where('firebase_uid', $firebaseUid)
+                ->update($updates);
+
+            $this->forgetCachedUser($existingDto);
+
+            return;
         }
+
+        $this->forgetCachedFirebaseUid($firebaseUid);
+
+        $insert = [
+            'id'             => $params['id'] ?? Str::uuid()->toString(),
+            'firebase_uid'   => $firebaseUid,
+            'email'          => $params['email'] ?? null,
+            'student_number' => $params['studentNumber'] ?? $params['student_number'] ?? null,
+            'full_name'      => $params['fullName'] ?? $params['full_name'] ?? null,
+            'role'           => $params['role'] ?? 'USER',
+            'status'         => $params['status'] ?? 'ACTIVE',
+            'created_at'     => $now,
+            'updated_at'     => $now,
+        ];
+
+        if (Schema::hasColumn('users', 'phone_number')) {
+            $insert['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? null;
+        }
+
+        DB::table('users')->insert($insert);
+
+        Cache::forget('sqlconnect_user_id_' . $insert['id']);
+        $this->forgetCachedFirebaseUid($firebaseUid);
     }
-    
+
     public function listAll(): array
     {
-        $data = $this->client->execute('ListAllUsers');
+        $rows = DB::table('users')
+            ->orderBy('full_name')
+            ->get();
 
         return array_map(
-            fn (array $row) => UserDTO::fromGraphQL($row),
-            $data['users'] ?? [],
+            fn (object $row) => $this->dtoFromRow($row),
+            $rows->all(),
         );
     }
 
@@ -108,14 +167,45 @@ class UserRepository
             $this->forgetCachedUser($existing);
         }
 
-        $this->client->execute('UpdateUser', array_merge(
-            ['id' => $id],
-            $params,
-        ));
+        $updates = [];
+        if (array_key_exists('role', $params)) {
+            $updates['role'] = $params['role'];
+        }
+        if (array_key_exists('status', $params)) {
+            $updates['status'] = $params['status'];
+        }
+
+        if (! empty($updates)) {
+            $updates['updated_at'] = now();
+            DB::table('users')->where('id', $id)->update($updates);
+        }
 
         if ($existing) {
             $this->forgetCachedUser($existing);
         }
+    }
+
+    public function hasBookingReferences(string $id): bool
+    {
+        $createdBookingsExist = DB::table('bookings')
+            ->where('created_by_user_id', $id)
+            ->exists();
+
+        if ($createdBookingsExist) {
+            return true;
+        }
+
+        $coachBookingsExist = DB::table('bookings')
+            ->where('coach_id', $id)
+            ->exists();
+
+        if ($coachBookingsExist) {
+            return true;
+        }
+
+        return DB::table('booking_players')
+            ->where('user_id', $id)
+            ->exists();
     }
 
     public function deleteUser(string $id): void
@@ -125,14 +215,20 @@ class UserRepository
             $this->forgetCachedUser($existing);
         }
 
-        $this->client->execute('DeleteUser', ['id' => $id]);
+        DB::table('users')->where('id', $id)->delete();
 
         if ($existing) {
             $this->forgetCachedUser($existing);
         }
     }
 
-    public function updateProfile(string $firebaseUid, string $fullName, ?string $studentNumber): void
+    public function updateProfile(
+        string $firebaseUid,
+        string $fullName,
+        ?string $studentNumber,
+        ?string $phoneNumber,
+        ?string $email
+    ): void
     {
         $keyFirebase = 'sqlconnect_user_firebase_uid_' . $firebaseUid;
 
@@ -143,11 +239,23 @@ class UserRepository
             Cache::forget('sqlconnect_user_id_' . $existing->id);
         }
 
-        $this->client->execute('UpdateUserProfile', [
-            'firebaseUid'    => $firebaseUid,
-            'fullName'       => $fullName,
-            'studentNumber'  => $studentNumber,
-        ]);
+        $updates = [
+            'full_name'      => $fullName,
+            'student_number' => $studentNumber,
+            'updated_at'     => now(),
+        ];
+
+        if (! empty($email)) {
+            $updates['email'] = $email;
+        }
+
+        if (Schema::hasColumn('users', 'phone_number')) {
+            $updates['phone_number'] = $phoneNumber;
+        }
+
+        DB::table('users')
+            ->where('firebase_uid', $firebaseUid)
+            ->update($updates);
 
         Cache::forget($keyFirebase);
         if ($existing) {

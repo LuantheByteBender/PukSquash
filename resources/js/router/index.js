@@ -2,6 +2,7 @@ import { watch } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/useAuth.js';
 import { useAccount, refreshAccount } from '../composables/useAccount.js';
+import { http, ApiError } from '../services/http.js';
 
 /**
  * Application routes.
@@ -18,7 +19,8 @@ const routes = [
     {
         path: '/',
         name: 'home',
-        redirect: { name: 'login' },
+        component: () => import('../pages/SplashScreen.vue'),
+        meta: { chrome: false },
     },
     {
         path: '/login',
@@ -30,6 +32,25 @@ const routes = [
         path: '/signup',
         name: 'signup',
         component: () => import('../pages/SignUpPage.vue'),
+        meta: { chrome: false },
+    },
+
+    {
+        path: '/registration/payment',
+        name: 'registration-payment',
+        component: () => import('../pages/RegistrationPaymentPage.vue'),
+        meta: { chrome: false },
+    },
+    {
+        path: '/payment/return',
+        name: 'payment-return',
+        component: () => import('../pages/PaymentReturnPage.vue'),
+        meta: { chrome: false },
+    },
+    {
+        path: '/payment/cancel',
+        name: 'payment-cancel',
+        component: () => import('../pages/PaymentCancelPage.vue'),
         meta: { chrome: false },
     },
 
@@ -99,15 +120,15 @@ const routes = [
     },
 
     {
-        path: '/:pathMatch(.*)*',
-        name: 'not-found',
-        redirect: { name: 'home' },
-    },
-
-    {
         path: '/notice-board',
         name: 'notice-board',
         component: () => import('../pages/CoachNoticeBoardPage.vue'),
+    },
+
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        redirect: { name: 'home' },
     },
 ];
 
@@ -123,8 +144,16 @@ function waitForTruthy(source) {
     }
 
     return new Promise((resolve) => {
-        const stop = watch(source, (value) => {
+        let stop = () => {};
+        const timeout = setTimeout(() => {
+            stop();
+            console.warn('[PukSquash] Timed out waiting for auth readiness.');
+            resolve();
+        }, 7000);
+
+        stop = watch(source, (value) => {
             if (!value) return;
+            clearTimeout(timeout);
             stop();
             resolve();
         });
@@ -137,7 +166,7 @@ router.beforeEach(async (to) => {
 
     await waitForTruthy(ready);
 
-    if (to.name === 'login' || to.name === 'signup') {
+    if (to.name === 'home' || to.name === 'login' || to.name === 'signup') {
         return true;
     }
 
@@ -146,6 +175,34 @@ router.beforeEach(async (to) => {
             name: 'login',
             query: to.fullPath ? { redirect: to.fullPath } : undefined,
         };
+    }
+
+    if (
+        to.name === 'registration-payment' ||
+        to.name === 'payment-return' ||
+        to.name === 'payment-cancel'
+    ) {
+        return true;
+    }
+
+    if (!role.value) {
+        try {
+            const status = await http.get('/registration/status');
+            if (!status?.registered) {
+                return {
+                    name: 'registration-payment',
+                    query: to.fullPath ? { redirect: to.fullPath } : undefined,
+                };
+            }
+        } catch (e) {
+            if (e instanceof ApiError && e.code === 'EMAIL_NOT_VERIFIED') {
+                return { name: 'login' };
+            }
+
+            if (e?.status === 401) {
+                return { name: 'login' };
+            }
+        }
     }
 
     const requiredRole = to.meta?.requiresRole;
@@ -158,7 +215,7 @@ router.beforeEach(async (to) => {
             await refreshAccount();
         } catch {
             return {
-                name: 'login',
+                name: 'registration-payment',
                 query: to.fullPath ? { redirect: to.fullPath } : undefined,
             };
         }

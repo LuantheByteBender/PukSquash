@@ -43,12 +43,19 @@ class PublishCoachAvailabilityRequest extends FormRequest
             // validate every ID contained in the time_slot_ids array
             'time_slot_ids.*' => [
                 'required',
-                'string',
-                'regex:/\A[0-9a-fA-F]{32}\z/',
+                'uuid',
                 'distinct',
 
             ],
 
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'time_slot_ids.min' => 'Please select at least one time slot.',
+            'time_slot_ids.*.uuid' => 'One or more selected time slots are invalid.',
         ];
     }
 }

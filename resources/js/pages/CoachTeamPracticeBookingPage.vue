@@ -50,6 +50,7 @@ const endDate = ref(todayIso);
 const availability = ref({});
 const loading = ref(false);
 const loadError = ref('');
+const coachSlotIdsByDate = ref({});
 
 const selections = ref(new Map());
 
@@ -115,24 +116,38 @@ async function loadAvailability() {
 
     loading.value = true;
     loadError.value = '';
+    coachSlotIdsByDate.value = {};
 
     try {
         const results = await Promise.all(
             dates.map(async (date) => ({
                 date,
                 data: await bookingService.coachTeamPracticeAvailability(date),
+                noticeBoard: await bookingService.coachNoticeBoard(date).catch(() => null),
             }))
         );
 
         const next = {};
+        const nextCoachSlots = {};
         for (const item of results) {
             next[item.date] = item.data;
+
+            const slotSet = new Set();
+            const rows = item.noticeBoard?.data || [];
+            for (const coach of rows) {
+                for (const slot of coach?.time_slots || []) {
+                    if (slot?.id) slotSet.add(String(slot.id));
+                }
+            }
+            nextCoachSlots[item.date] = Array.from(slotSet);
         }
 
         availability.value = next;
+        coachSlotIdsByDate.value = nextCoachSlots;
     } catch (error) {
         loadError.value = error?.message ?? String(error);
         availability.value = {};
+        coachSlotIdsByDate.value = {};
     } finally {
         loading.value = false;
     }
@@ -268,6 +283,31 @@ onMounted(loadAvailability);
             </div>
         </div>
 
+        <div class="card review" v-if="selectionCount">
+            <div class="review-head">
+                <h2>Selected reservations</h2>
+                <span class="pill">{{ selectionCount }} total</span>
+            </div>
+
+            <div class="review-list">
+                <div v-for="row in selectionList" :key="`${row.booking_date}:${row.court_id}:${row.time_slot_id}`" class="review-row">
+                    <div class="review-meta">
+                        <div class="review-main">
+                            <span class="review-date">{{ row.booking_date }}</span>
+                            <span class="review-court">{{ row.court_name }}</span>
+                        </div>
+                        <div class="review-sub muted">
+                            {{ hhmm(row.start_time) }}–{{ hhmm(row.end_time) }}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" type="button" @click="removeSelection(row)">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
 
         <div v-if="loading && !Object.keys(availability).length" class="card centred">
@@ -292,34 +332,10 @@ onMounted(loadAvailability);
                     :courts="availability[date].courts"
                     :time-slots="availability[date].time_slots"
                     :cells="availability[date].cells"
+                    :coach-slot-ids="coachSlotIdsByDate[date]"
                     :selected-keys="selectedKeysByDate[date]"
                     @select="({ court, slot, cell }) => toggleSelection(date, court, slot, cell)"
                 />
-            </div>
-        </div>
-
-        <div class="card review" v-if="selectionCount">
-            <div class="review-head">
-                <h2>Selected reservations</h2>
-                <span class="pill">{{ selectionCount }} total</span>
-            </div>
-
-            <div class="review-list">
-                <div v-for="row in selectionList" :key="`${row.booking_date}:${row.court_id}:${row.time_slot_id}`" class="review-row">
-                    <div class="review-meta">
-                        <div class="review-main">
-                            <span class="review-date">{{ row.booking_date }}</span>
-                            <span class="review-court">{{ row.court_name }}</span>
-                        </div>
-                        <div class="review-sub muted">
-                            {{ hhmm(row.start_time) }}–{{ hhmm(row.end_time) }}
-                        </div>
-                    </div>
-
-                    <button class="btn btn-secondary btn-sm" type="button" @click="removeSelection(row)">
-                        Remove
-                    </button>
-                </div>
             </div>
         </div>
 

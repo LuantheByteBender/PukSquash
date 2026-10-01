@@ -134,20 +134,6 @@ class AvailabilityController extends Controller
                 $userBusy = isset($userBusySlotIds[$slot->id]);
 
                 if (! $booking) {
-                    if ($court->status !== 'ACTIVE') {
-                        $cells[] = [
-                            'court_id'     => $court->id,
-                            'time_slot_id' => $slot->id,
-                            'state'        => 'UNAVAILABLE',
-                            'label'        => 'Inactive',
-                            'can_book'     => false,
-                            'can_join'     => false,
-                            'is_mine'      => false,
-                            'booking_id'   => null,
-                        ];
-                        continue;
-                    }
-
                     if ($slotIsPast) {
                         $cells[] = [
                             'court_id'     => $court->id,
@@ -207,13 +193,16 @@ class AvailabilityController extends Controller
                     : null;
 
                 $state = match (true) {
+                    $booking->bookingType === 'TEAM_PRACTICE'            => 'LOCKED',
                     $booking->bookingType === 'PRIVATE_COACH'           => 'PRIVATE_COACH',
                     $booking->bookingType === 'LOCKED'                  => 'LOCKED',
                     $booking->bookingType === 'OPEN' && $playerCount < 2 => 'OPEN',
                     default                                             => 'FULL',
                 };
 
-                $label = match ($state) {
+                $label = match (true) {
+                    $booking->bookingType === 'TEAM_PRACTICE' => 'NWU Team',
+                    default => match ($state) {
                     'OPEN'          => $nameA ? ($nameA . ' vs ?') : 'Open',
                     'FULL'          => ($nameA && $nameB) ? ($nameA . ' vs ' . $nameB) : ($nameA ?: 'Full'),
                     'LOCKED'        => $nameA ?: 'Locked',
@@ -221,6 +210,7 @@ class AvailabilityController extends Controller
                         ? ($nameA . ' / Coach ' . $coachName)
                         : ($nameA ?: ($coachName ? ('Coach ' . $coachName) : 'Coach')),
                     default         => $nameA ?: $state,
+                    },
                 };
 
                 $isMine = false;

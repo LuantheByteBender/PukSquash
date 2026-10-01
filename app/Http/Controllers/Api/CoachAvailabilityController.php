@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PublishCoachAvailabilityRequest;
+use App\Repositories\BookingRepository;
 use App\Repositories\CoachAvailabilityRepository;
 use App\Repositories\TimeSlotRepository;
 use App\Repositories\UserRepository;
@@ -14,6 +15,7 @@ class CoachAvailabilityController extends Controller
 {
     public function __construct(
         private CoachAvailabilityRepository $availability,
+        private BookingRepository $bookings,
         private TimeSlotRepository $timeSlots,
         private UserRepository $users,
     ) {}
@@ -28,9 +30,12 @@ class CoachAvailabilityController extends Controller
             'time_slot_id' => 'required|string',
         ]);
 
+        $date = (string) $request->query('date');
+        $timeSlotId = (string) $request->query('time_slot_id');
+
         $results = $this->availability->getAvailableCoaches(
-            $request->query('date'),
-            $request->query('time_slot_id'),
+            $date,
+            $timeSlotId,
         );
 
         $coaches = [];
@@ -38,6 +43,10 @@ class CoachAvailabilityController extends Controller
             $coach = $availability->coach;
 
             if (! $coach || empty($coach['id'])) {
+                continue;
+            }
+
+            if ($this->bookings->coachHasBookingForSlot($coach['id'], $date, $timeSlotId)) {
                 continue;
             }
 
@@ -343,8 +352,7 @@ class CoachAvailabilityController extends Controller
             'availability_date' => ['required', 'date_format:Y-m-d'],
             'time_slot_id' => [
                 'required',
-                'string',
-                'regex:/\A[0-9a-fA-F]{32}\z/',
+                'uuid',
             ],
         ]);
 

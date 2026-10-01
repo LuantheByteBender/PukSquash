@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { http } from '../services/http.js';
 import { useToast } from '../composables/useToast.js';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
@@ -15,6 +16,7 @@ const isLoading = ref(false);
 const loadError = ref('');
 const actionError = ref('');
 const isWorking = ref(false);
+const actionKey = ref('');
 
 const confirmState = ref({
     open: false,
@@ -78,9 +80,14 @@ function normalizeUser(user) {
             user.name ||
             (user.email ? user.email.split('@')[0] : 'Unknown user'),
         email: user.email || '',
+        phoneNumber: user.phoneNumber ?? user.phone_number ?? '',
         role: user.role || 'USER',
         status: user.status || 'ACTIVE',
     };
+}
+
+function isActionBusy(key) {
+    return isWorking.value && actionKey.value === key;
 }
 
 
@@ -118,6 +125,7 @@ const filteredUsers = computed(() => {
             !query ||
             user.fullName.toLowerCase().includes(query) ||
             user.email.toLowerCase().includes(query) ||
+            (user.phoneNumber || '').toLowerCase().includes(query) ||
             user.role.toLowerCase().includes(query) ||
             user.status.toLowerCase().includes(query);
 
@@ -169,6 +177,7 @@ async function saveUser(user) {
     }
 
     isWorking.value = true;
+    actionKey.value = `save:${user.id}`;
 
     try {
         const updated = await http.put(`/admin/users/${user.id}`, {
@@ -186,6 +195,7 @@ async function saveUser(user) {
         toast.error(actionError.value);
     } finally {
         isWorking.value = false;
+        actionKey.value = '';
     }
 }
 
@@ -206,6 +216,7 @@ async function removeUser(id) {
     if (!ok) return;
 
     isWorking.value = true;
+    actionKey.value = `delete:${id}`;
 
     try {
         await http.delete(`/admin/users/${id}`);
@@ -213,11 +224,12 @@ async function removeUser(id) {
         toast.success('User deleted.');
     } catch (error) {
         console.error('Failed to delete user:', error);
-        actionError.value = 'Unable to remove user. Please try again.';
+        actionError.value = error?.message || 'Unable to remove user. Please try again.';
         toast.error(actionError.value);
         return;
     } finally {
         isWorking.value = false;
+        actionKey.value = '';
     }
 
     if (editingUserId.value === id) {
@@ -284,6 +296,7 @@ onMounted(() => {
                         <tr>
                             <th scope="col">Name</th>
                             <th scope="col">Email</th>
+                            <th scope="col">Phone number</th>
                             <th scope="col">Role</th>
                             <th scope="col">Status</th>
                             <th scope="col" class="actions">Actions</th>
@@ -296,6 +309,7 @@ onMounted(() => {
                                 <strong>{{ user.fullName }}</strong>
                             </td>
                             <td class="muted">{{ user.email }}</td>
+                            <td class="muted">{{ user.phoneNumber || '-' }}</td>
                             <td>
                                 <template v-if="editingUserId === user.id">
                                     <select v-model="draftRole" :disabled="isWorking">
@@ -325,6 +339,7 @@ onMounted(() => {
                             <td class="actions">
                                 <template v-if="editingUserId === user.id">
                                     <button type="button" class="btn btn-secondary btn-sm" :disabled="isWorking" @click="saveUser(user)">
+                                        <LoadingSpinner v-if="isActionBusy(`save:${user.id}`)" quiet />
                                         Save
                                     </button>
                                     <button type="button" class="btn btn-secondary btn-sm" :disabled="isWorking" @click="cancelEdit">
@@ -336,6 +351,7 @@ onMounted(() => {
                                         Edit
                                     </button>
                                     <button type="button" class="btn btn-danger btn-sm" :disabled="isWorking" @click="removeUser(user.id)">
+                                        <LoadingSpinner v-if="isActionBusy(`delete:${user.id}`)" quiet />
                                         Delete
                                     </button>
                                 </template>
@@ -343,7 +359,7 @@ onMounted(() => {
                         </tr>
 
                         <tr v-if="filteredUsers.length === 0 && !isLoading">
-                            <td colspan="5" class="muted empty">
+                            <td colspan="6" class="muted empty">
                                 No users found.
                             </td>
                         </tr>
@@ -369,7 +385,7 @@ onMounted(() => {
 .manage-users-page {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.75rem;
     padding-top: 1.5rem;
 }
 
@@ -381,25 +397,22 @@ onMounted(() => {
     flex-wrap: wrap;
 }
 
-/* =========================
-   Page Heading
-   ========================= */
-
 .eyebrow {
     margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--ps-brand);
 }
 
 .page-title {
-    margin: 0.25rem 0 0;
-    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
     line-height: 1.1;
 }
-
 
 .table-controls {
     align-items: flex-end;
@@ -419,15 +432,20 @@ onMounted(() => {
 }
 
 .label {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--ps-text-muted);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
 }
 
 .table-wrap {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px;
+    border: 1px solid var(--ps-border-soft);
+    border-radius: var(--ps-radius);
+    background: var(--ps-surface);
 }
 
 .users-table {
@@ -438,23 +456,32 @@ onMounted(() => {
 
 .users-table th {
     text-align: left;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--ps-text-muted);
-    padding: 0.75rem 0.7rem;
+    padding: 0.75rem 0.75rem;
     border-bottom: 1px solid var(--ps-border-soft);
+    background: rgba(242, 236, 247, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
 .users-table td {
-    padding: 0.75rem 0.7rem;
+    padding: 0.75rem 0.75rem;
     border-bottom: 1px solid var(--ps-border-soft);
     vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.users-table tbody tr {
+    transition: background 0.12s ease;
 }
 
 .users-table tbody tr:hover {
-    background: rgba(108, 62, 148, 0.02);
+    background: rgba(108, 62, 148, 0.03);
 }
 
 .actions {
@@ -468,17 +495,13 @@ onMounted(() => {
 }
 
 .empty {
-    padding: 1rem 0.7rem;
+    padding: 1.5rem 0.75rem;
+    text-align: center;
 }
 
-/* =========================
-   Responsive Design
-   ========================= */
-
 @media (max-width: 760px) {
-
     .manage-users-page {
-        gap: 1rem;
+        gap: 1.25rem;
         padding-top: 1rem;
     }
 
@@ -488,7 +511,7 @@ onMounted(() => {
     }
 
     .page-title {
-        font-size: clamp(1.8rem, 8vw, 2.2rem);
+        font-size: clamp(1.6rem, 8vw, 2rem);
     }
 
     .table-controls {
@@ -505,5 +528,4 @@ onMounted(() => {
         min-width: 680px;
     }
 }
-
 </style>

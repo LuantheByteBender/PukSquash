@@ -126,7 +126,7 @@ class TeamPracticeController extends Controller
                             'court_id' => $court->id,
                             'time_slot_id' => $slot->id,
                             'state' => 'UNAVAILABLE',
-                            'label' => 'Inactive',
+                            'label' => 'Under maintenance',
                             'can_book' => false,
                             'can_join' => false,
                             'is_mine' => false,
@@ -155,6 +155,20 @@ class TeamPracticeController extends Controller
                         'state' => 'AVAILABLE',
                         'label' => 'Available',
                         'can_book' => true,
+                        'can_join' => false,
+                        'is_mine' => false,
+                        'booking_id' => null,
+                    ];
+                    continue;
+                }
+
+                if ($court->status !== 'ACTIVE') {
+                    $cells[] = [
+                        'court_id' => $court->id,
+                        'time_slot_id' => $slot->id,
+                        'state' => 'UNAVAILABLE',
+                        'label' => 'Under maintenance',
+                        'can_book' => false,
                         'can_join' => false,
                         'is_mine' => false,
                         'booking_id' => null,

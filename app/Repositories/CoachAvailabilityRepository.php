@@ -3,58 +3,111 @@
 namespace App\Repositories;
 
 use App\DataTransferObjects\CoachAvailabilityDTO;
-use App\Services\SqlConnectClient;
+use Illuminate\Support\Facades\DB;
 
 class CoachAvailabilityRepository
 {
-    public function __construct(
-        private SqlConnectClient $client,
-    ) {}
+    private string $table = 'coach_availability';
 
     /** @return CoachAvailabilityDTO[] */
     public function getAvailableCoaches(string $availabilityDate, string $timeSlotId): array
     {
-        $data = $this->client->execute('GetAvailableCoaches', [
-            'availabilityDate' => $availabilityDate,
-            'timeSlotId' => $timeSlotId,
-        ]);
+        $rows = DB::table($this->table . ' as ca')
+            ->leftJoin('users as u', 'u.id', '=', 'ca.coach_id')
+            ->leftJoin('time_slots as ts', 'ts.id', '=', 'ca.time_slot_id')
+            ->where('ca.availability_date', $availabilityDate)
+            ->where('ca.time_slot_id', $timeSlotId)
+            ->select([
+                'ca.availability_date',
+                'ca.created_at',
+                'ca.coach_id',
+                'ca.time_slot_id',
+                'u.id as coach_user_id',
+                'u.full_name as coach_full_name',
+                'u.email as coach_email',
+                'u.role as coach_role',
+                'u.status as coach_status',
+                'ts.id as ts_id',
+                'ts.start_time as ts_start_time',
+                'ts.end_time as ts_end_time',
+                'ts.display_order as ts_display_order',
+                'ts.is_active as ts_is_active',
+            ])
+            ->get();
 
-        return array_map(
-            fn (array $row) => CoachAvailabilityDTO::fromGraphQL($row),
-            $data['coachAvailabilities'] ?? [],
-        );
+        return array_map(function (object $row) {
+            return CoachAvailabilityDTO::fromGraphQL([
+                'availabilityDate' => (string) ($row->availability_date ?? ''),
+                'createdAt' => (string) ($row->created_at ?? ''),
+                'coachId' => (string) ($row->coach_id ?? ''),
+                'timeSlotId' => (string) ($row->time_slot_id ?? ''),
+                'coach' => ! empty($row->coach_user_id)
+                    ? [
+                        'id' => (string) $row->coach_user_id,
+                        'fullName' => (string) ($row->coach_full_name ?? ''),
+                        'email' => (string) ($row->coach_email ?? ''),
+                        'role' => (string) ($row->coach_role ?? ''),
+                        'status' => (string) ($row->coach_status ?? ''),
+                    ]
+                    : null,
+                'timeSlot' => ! empty($row->ts_id)
+                    ? [
+                        'id' => (string) $row->ts_id,
+                        'startTime' => (string) ($row->ts_start_time ?? ''),
+                        'endTime' => (string) ($row->ts_end_time ?? ''),
+                        'displayOrder' => (int) ($row->ts_display_order ?? 0),
+                        'isActive' => (bool) ($row->ts_is_active ?? false),
+                    ]
+                    : null,
+            ]);
+        }, $rows->all());
     }
 
     public function create(string $coachId, string $timeSlotId, string $availabilityDate): void
     {
-        $this->client->execute('CreateCoachAvailability', [
-            'coachId' => $coachId,
-            'timeSlotId' => $timeSlotId,
-            'availabilityDate' => $availabilityDate,
+        DB::table($this->table)->insert([
+            'coach_id' => $coachId,
+            'time_slot_id' => $timeSlotId,
+            'availability_date' => $availabilityDate,
+            'created_at' => now(),
         ]);
     }
 
     public function createMany(array $rows): array
     {
-        return $this->client->executeMany(
-            'CreateCoachAvailability',
-            array_map(fn (array $row) => [
-                'coachId' => $row['coachId'],
-                'timeSlotId' => $row['timeSlotId'],
-                'availabilityDate' => $row['availabilityDate'],
-            ], $rows),
-        );
+        $results = [];
+
+        foreach ($rows as $row) {
+            try {
+                $this->create(
+                    $row['coachId'],
+                    $row['timeSlotId'],
+                    $row['availabilityDate'],
+                );
+
+                $results[] = [
+                    'ok' => true,
+                    'data' => null,
+                ];
+            } catch (\Throwable $exception) {
+                $results[] = [
+                    'ok' => false,
+                    'error' => $exception->getMessage(),
+                ];
+            }
+        }
+
+        return $results;
     }
 
     public function isCoachAvailable(string $availabilityDate, string $timeSlotId, string $coachId): bool
     {
-        $data = $this->client->execute('IsCoachAvailable', [
-            'availabilityDate' => $availabilityDate,
-            'timeSlotId' => $timeSlotId,
-            'coachId' => $coachId,
-        ]);
-
-        return ! empty($data['coachAvailabilities'] ?? []);
+        return DB::table($this->table)
+            ->where('availability_date', $availabilityDate)
+            ->where('time_slot_id', $timeSlotId)
+            ->where('coach_id', $coachId)
+            ->limit(1)
+            ->exists();
     }
 
     /**
@@ -66,17 +119,55 @@ class CoachAvailabilityRepository
         string $coachId,
         string $availabilityDate,
     ): array {
-        // execute the query using filter values
-        $data = $this->client->execute('GetCoachAvailabilityForDate', [
-            'coachId' => $coachId,
-            'availabilityDate' => $availabilityDate,
-        ]);
+        $rows = DB::table($this->table . ' as ca')
+            ->leftJoin('users as u', 'u.id', '=', 'ca.coach_id')
+            ->leftJoin('time_slots as ts', 'ts.id', '=', 'ca.time_slot_id')
+            ->where('ca.coach_id', $coachId)
+            ->where('ca.availability_date', $availabilityDate)
+            ->select([
+                'ca.availability_date',
+                'ca.created_at',
+                'ca.coach_id',
+                'ca.time_slot_id',
+                'u.id as coach_user_id',
+                'u.full_name as coach_full_name',
+                'u.email as coach_email',
+                'u.role as coach_role',
+                'u.status as coach_status',
+                'ts.id as ts_id',
+                'ts.start_time as ts_start_time',
+                'ts.end_time as ts_end_time',
+                'ts.display_order as ts_display_order',
+                'ts.is_active as ts_is_active',
+            ])
+            ->get();
 
-        // convert each returned row into the existing availability DTO
-        return array_map(
-            fn (array $row) => CoachAvailabilityDTO::fromGraphQL($row),
-            $data['coachAvailabilities'] ?? [],
-        );
+        return array_map(function (object $row) {
+            return CoachAvailabilityDTO::fromGraphQL([
+                'availabilityDate' => (string) ($row->availability_date ?? ''),
+                'createdAt' => (string) ($row->created_at ?? ''),
+                'coachId' => (string) ($row->coach_id ?? ''),
+                'timeSlotId' => (string) ($row->time_slot_id ?? ''),
+                'coach' => ! empty($row->coach_user_id)
+                    ? [
+                        'id' => (string) $row->coach_user_id,
+                        'fullName' => (string) ($row->coach_full_name ?? ''),
+                        'email' => (string) ($row->coach_email ?? ''),
+                        'role' => (string) ($row->coach_role ?? ''),
+                        'status' => (string) ($row->coach_status ?? ''),
+                    ]
+                    : null,
+                'timeSlot' => ! empty($row->ts_id)
+                    ? [
+                        'id' => (string) $row->ts_id,
+                        'startTime' => (string) ($row->ts_start_time ?? ''),
+                        'endTime' => (string) ($row->ts_end_time ?? ''),
+                        'displayOrder' => (int) ($row->ts_display_order ?? 0),
+                        'isActive' => (bool) ($row->ts_is_active ?? false),
+                    ]
+                    : null,
+            ]);
+        }, $rows->all());
     }
 
     /**
@@ -87,14 +178,52 @@ class CoachAvailabilityRepository
     */
     public function getNoticeBoardForDate(string $availabilityDate): array
     {
-        $data = $this->client->execute('GetCoachAvailabilityNoticeBoard', [
-            'availabilityDate' => $availabilityDate,
-        ]);
-        
-        return array_map(
-            fn (array $row) => CoachAvailabilityDTO::fromGraphQL($row),
-            $data['coachAvailabilities'] ?? [],
-        );
+        $rows = DB::table($this->table . ' as ca')
+            ->leftJoin('users as u', 'u.id', '=', 'ca.coach_id')
+            ->leftJoin('time_slots as ts', 'ts.id', '=', 'ca.time_slot_id')
+            ->where('ca.availability_date', $availabilityDate)
+            ->select([
+                'ca.availability_date',
+                'ca.created_at',
+                'ca.coach_id',
+                'ca.time_slot_id',
+                'u.id as coach_user_id',
+                'u.full_name as coach_full_name',
+                'u.role as coach_role',
+                'u.status as coach_status',
+                'ts.id as ts_id',
+                'ts.start_time as ts_start_time',
+                'ts.end_time as ts_end_time',
+                'ts.display_order as ts_display_order',
+                'ts.is_active as ts_is_active',
+            ])
+            ->get();
+
+        return array_map(function (object $row) {
+            return CoachAvailabilityDTO::fromGraphQL([
+                'availabilityDate' => (string) ($row->availability_date ?? ''),
+                'createdAt' => (string) ($row->created_at ?? ''),
+                'coachId' => (string) ($row->coach_id ?? ''),
+                'timeSlotId' => (string) ($row->time_slot_id ?? ''),
+                'coach' => ! empty($row->coach_user_id)
+                    ? [
+                        'id' => (string) $row->coach_user_id,
+                        'fullName' => (string) ($row->coach_full_name ?? ''),
+                        'role' => (string) ($row->coach_role ?? ''),
+                        'status' => (string) ($row->coach_status ?? ''),
+                    ]
+                    : null,
+                'timeSlot' => ! empty($row->ts_id)
+                    ? [
+                        'id' => (string) $row->ts_id,
+                        'startTime' => (string) ($row->ts_start_time ?? ''),
+                        'endTime' => (string) ($row->ts_end_time ?? ''),
+                        'displayOrder' => (int) ($row->ts_display_order ?? 0),
+                        'isActive' => (bool) ($row->ts_is_active ?? false),
+                    ]
+                    : null,
+            ]);
+        }, $rows->all());
     }
 
     /**
@@ -105,12 +234,11 @@ class CoachAvailabilityRepository
         string $timeSlotId,
         string $availabilityDate,
     ): void {
-        // pass all three key values to the GraphQL mutation
-        $this->client->execute('DeleteCoachAvailabilityForSlot', [
-            'coachId' => $coachId,
-            'timeSlotId' => $timeSlotId,
-            'availabilityDate' => $availabilityDate,
-        ]);
+        DB::table($this->table)
+            ->where('coach_id', $coachId)
+            ->where('time_slot_id', $timeSlotId)
+            ->where('availability_date', $availabilityDate)
+            ->delete();
     }
 
     /**
@@ -121,37 +249,27 @@ class CoachAvailabilityRepository
         string $availabilityDate,
         string $timeSlotId,
     ): bool {
-        // check bookings across all courts for this coach, date and slot
-        $data = $this->client->execute('GetConfirmedBookingForCoachSlot', [
-            'coachId' => $coachId,
-            'bookingDate' => $availabilityDate,
-            'timeSlotId' => $timeSlotId,
-        ]);
-
-        // true means a booking exists, so removal must be blocked
-        return ! empty($data['bookings'] ?? []);
+        return DB::table('bookings')
+            ->where('coach_id', $coachId)
+            ->where('booking_date', $availabilityDate)
+            ->where('time_slot_id', $timeSlotId)
+            ->where('status', 'CONFIRMED')
+            ->limit(1)
+            ->exists();
     }
 
     public function listConfirmedBookingTimeSlotIdsForDate(
         string $coachId,
         string $availabilityDate,
     ): array {
-        $data = $this->client->execute('GetConfirmedBookingsForCoachDate', [
-            'coachId' => $coachId,
-            'bookingDate' => $availabilityDate,
-        ]);
-
-        $ids = [];
-        foreach (($data['bookings'] ?? []) as $row) {
-            $timeSlotId = $row['timeSlotId'] ?? null;
-
-            if (! $timeSlotId) {
-                continue;
-            }
-
-            $ids[$timeSlotId] = true;
-        }
-
-        return array_keys($ids);
+        return DB::table('bookings')
+            ->where('coach_id', $coachId)
+            ->where('booking_date', $availabilityDate)
+            ->where('status', 'CONFIRMED')
+            ->whereNotNull('time_slot_id')
+            ->distinct()
+            ->pluck('time_slot_id')
+            ->map(fn ($v) => (string) $v)
+            ->all();
     }
 }

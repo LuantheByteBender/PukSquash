@@ -42,26 +42,10 @@ class BookingController extends Controller
         $user = $this->users->findByFirebaseUid($firebaseUid);
 
         if (! $user) {
-            $email = $request->attributes->get('firebase_email');
-
-            if (! $email) {
-                return response()->json(['message' => 'User profile not found.'], 404);
-            }
-
-            $studentNumber = explode('@', $email)[0];
-
-            $this->users->upsert([
-                'firebaseUid' => $firebaseUid,
-                'fullName'    => explode('@', $email)[0],
-                'email'       => $email,
-                'studentNumber' => $studentNumber,
-            ]);
-
-            $user = $this->users->findByFirebaseUid($firebaseUid);
-
-            if (! $user) {
-                return response()->json(['message' => 'User profile not found.'], 404);
-            }
+            return response()->json([
+                'message' => 'Registration payment required.',
+                'code' => 'REGISTRATION_PAYMENT_REQUIRED',
+            ], 403);
         }
 
         // Court must be ACTIVE.
@@ -118,6 +102,17 @@ class BookingController extends Controller
                     'message' => 'Selected coach is not available for this time slot.',
                     'code'    => 'COACH_UNAVAILABLE',
                 ], 409);
+            }
+
+            if ($this->bookings->coachHasBookingForSlot(
+                $coachId,
+                $request->input('booking_date'),
+                $request->input('time_slot_id'),
+            )) {
+                return response()->json([
+                    'message' => 'Selected coach is already booked for this time slot.',
+                    'code'    => 'COACH_ALREADY_BOOKED',
+                ], 422);
             }
         }
 
@@ -176,6 +171,14 @@ class BookingController extends Controller
 
         if (! $booking) {
             return response()->json(['message' => 'Booking not found.'], 404);
+        }
+
+        $courtId = $booking->court['id'] ?? null;
+        if (is_string($courtId) && $courtId !== '') {
+            $court = $this->courts->findById($courtId);
+            if (! $court || $court->status !== 'ACTIVE') {
+                return response()->json(['message' => 'Court is not available.'], 422);
+            }
         }
 
         if ($booking->status !== 'CONFIRMED') {
