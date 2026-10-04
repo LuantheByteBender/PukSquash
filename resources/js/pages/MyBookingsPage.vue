@@ -1,6 +1,6 @@
 <script setup>
 /** FR-15 / FR-16 — view your bookings and cancel your own. */
-import { ref, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { bookingService } from '../features/booking/bookingService.js';
 import { useToast } from '../composables/useToast.js';
 import { useAccount } from '../composables/useAccount.js';
@@ -23,6 +23,34 @@ const cancellingId = ref(null);
 const confirming = ref(null);
 
 const { role } = useAccount();
+
+// Pagination: the API returns the full list for a tab, so we page it here.
+const PAGE_SIZE = 10;
+const page = ref(1);
+
+const totalPages = computed(() => Math.max(1, Math.ceil(bookings.value.length / PAGE_SIZE)));
+
+const pagedBookings = computed(() => {
+    const start = (page.value - 1) * PAGE_SIZE;
+    return bookings.value.slice(start, start + PAGE_SIZE);
+});
+
+const rangeLabel = computed(() => {
+    const total = bookings.value.length;
+    const from = (page.value - 1) * PAGE_SIZE + 1;
+    const to = Math.min(page.value * PAGE_SIZE, total);
+    return `${from}–${to} of ${total}`;
+});
+
+// After a reload (e.g. a cancel on the last page) keep the page in range.
+watch(totalPages, (n) => {
+    if (page.value > n) page.value = n;
+});
+
+function goToPage(n) {
+    page.value = Math.min(Math.max(1, n), totalPages.value);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 async function load() {
     loading.value = true;
@@ -50,12 +78,14 @@ function switchTab(key) {
         return;
     }
     tab.value = key;
+    page.value = 1;
     load();
 }
 
 function switchView(key) {
     if (key === view.value) return;
     view.value = key;
+    page.value = 1;
 
     if (view.value === 'coach') {
         tab.value = 'upcoming';
@@ -150,16 +180,32 @@ const hhmm = (time) => (time || '').slice(0, 5);
             </RouterLink>
         </div>
 
-        <div v-else class="list">
-            <BookingCard
-                v-for="booking in bookings"
-                :key="booking.id"
-                :booking="booking"
-                :show-cancel="view === 'mine' && tab === 'upcoming'"
-                :cancelling="cancellingId === booking.id"
-                @cancel="confirming = $event"
-            />
-        </div>
+        <template v-else>
+            <div class="list">
+                <BookingCard
+                    v-for="booking in pagedBookings"
+                    :key="booking.id"
+                    :booking="booking"
+                    :show-cancel="view === 'mine' && tab === 'upcoming'"
+                    :cancelling="cancellingId === booking.id"
+                    @cancel="confirming = $event"
+                />
+            </div>
+
+            <nav v-if="totalPages > 1" class="pager" aria-label="Bookings pages">
+                <button class="btn btn-secondary" :disabled="page <= 1" @click="goToPage(page - 1)">
+                    Previous
+                </button>
+
+                <span class="pager-info muted">
+                    Page {{ page }} of {{ totalPages }} · {{ rangeLabel }}
+                </span>
+
+                <button class="btn btn-secondary" :disabled="page >= totalPages" @click="goToPage(page + 1)">
+                    Next
+                </button>
+            </nav>
+        </template>
 
         <div v-if="confirming" class="backdrop" @click.self="confirming = null">
             <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
@@ -223,6 +269,19 @@ const hhmm = (time) => (time || '').slice(0, 5);
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.pager-info {
+    font-size: 0.85rem;
+    text-align: center;
 }
 
 .centred {
