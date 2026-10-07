@@ -442,6 +442,8 @@ onMounted(loadAvailability);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
 }
 
 .review-row {
