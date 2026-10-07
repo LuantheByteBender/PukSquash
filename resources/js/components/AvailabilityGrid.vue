@@ -116,6 +116,11 @@ function describe(court, slot, cell) {
                 Court availability. Rows are one-hour time slots, columns are courts.
             </caption>
 
+            <colgroup>
+                <col class="time-col" />
+                <col v-for="court in courts" :key="court.id" class="court-col" />
+            </colgroup>
+
             <thead>
                 <tr>
                     <th scope="col" class="time-head">Time</th>
@@ -232,6 +237,23 @@ thead th {
 .cell-td {
     width: 150px;
     min-width: 150px;
+}
+
+.court-head {
+    padding: 3px;
+}
+
+.court-head > span {
+    display: block;
+    padding: 0.55rem 0.4rem;
+}
+
+.time-col {
+    width: 92px;
+}
+
+.court-col {
+    width: 150px;
 }
 
 .court-head .pill {
@@ -435,6 +457,10 @@ thead th {
         min-width: 118px;
     }
 
+    .court-col {
+        width: 118px;
+    }
+
     /* Narrower frozen column so more courts fit beside it, and a soft shadow so
        it reads as sitting above the columns sliding underneath. */
     .time-head,
@@ -442,6 +468,10 @@ thead th {
         width: 68px;
         min-width: 68px;
         box-shadow: 2px 0 6px rgba(24, 14, 33, 0.1);
+    }
+
+    .time-col {
+        width: 68px;
     }
 
     .time-head {
