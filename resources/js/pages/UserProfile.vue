@@ -14,6 +14,11 @@ const { profile: accountProfile } = useAccount();
 const error = ref('');
 const saving = ref(false);
 
+const showEmailCurrentPassword = ref(false);
+const showPasswordCurrent = ref(false);
+const showPasswordNext = ref(false);
+const showPasswordConfirm = ref(false);
+
 const profile = ref({
     firstName: '',
     lastName: '',
@@ -443,13 +448,49 @@ const saveProfile = async () => {
 
                         <div class="field">
                             <label class="field-label" for="email-current">Current password</label>
-                            <input
-                                id="email-current"
-                                v-model="emailUpdate.currentPassword"
-                                type="password"
-                                class="field-input field-input--active"
-                                placeholder="••••••••"
-                            />
+                            <div class="password-input">
+                                <input
+                                    id="email-current"
+                                    v-model="emailUpdate.currentPassword"
+                                    :type="showEmailCurrentPassword ? 'text' : 'password'"
+                                    class="field-input field-input--active"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    :aria-label="showEmailCurrentPassword ? 'Hide password' : 'Show password'"
+                                    @click="showEmailCurrentPassword = !showEmailCurrentPassword"
+                                >
+                                    <svg
+                                        v-if="showEmailCurrentPassword"
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <line x1="4" y1="4" x2="20" y2="20" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -477,35 +518,143 @@ const saveProfile = async () => {
                     <div class="field-stack">
                         <div class="field">
                             <label class="field-label" for="pw-current">Current password</label>
-                            <input
-                                id="pw-current"
-                                v-model="passwordUpdate.currentPassword"
-                                type="password"
-                                class="field-input field-input--active"
-                                placeholder="••••••••"
-                            />
+                            <div class="password-input">
+                                <input
+                                    id="pw-current"
+                                    v-model="passwordUpdate.currentPassword"
+                                    :type="showPasswordCurrent ? 'text' : 'password'"
+                                    class="field-input field-input--active"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    :aria-label="showPasswordCurrent ? 'Hide password' : 'Show password'"
+                                    @click="showPasswordCurrent = !showPasswordCurrent"
+                                >
+                                    <svg
+                                        v-if="showPasswordCurrent"
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <line x1="4" y1="4" x2="20" y2="20" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="field">
                             <label class="field-label" for="pw-next">New password</label>
-                            <input
-                                id="pw-next"
-                                v-model="passwordUpdate.nextPassword"
-                                type="password"
-                                class="field-input field-input--active"
-                                placeholder="••••••••"
-                            />
+                            <div class="password-input">
+                                <input
+                                    id="pw-next"
+                                    v-model="passwordUpdate.nextPassword"
+                                    :type="showPasswordNext ? 'text' : 'password'"
+                                    class="field-input field-input--active"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    :aria-label="showPasswordNext ? 'Hide password' : 'Show password'"
+                                    @click="showPasswordNext = !showPasswordNext"
+                                >
+                                    <svg
+                                        v-if="showPasswordNext"
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <line x1="4" y1="4" x2="20" y2="20" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="field">
                             <label class="field-label" for="pw-confirm">Confirm new password</label>
-                            <input
-                                id="pw-confirm"
-                                v-model="passwordUpdate.confirmPassword"
-                                type="password"
-                                class="field-input field-input--active"
-                                placeholder="••••••••"
-                            />
+                            <div class="password-input">
+                                <input
+                                    id="pw-confirm"
+                                    v-model="passwordUpdate.confirmPassword"
+                                    :type="showPasswordConfirm ? 'text' : 'password'"
+                                    class="field-input field-input--active"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    :aria-label="showPasswordConfirm ? 'Hide password' : 'Show password'"
+                                    @click="showPasswordConfirm = !showPasswordConfirm"
+                                >
+                                    <svg
+                                        v-if="showPasswordConfirm"
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <line x1="4" y1="4" x2="20" y2="20" />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        aria-hidden="true"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -865,6 +1014,46 @@ const saveProfile = async () => {
 .field-input--active:focus {
     border-color: var(--ps-brand);
     box-shadow: 0 0 0 3px rgba(108, 62, 148, .12);
+}
+
+.password-input {
+    position: relative;
+    width: 100%;
+}
+
+.password-input .field-input {
+    padding-right: 4.25rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    padding: 0.25rem 0.45rem;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(23, 18, 29, 0.06);
+    color: rgba(23, 18, 29, 0.8);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    background: rgba(23, 18, 29, 0.1);
+}
+
+.password-toggle:active {
+    background: rgba(23, 18, 29, 0.14);
+}
+
+.password-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
 /* ── Buttons ─────────────────────────────────────── */

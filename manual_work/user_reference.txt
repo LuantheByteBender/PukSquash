@@ -1,0 +1,175 @@
+[Title] Campus Marketplace
+[Subtitle] User Guide
+Version | Document Issued
+1.1 | October 2025
+ | 
+Prepared by | Department
+Developer Team | IT Development
+ | 
+Authored by | Last Updated
+JH Nell; PD Bekker | 13 October 2025
+[Heading 4] About This Guide
+[normal] This comprehensive guide provides instructions to all users of the Campus Marketplace web application. Both normal users (including buyers and sellers) and administrators can make use of this document to guide them through using Campus Marketplace.
+[normal] Table of Contents
+[Heading 1] Introduction
+[Heading 4] Welcome to Campus Marketplace!
+[normal] For students, by students. Thank you for supporting Campus Marketplace. This guide will introduce you to all things Campus Marketplace.
+[Heading 4] What is Campus Marketplace?
+[normal] Campus Marketplace is a secure web application that allows North-West University (NWU) students to browse, buy and sell second hand textbooks, electronics, and other items to other students on or near campus.
+[Heading 4] What will you learn from this guide?
+[normal] This guide will assist you as the user to make full use of the functionality provided by the application. The guide will cover the following sections:
+[normal] Sign up
+[normal] Login
+[normal] Menu navigation
+[normal] User profile setup
+[normal] Item search, item filter, and item view
+[normal] Purchase an item
+[normal] Sell an item
+[Heading 1]  Getting started
+[normal] Campus Marketplace is a web application that does not require any special setup on a user device. 
+[Heading 4] User Requirements
+[normal] In order to use the application you will need the following:
+[normal] A laptop, desktop or mobile phone
+[normal] Internet connection
+[normal] Supported web browser (including Google Chrome, Microsoft Edge, Safari, Firefox, and Opera)
+[normal] Access credentials to use features restricted to accounts
+[normal] Once you have met all the requirements, you can proceed to access the application. 
+[Heading 4] Accessing the Application
+[normal] Here is the link to the website: https://campus-marketplace-2yna.vercel.app 
+[normal] Accessing the website will take you to the home page with all the items on sale as shown in Figure 1.1 below. You will see the navigation bar at the top of the screen which will allow you to navigate to all the main pages of the application. 
+[normal] Figure 1.1: Accessing the home page. 
+[Heading 1]  Navigating the Web Application
+[normal] After accessing the home page, the user will be greeted with the navigation bar at the top of the screen. Refer to Figure 2.1 below. From here you will be able to select various actions:
+[normal] Logo or “Marketplace” - This will take you to the home page.
+[normal] “Profile” - Existing users can update their information here.
+[normal] “How it works” - This is a quick user guide to the web application.
+[normal] “Login” - Existing users can log in to the application here.
+[normal] “Sign Up” - New users can sign up to use the application.
+[normal] Functionality of the home page will differ depending on whether you are logged in or not.
+
+[Heading 4] Homepage Before Login
+[normal] You will be able to search, sort and filter items currently being offered for sale on the website. However, you will not be able to buy or sell any item before signing up and logging in.
+[normal] Figure 2.1: Navigating the home page. 
+[Heading 1]  Sign Up
+[normal] Please follow these steps to complete sign up as a new user. Refer to Figure 3.1 below.
+[normal] Step 1 - Select “Sign Up” on the navigation bar.
+[normal] Step 2 - Select “Continue with Google” if you want to access the application with your Google account, and you will automatically be redirected to the main page. Otherwise, continue to the next step.
+[normal] Step 3 - Complete all the required fields with your personal details.
+[normal] Step 4 - Agree to the Terms and Conditions and the Privacy Policy.
+[normal] Step 5 - Click on “Register” to complete sign-up. 
+[normal] Step 6 - Verify your email address and proceed to the login page. 
+[normal] Figure 3.1: Sign Up page. 
+[normal] Figure 3.2: Verify email address page.
+[normal] Figure 3.3: Verify email.
+[Heading 1]  Login
+[normal] Please follow these steps to login to the application as a registered user. Please refer to Figure 4.1 below.
+[normal] Step 1 - Select “Login” on the navigation bar.
+[normal] Step 2 - Select “Continue with Google” if you used your Google account to register on the application. Otherwise continue to the next step.
+[normal] Step 3 - Enter your login details in the required email and password fields.
+[normal] Step 4 - Click on “Log in”. You will be redirected to the homepage.
+[normal] Figure 4.1: Login page. 
+[Heading 1]  Profile View & Update
+[normal] Select “Profile” from the header which will take you to the profile screen with the following tabs:
+[normal] “My Items” - Displays a list of all the items that you have listed for sale.
+[normal] “My Purchases” - Displays a list of all the items that you have purchased.
+[normal] “Profile & Password” - Allows you to change your information and password.
+[Heading 4] My Items
+[normal] After selecting “My Items” you will see a list of current items that you are selling (Figure 5.1). Clicking on the “eye” icon on a listing will view the listing and available actions (Figure 5.2).
+[normal] Figure 5.1: Profile - My Items.
+[normal] Figure 5.2: View Item & Withdraw.
+[normal]  
+[Heading 4] My Purchases
+[normal] When selecting “My Purchases” you will see a list of all the past items you purchased from Campus Marketplace (Figure 5.3).
+[normal] Figure 5.3: Profile - My Purchases.
+[Heading 4] Profile & Password
+[normal] Clicking on “Profile & Password” will take you to your profile where you can update your profile information as well as change your password (Figure 5.4).
+[normal] Figure 5.4: Profile & Password.
+[Heading 1]  Sell an Item
+[normal] Selling an item on Campus Marketplace is a simple process. You have to be logged in as a user to list an item for sale. Once you have created a listing, the listing will be reviewed and approved by an administrator before the listing goes live.
+[normal] You can access the “New Item” screen in two ways:
+[normal] You can click on “Sell” in the navigation bar.
+[normal] You can click on “Sell” under My Items on the Profile page.
+[Heading 4] New Item
+[normal] Please follow the steps below and refer to Figure 6.1 to list a new item for sale.
+[normal] Step 1 - Enter a name for your listing in “Title”.
+[normal] Step 2 - In the “Description” box, describe everything you want the buyer to know about the item. You can use Markdown as per the placeholder text to format your listing. Press Enter or Return twice to create a line break.
+[normal] Step 3 - Add a selling price for the item.
+[normal] Step 4 - List your address for collection of the item once it is sold.
+[normal] Step 5 - Select the condition of the item.
+[normal] Step 6 - Select the category of the item.
+[normal] Step 7 - Upload between 1 and 3 images of the item.
+[normal] Step 8 - After completing the above steps, you can choose to “Sell Item” which will publish the listing for review. You can also choose to save the listing as a draft to edit later or cancel to discard the listing.
+[normal] Step 9 - Once an administrator has approved your item, it will appear on the Campus Marketplace. Prospective sellers can view your item and send you emails with questions.
+[normal] Step 10 - When a seller has placed your item in their cart and paid through PayFast, the item is marked as Sold but not yet Collected. The onus is on the buyer to contact you, the seller, via email to arrange collection. The buyer’s payment remains with Campus Marketplace for safekeeping.
+[normal] Step 11 - Once the seller has contacted you and arranged a time and place to collect, you must then at the collection take a selfie of you, the buyer, and the item. The buyer then marks the item as collected under their Purchases tab on their Profile. Then payment is released to your bank account.
+[normal] Any disputes can be arbitrated by Campus Marketplace. Please retain the selfie as proof the buyer collected the item in good condition.
+[normal] Figure 6.1: Sell an Item.
+[Heading 1]  Item Search, Item Filter & View Item
+[normal] All the item listings are displayed on the home page of Campus Marketplace. The home page can be accessed in several ways:
+[normal] Clicking on the Campus Marketplace logo.
+[normal] Selecting “Marketplace” on the navigation bar.
+[normal] After login you will be directed to the home page.
+[normal] The main features on the home page are the search bar and the filter bar. 
+[Heading 4] Item Search
+[normal] The search bar can be used like any search function to search the database for items matching the keywords that you type in (Figure 7.1). You will see a list of items that are a closest match to your search terms.
+[Heading 4] Item Filter
+[normal] You have four options when filtering items in Campus Marketplace (Figure 7.1). These are the following:
+[normal] “Sort By” - This option allows you to order items according to the age of the listing or the price.
+[normal] “Category” - You can filter items according to a specific category of item such as books or electronics.
+[normal] “Price” - You can look for items that fit within your budget for ex. items less than R500.00.
+[normal] “Condition” - This option allows you to filter items based on the condition of the item for ex. items that are in a fair or good condition. 
+[normal] Figure 7.1: Search & Filter.
+[Heading 4] View Item
+[normal] The “View item” button at the bottom of each listing, takes you to the page of that individually listed item. On this page you can find more information about the item including a short description and the location of the item.
+[normal] You also have several options when viewing a listing (Figure 7.2). They are:
+[normal] “Add to cart” - You can add the item to your cart should you wish to purchase it.
+[normal] An email button - This button acts as a link to send the seller an email. Clicking this link will take you to Gmail where you can contact the seller directly via email. You will have to sign into your email account first before you can send the seller an email.
+[normal] “Back” - You will be taken back to the previous screen after viewing the item.
+[normal] Figure 7.2: View Item.
+[Heading 1]  Purchase an Item
+[normal] You have decided to purchase an item. You have viewed the item and possibly contacted the seller for more information, and you would like to proceed.
+[Heading 4] Purchase an Item
+[normal] To purchase an item, refer to Figure 8.1 and do the following:
+[normal] Step 1 - On the item page, click on “Add to cart”. The item will be added to your cart and temporarily removed from the home page. You have not purchased the item yet. You will be taken to your cart, where you have the option to pay or to continue shopping. You can access your cart at any time directly from the navigation bar by clicking on “Cart” in the top right-hand corner.
+[normal] Step 2 - Click on “Continue Shopping” to select other items to purchase. Otherwise, continue with the next step.
+[normal] Step 3 - Click on “Pay Now” to pay for the item. You will be directed to PayFast to process payment for the item in your cart.
+[normal] Step 4 - Follow the instructions for collecting the item from the seller and confirming payment. This involves contacting the seller and arranging a time and place for collection.
+[normal] Step 5 - Collect the item from the seller. They will request that you take a selfie with them and the item. This is for proof in case of any disputes later.
+[normal] Step 6 - Mark the item as sold under the Purchases tab of your Profile page. Failing to do so is considered fraud and will get you removed from the platform and reported to the police.
+[normal] Figure 8.1: Purchase an Item.
+[Heading 1]  Logout
+[normal] Following your purchase or listing of an item for sale, you can log out of Campus Marketplace.
+[Heading 4] Logout
+[normal] To log out of the application, refer to Figure 9.1 and do the following:
+[normal] Step 1 - From the navigation bar, click on “Account” at the top right-hand side.
+[normal] Step 2 - From the drop-down menu, select “Logout,” and you will be logged out of the Campus Marketplace.
+[normal] Figure 9.1: Logout.
+[Heading 1] Administrator Dashboard
+[normal] Administrators will register and log in to Campus Marketplace as explained in Sections 3 and 4 of this document. Once logged in, administrators will see an additional option when selecting “Account” in the navigation bar (Figure 10.1).
+[normal] The additional option will take administrators to the “Admin Dashboard”.
+[normal] Figure 10.1: Admin Dashboard.
+[normal] After selecting “Admin Dashboard”, administrators will see the dashboard for Campus Marketplace as shown in Figure 10.2 below. The dashboard is a quick visual reference of several performance metrics. The metrics on the dashboard include the following:
+[normal] Status summary of all listed items.
+[normal] Price distribution of all listed items.
+[normal] Number of users and their status.
+[normal] Usage of the site shows items sold per user.
+[normal] Figure 10.2: Admin Dashboard Performance Metrics.
+[Heading 1] Administrator Dashboard - User Management
+[normal] Administrators can manage all users of Campus Marketplace. Figure 11.1 shows the various details that are visible to admin users. Admin users can take further actions related to individual users. They are:
+[normal] Suspending a user for violating the terms of use of Campus Marketplace.
+[normal] Removing a user.
+[normal] Giving administrative rights to a user.
+[normal] View more detailed information regarding each user, as shown in Figure 11.2.
+[normal] Figure 11.1: Admin Dashboard User Management.
+[normal] Figure 11.2: Detailed User Information.
+[Heading 1] Administrator Dashboard - Item Management
+[normal] Administrators are responsible for checking item listings for compliance, accuracy and quality. They can either approve or edit a listing. Alternatively, they can contact the seller.
+[normal] Figure 12.1 illustrates the administrator's view of all items on Campus Marketplace. The list can be searched or sorted for convenience. 
+[normal] Figure 12.1: Admin Dashboard Item Management.
+[normal] To review a listing, an administrator will select the “eye” to the right of the listing. This will open the listing page with additional functionality for the administrator. Please refer to Figure 12.2 below.
+[normal] Administrators have the following options:
+[normal] Change the condition of the items based on the images uploaded by the seller.
+[normal] Change the status of the item.
+[normal] Approve the item, whereafter it will become visible to all users of Campus Marketplace.
+[normal] Figure 12.2: Admin Listing Edit & Approval.
+[normal] For any further questions and concerns, do not hesitate to contact Campus Marketplace.

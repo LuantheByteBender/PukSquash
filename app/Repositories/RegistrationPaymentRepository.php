@@ -30,6 +30,16 @@ class RegistrationPaymentRepository
             ->first();
     }
 
+    public function findPaidForPendingRegistration(string $pendingRegistrationId): ?object
+    {
+        return DB::table('registration_payments')
+            ->where('pending_registration_id', $pendingRegistrationId)
+            ->where('status', 'PAID')
+            ->orderByDesc('paid_at')
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
     public function createPending(
         string $pendingRegistrationId,
         string $merchantPaymentId,

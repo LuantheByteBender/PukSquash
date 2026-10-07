@@ -9,6 +9,7 @@ use App\Repositories\UserRepository;
 use App\Services\PayfastService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class RegistrationController extends Controller
@@ -48,6 +49,10 @@ class RegistrationController extends Controller
                 'pending_registration' => null,
                 'latest_payment' => null,
                 'email' => $email,
+                'registration_fee' => [
+                    'amount' => (string) config('payfast.registration_fee'),
+                    'currency' => 'ZAR',
+                ],
             ]);
         }
 
@@ -57,6 +62,10 @@ class RegistrationController extends Controller
             'registered' => false,
             'pending_registration' => $pending,
             'latest_payment' => $latestPayment,
+            'registration_fee' => [
+                'amount' => (string) config('payfast.registration_fee'),
+                'currency' => 'ZAR',
+            ],
         ]);
     }
 
@@ -70,6 +79,24 @@ class RegistrationController extends Controller
 
         $firebaseUid = (string) $request->attributes->get('firebase_uid');
         $email = trim((string) $request->attributes->get('firebase_email'));
+
+        $studentNumber = $request->input('student_number');
+        if (is_string($studentNumber)) {
+            $studentNumber = trim($studentNumber);
+        }
+
+        if (is_string($studentNumber) && $studentNumber !== '') {
+            $exists = DB::table('users')
+                ->where('student_number', $studentNumber)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' => 'Student number is already registered.',
+                    'code' => 'STUDENT_NUMBER_ALREADY_REGISTERED',
+                ], 409);
+            }
+        }
 
         if ($this->users->findByFirebaseUid($firebaseUid)) {
             return response()->json([
@@ -93,7 +120,7 @@ class RegistrationController extends Controller
             $firebaseUid,
             $email,
             (string) $request->input('full_name'),
-            $request->input('student_number'),
+            is_string($studentNumber) && $studentNumber !== '' ? $studentNumber : null,
             $request->input('phone_number'),
         );
 

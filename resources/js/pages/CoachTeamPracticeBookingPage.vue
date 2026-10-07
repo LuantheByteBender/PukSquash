@@ -155,7 +155,6 @@ async function loadAvailability() {
 
 function onConfirmDialogConfirm() {
     if (submitting.value) return;
-    confirmOpen.value = false;
     confirmBooking();
 }
 
@@ -207,6 +206,7 @@ async function confirmBooking() {
         const res = await bookingService.createTeamPractice(payload);
         lastBookedIds.value = res?.data?.booking_ids ?? [];
         clearSelections();
+        confirmOpen.value = false;
         toast.success('Team practice booked successfully.');
     } catch (error) {
         if (error instanceof ApiConflict) {
@@ -351,6 +351,8 @@ onMounted(loadAvailability);
             confirm-text="Confirm"
             cancel-text="Cancel"
             :confirm-variant="'primary'"
+            :loading="submitting"
+            loading-text="Confirming team practice…"
             @cancel="confirmOpen = false"
             @confirm="onConfirmDialogConfirm"
         />

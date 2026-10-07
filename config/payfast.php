@@ -17,7 +17,7 @@ return [
 
     // Optional: relax ITN validation checks (signature + server confirmation)
     // for sandbox demos.
-    'relax_itn' => env('PAYFAST_RELAX_ITN', false),
+    'relax_itn' => env('PAYFAST_RELAX_ITN', env('PAYFAST_SANDBOX', true)),
 
     // Registration payment amount in ZAR.
     'registration_fee' => env(

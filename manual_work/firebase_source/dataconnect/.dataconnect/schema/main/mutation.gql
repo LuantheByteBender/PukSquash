@@ -1,0 +1,664 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Booking` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  booking_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Booking_Data!
+  ): Booking_KeyOutput! @fdc_generated(from: "Booking", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `BookingPlayer` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  bookingPlayer_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: BookingPlayer_Data!
+  ): BookingPlayer_KeyOutput! @fdc_generated(from: "BookingPlayer", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CoachAvailability` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  coachAvailability_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CoachAvailability_Data!
+  ): CoachAvailability_KeyOutput! @fdc_generated(from: "CoachAvailability", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Court` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  court_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Court_Data!
+  ): Court_KeyOutput! @fdc_generated(from: "Court", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `TimeSlot` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  timeSlot_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: TimeSlot_Data!
+  ): TimeSlot_KeyOutput! @fdc_generated(from: "TimeSlot", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Booking` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  booking_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Booking_Data!]!
+  ): [Booking_KeyOutput!]! @fdc_generated(from: "Booking", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `BookingPlayer` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  bookingPlayer_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [BookingPlayer_Data!]!
+  ): [BookingPlayer_KeyOutput!]! @fdc_generated(from: "BookingPlayer", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CoachAvailability` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  coachAvailability_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CoachAvailability_Data!]!
+  ): [CoachAvailability_KeyOutput!]! @fdc_generated(from: "CoachAvailability", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Court` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  court_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Court_Data!]!
+  ): [Court_KeyOutput!]! @fdc_generated(from: "Court", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `TimeSlot` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  timeSlot_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [TimeSlot_Data!]!
+  ): [TimeSlot_KeyOutput!]! @fdc_generated(from: "TimeSlot", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Booking` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Booking`.
+  """
+  booking_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Booking_Data!
+  ): Booking_KeyOutput! @fdc_generated(from: "Booking", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `BookingPlayer` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BookingPlayer`.
+  """
+  bookingPlayer_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: BookingPlayer_Data!
+  ): BookingPlayer_KeyOutput! @fdc_generated(from: "BookingPlayer", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CoachAvailability` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CoachAvailability`.
+  """
+  coachAvailability_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CoachAvailability_Data!
+  ): CoachAvailability_KeyOutput! @fdc_generated(from: "CoachAvailability", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Court` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Court`.
+  """
+  court_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Court_Data!
+  ): Court_KeyOutput! @fdc_generated(from: "Court", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `TimeSlot` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TimeSlot`.
+  """
+  timeSlot_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: TimeSlot_Data!
+  ): TimeSlot_KeyOutput! @fdc_generated(from: "TimeSlot", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Booking` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Booking`.
+  """
+  booking_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Booking_Data!]!
+  ): [Booking_KeyOutput!]! @fdc_generated(from: "Booking", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `BookingPlayer` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BookingPlayer`.
+  """
+  bookingPlayer_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [BookingPlayer_Data!]!
+  ): [BookingPlayer_KeyOutput!]! @fdc_generated(from: "BookingPlayer", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CoachAvailability` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CoachAvailability`.
+  """
+  coachAvailability_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CoachAvailability_Data!]!
+  ): [CoachAvailability_KeyOutput!]! @fdc_generated(from: "CoachAvailability", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Court` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Court`.
+  """
+  court_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Court_Data!]!
+  ): [Court_KeyOutput!]! @fdc_generated(from: "Court", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `TimeSlot` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TimeSlot`.
+  """
+  timeSlot_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [TimeSlot_Data!]!
+  ): [TimeSlot_KeyOutput!]! @fdc_generated(from: "TimeSlot", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Booking` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Booking` or `null` if not found.
+  """
+  booking_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Booking_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Booking_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Booking_Data!
+  ): Booking_KeyOutput @fdc_generated(from: "Booking", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `BookingPlayer` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `BookingPlayer` or `null` if not found.
+  """
+  bookingPlayer_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BookingPlayer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BookingPlayer_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: BookingPlayer_Data!
+  ): BookingPlayer_KeyOutput @fdc_generated(from: "BookingPlayer", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CoachAvailability` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CoachAvailability` or `null` if not found.
+  """
+  coachAvailability_update(
+    """
+    The key used to identify the object.
+    """
+    key: CoachAvailability_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CoachAvailability_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CoachAvailability_Data!
+  ): CoachAvailability_KeyOutput @fdc_generated(from: "CoachAvailability", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Court` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Court` or `null` if not found.
+  """
+  court_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Court_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Court_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Court_Data!
+  ): Court_KeyOutput @fdc_generated(from: "Court", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `TimeSlot` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `TimeSlot` or `null` if not found.
+  """
+  timeSlot_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TimeSlot_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TimeSlot_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: TimeSlot_Data!
+  ): TimeSlot_KeyOutput @fdc_generated(from: "TimeSlot", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Booking` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  booking_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Booking_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Booking_Data!
+  ): Int! @fdc_generated(from: "Booking", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `BookingPlayer` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  bookingPlayer_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: BookingPlayer_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: BookingPlayer_Data!
+  ): Int! @fdc_generated(from: "BookingPlayer", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CoachAvailability` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  coachAvailability_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CoachAvailability_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CoachAvailability_Data!
+  ): Int! @fdc_generated(from: "CoachAvailability", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Court` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  court_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Court_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Court_Data!
+  ): Int! @fdc_generated(from: "Court", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `TimeSlot` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  timeSlot_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: TimeSlot_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: TimeSlot_Data!
+  ): Int! @fdc_generated(from: "TimeSlot", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Booking` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  booking_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Booking_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Booking_FirstRow
+  ): Booking_KeyOutput @fdc_generated(from: "Booking", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `BookingPlayer` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  bookingPlayer_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: BookingPlayer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BookingPlayer_FirstRow
+  ): BookingPlayer_KeyOutput @fdc_generated(from: "BookingPlayer", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CoachAvailability` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  coachAvailability_delete(
+    """
+    The key used to identify the object.
+    """
+    key: CoachAvailability_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CoachAvailability_FirstRow
+  ): CoachAvailability_KeyOutput @fdc_generated(from: "CoachAvailability", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Court` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  court_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Court_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Court_FirstRow
+  ): Court_KeyOutput @fdc_generated(from: "Court", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `TimeSlot` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  timeSlot_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: TimeSlot_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: TimeSlot_FirstRow
+  ): TimeSlot_KeyOutput @fdc_generated(from: "TimeSlot", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Booking` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  booking_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Booking_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Booking", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `BookingPlayer` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  bookingPlayer_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: BookingPlayer_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "BookingPlayer", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CoachAvailability` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  coachAvailability_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CoachAvailability_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CoachAvailability", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Court` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  court_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Court_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Court", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `TimeSlot` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  timeSlot_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: TimeSlot_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "TimeSlot", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+}

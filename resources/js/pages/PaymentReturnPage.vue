@@ -29,6 +29,7 @@ async function processReturn() {
         try {
             redirect = localStorage.getItem('registration_payment_redirect');
             localStorage.removeItem('registration_payment_redirect');
+            localStorage.removeItem('registration_payment_draft');
         } catch {
         }
 

@@ -13,6 +13,7 @@ const toast = useToast();
 
 const email = ref('');
 const password = ref('');
+const showPassword = ref(false);
 const message = ref('');
 const isLoggingIn = ref(false);
 
@@ -165,13 +166,49 @@ async function login() {
                     />
 
                     <label for="password">Password</label>
-                    <input
-                        id="password"
-                        v-model="password"
-                        type="password"
-                        placeholder="Password"
-                        required
-                    />
+                    <div class="password-input">
+                        <input
+                            id="password"
+                            v-model="password"
+                            :type="showPassword ? 'text' : 'password'"
+                            placeholder="Password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                            @click="showPassword = !showPassword"
+                        >
+                            <svg
+                                v-if="showPassword"
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <line x1="4" y1="4" x2="20" y2="20" />
+                            </svg>
+                            <svg
+                                v-else
+                                aria-hidden="true"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <!-- Bottom section of screen: Login button and back button -->
                     <div class="login-buttons">
@@ -400,6 +437,51 @@ async function login() {
     border-color: #6c3e94;
     box-shadow: 0 0 0 3px rgba(108, 62, 148, 0.15);
     background: white;
+}
+
+.password-input {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.6rem;
+}
+
+.password-input input {
+    padding-right: 4.25rem;
+    margin-bottom: 0;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.45rem;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(23, 18, 29, 0.06);
+    color: rgba(23, 18, 29, 0.8);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+    background: rgba(23, 18, 29, 0.1);
+}
+
+.password-toggle:active {
+    background: rgba(23, 18, 29, 0.14);
+}
+
+.password-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
 .login-message {

@@ -12,6 +12,8 @@ const fullName = ref('');
 const studentNumber = ref('');
 const phoneNumber = ref('');
 
+const registrationFee = ref(null);
+
 const message = ref('');
 const submitting = ref(false);
 
@@ -68,6 +70,7 @@ function submitPayfastForm(processUrl, fields) {
 async function checkIfAlreadyRegistered() {
     try {
         const status = await http.get('/registration/status');
+        registrationFee.value = status?.registration_fee ?? null;
         if (status?.registered) {
             await router.replace({ name: 'book' });
         }
@@ -75,6 +78,48 @@ async function checkIfAlreadyRegistered() {
         if (e instanceof ApiError && e.code === 'EMAIL_NOT_VERIFIED') {
             message.value = 'Please verify your email address before making payment.';
             return;
+        }
+    }
+}
+
+function clearDraft() {
+    try {
+        localStorage.removeItem('registration_payment_draft');
+        localStorage.removeItem('registration_payment_redirect');
+    } catch {
+    }
+}
+
+async function attemptDemoCompletionIfPossible() {
+    try {
+        const status = await http.get('/registration/status');
+        if (status?.registered) {
+            await router.replace({ name: 'book' });
+            return;
+        }
+
+        const latest = status?.latest_payment ?? null;
+        if (!latest || typeof latest !== 'object') {
+            return;
+        }
+
+        if (String(latest.status ?? '').toUpperCase() === 'PAID') {
+            await http.post('/registration/reconcile');
+            await router.replace({ name: 'book' });
+            return;
+        }
+
+        try {
+            await http.post('/registration/payment/demo/complete');
+        } catch {
+            return;
+        }
+
+        await http.post('/registration/reconcile');
+        await router.replace({ name: 'book' });
+    } catch (e) {
+        if (e instanceof ApiError && e.code === 'EMAIL_NOT_VERIFIED') {
+            message.value = 'Please verify your email address before making payment.';
         }
     }
 }
@@ -102,6 +147,10 @@ async function initiatePayment() {
             return;
         }
 
+        clearDraft();
+        fullName.value = '';
+        studentNumber.value = '';
+        phoneNumber.value = '';
         submitPayfastForm(processUrl, fields);
     } catch (e) {
         message.value = e?.message ?? String(e);
@@ -113,11 +162,19 @@ async function initiatePayment() {
 onMounted(async () => {
     loadDraft();
     await checkIfAlreadyRegistered();
+    await attemptDemoCompletionIfPossible();
 });
 </script>
 
 <template>
     <main class="payment-page">
+        <div v-if="submitting" class="redirect-overlay" aria-live="polite" aria-busy="true">
+            <div class="redirect-card">
+                <span class="spinner" aria-hidden="true" />
+                <p>Redirecting to PayFast...</p>
+            </div>
+        </div>
+
         <header>
             <h1>Registration Payment</h1>
         </header>
@@ -126,6 +183,10 @@ onMounted(async () => {
             <p class="hint">
                 Your account is verified, but registration is not active yet.
                 Please complete the registration payment to continue.
+            </p>
+
+            <p v-if="registrationFee" class="fee">
+                Amount due: {{ registrationFee.currency }} {{ registrationFee.amount }}
             </p>
 
             <form class="payment-form" @submit.prevent="initiatePayment">
@@ -157,7 +218,7 @@ onMounted(async () => {
                 />
 
                 <button type="submit" :disabled="submitting">
-                    {{ submitting ? 'Redirecting...' : 'Pay with PayFast (Sandbox)' }}
+                    {{ submitting ? 'Redirecting...' : `Pay with PayFast (Sandbox) - ${registrationFee?.currency ?? 'ZAR'} ${registrationFee?.amount ?? ''}` }}
                 </button>
 
                 <p v-if="message" class="message" role="status">
@@ -174,6 +235,46 @@ onMounted(async () => {
     padding: 2rem 1.25rem;
     color: #111827;
     background: #f3f4f6;
+}
+
+.redirect-overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+}
+
+.redirect-card {
+    width: min(420px, calc(100% - 2.5rem));
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+    color: #111827;
+}
+
+.redirect-card p {
+    margin: 0;
+    font-weight: 800;
+}
+
+.spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 4px solid rgba(108, 62, 148, 0.2);
+    border-top-color: #6c3e94;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 header {
@@ -199,6 +300,12 @@ h1 {
 .hint {
     margin: 0 0 1rem;
     color: #374151;
+}
+
+.fee {
+    margin: -0.25rem 0 1rem;
+    font-weight: 800;
+    color: #111827;
 }
 
 .payment-form {

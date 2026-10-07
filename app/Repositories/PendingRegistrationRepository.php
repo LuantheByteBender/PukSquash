@@ -35,6 +35,35 @@ class PendingRegistrationRepository
     ): object {
         $existing = $this->findByFirebaseUid($firebaseUid);
         if ($existing) {
+            $update = [];
+
+            $email = trim($email);
+            if ($email !== '' && strtolower((string) $existing->email) !== strtolower($email)) {
+                $update['email'] = $email;
+            }
+
+            if ($fullName !== null && trim($fullName) !== '' && (string) $existing->full_name !== $fullName) {
+                $update['full_name'] = $fullName;
+            }
+
+            if ($studentNumber !== null && trim($studentNumber) !== '' && (string) ($existing->student_number ?? '') !== $studentNumber) {
+                $update['student_number'] = $studentNumber;
+            }
+
+            if ($phoneNumber !== null && trim($phoneNumber) !== '' && (string) ($existing->phone_number ?? '') !== $phoneNumber) {
+                $update['phone_number'] = $phoneNumber;
+            }
+
+            if ($update !== []) {
+                DB::table('pending_registrations')
+                    ->where('id', (string) $existing->id)
+                    ->update($update);
+
+                return DB::table('pending_registrations')
+                    ->where('id', (string) $existing->id)
+                    ->first();
+            }
+
             return $existing;
         }
 

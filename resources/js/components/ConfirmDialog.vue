@@ -1,4 +1,6 @@
 <script setup>
+import LoadingSpinner from './LoadingSpinner.vue';
+
 const props = defineProps({
     open: { type: Boolean, default: false },
     title: { type: String, default: 'Confirm' },
@@ -6,19 +8,24 @@ const props = defineProps({
     confirmText: { type: String, default: 'Confirm' },
     cancelText: { type: String, default: 'Cancel' },
     confirmVariant: { type: String, default: 'primary' },
+    loading: { type: Boolean, default: false },
+    loadingText: { type: String, default: 'Working…' },
 });
 
 const emit = defineEmits(['confirm', 'cancel']);
 
 function onBackdropClick() {
+    if (props.loading) return;
     emit('cancel');
 }
 
 function onCancel() {
+    if (props.loading) return;
     emit('cancel');
 }
 
 function onConfirm() {
+    if (props.loading) return;
     emit('confirm');
 }
 
@@ -35,11 +42,15 @@ function confirmClass() {
             <h2 id="confirm-title">{{ title }}</h2>
             <p class="muted">{{ message }}</p>
 
+            <div v-if="loading" class="loading">
+                <LoadingSpinner :label="loadingText" />
+            </div>
+
             <div class="actions">
-                <button type="button" class="btn btn-secondary" @click="onCancel">
+                <button type="button" class="btn btn-secondary" :disabled="loading" @click="onCancel">
                     {{ cancelText }}
                 </button>
-                <button type="button" :class="confirmClass()" @click="onConfirm">
+                <button type="button" :class="confirmClass()" :disabled="loading" @click="onConfirm">
                     {{ confirmText }}
                 </button>
             </div>
@@ -75,6 +86,12 @@ function confirmClass() {
     margin: 0 0 0.4rem;
     font-size: 1.1rem;
     font-weight: 700;
+}
+
+.loading {
+    margin-top: 1rem;
+    display: grid;
+    place-items: center;
 }
 
 .actions {

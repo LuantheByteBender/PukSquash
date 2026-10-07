@@ -170,7 +170,7 @@ class PayfastItnController extends Controller
                     $this->users->upsert([
                         'firebaseUid' => (string) $pending->firebase_uid,
                         'fullName' => (string) $pending->full_name,
-                        'email' => (string) $pending->email,
+                        'email' => (string) $firebaseUser->email,
                         'studentNumber' => $pending->student_number ? (string) $pending->student_number : null,
                         'phoneNumber' => $pending->phone_number ? (string) $pending->phone_number : null,
                     ]);

@@ -28,6 +28,8 @@ class RegistrationReconcileController extends Controller
     public function reconcile(Request $request): JsonResponse
     {
         $firebaseUid = (string) $request->attributes->get('firebase_uid');
+        $firebaseEmail = trim((string) $request->attributes->get('firebase_email'));
+        $firebaseEmailVerified = (bool) $request->attributes->get('firebase_email_verified');
 
         if ($this->users->findByFirebaseUid($firebaseUid)) {
             return response()->json([
@@ -43,15 +45,30 @@ class RegistrationReconcileController extends Controller
             ], 404);
         }
 
-        $latest = $this->payments->findLatestForPendingRegistration((string) $pending->id);
-        if (! $latest || (string) $latest->status !== 'PAID') {
+        $paid = $this->payments->findPaidForPendingRegistration((string) $pending->id);
+        if (! $paid) {
             return response()->json([
                 'registered' => false,
                 'message' => 'No verified payment found.',
             ], 409);
         }
 
-        DB::transaction(function () use ($pending): void {
+        $studentNumber = $pending->student_number ? trim((string) $pending->student_number) : '';
+        if ($studentNumber !== '') {
+            $existing = DB::table('users')
+                ->where('student_number', $studentNumber)
+                ->first();
+
+            if ($existing && (string) ($existing->firebase_uid ?? '') !== $firebaseUid) {
+                return response()->json([
+                    'registered' => false,
+                    'message' => 'Student number is already registered.',
+                    'code' => 'STUDENT_NUMBER_ALREADY_REGISTERED',
+                ], 409);
+            }
+        }
+
+        DB::transaction(function () use ($pending, $firebaseEmail, $firebaseEmailVerified): void {
             $pendingLocked = DB::table('pending_registrations')
                 ->where('id', (string) $pending->id)
                 ->lockForUpdate()
@@ -67,8 +84,7 @@ class RegistrationReconcileController extends Controller
                 return;
             }
 
-            $firebaseUser = $this->firebase->getUser((string) $pendingLocked->firebase_uid);
-            if ($firebaseUser->emailVerified !== true) {
+            if ($firebaseEmailVerified !== true) {
                 return;
             }
 
@@ -77,7 +93,7 @@ class RegistrationReconcileController extends Controller
             $this->users->upsert([
                 'firebaseUid' => (string) $pendingLocked->firebase_uid,
                 'fullName' => (string) $pendingLocked->full_name,
-                'email' => (string) $pendingLocked->email,
+                'email' => $firebaseEmail !== '' ? $firebaseEmail : (string) ($pendingLocked->email ?? ''),
                 'studentNumber' => $pendingLocked->student_number ? (string) $pendingLocked->student_number : null,
                 'phoneNumber' => $pendingLocked->phone_number ? (string) $pendingLocked->phone_number : null,
             ]);

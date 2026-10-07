@@ -35,7 +35,7 @@ class UserController extends Controller
         $user = $this->users->findByFirebaseUid($firebaseUid);
 
         if (! $user) {
-            $this->attemptRegistrationRecovery((string) $firebaseUid);
+            $this->attemptRegistrationRecovery((string) $firebaseUid, is_string($email) ? $email : null);
             $user = $this->users->findByFirebaseUid((string) $firebaseUid);
         }
 
@@ -47,10 +47,15 @@ class UserController extends Controller
             ], 403);
         }
 
+        if (is_string($email) && $email !== '' && strcasecmp((string) $user->email, $email) !== 0) {
+            $this->users->updateEmailForFirebaseUid((string) $firebaseUid, $email);
+            $user = $this->users->findByFirebaseUid((string) $firebaseUid) ?? $user;
+        }
+
         return response()->json($user->toArray());
     }
 
-    private function attemptRegistrationRecovery(string $firebaseUid): void
+    private function attemptRegistrationRecovery(string $firebaseUid, ?string $firebaseEmail = null): void
     {
         if ($firebaseUid === '') {
             return;
@@ -83,7 +88,7 @@ class UserController extends Controller
         $this->users->upsert([
             'firebaseUid' => (string) $pending->firebase_uid,
             'fullName' => (string) $pending->full_name,
-            'email' => (string) $pending->email,
+            'email' => is_string($firebaseEmail) && $firebaseEmail !== '' ? $firebaseEmail : (string) $pending->email,
             'studentNumber' => $pending->student_number ? (string) $pending->student_number : null,
             'phoneNumber' => $pending->phone_number ? (string) $pending->phone_number : null,
         ]);

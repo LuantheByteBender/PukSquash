@@ -1,0 +1,767 @@
+[
+  {
+    "id": "00",
+    "title": "Project Setup and Firebase Data Layer",
+    "purpose": "PukSquash lets NWU Potchefstroom students check squash court availability and manage bookings remotely. This part explains the environment shared by the functionality manuals. The application uses Vue 3 and Vite for the browser, Laravel 12 and PHP for the REST API, Firebase Authentication for identity, and Firebase Data Connect with Cloud SQL PostgreSQL for relational data.",
+    "workflow": "The browser sends a Firebase ID token to Laravel. Middleware verifies the identity, controllers apply feature rules, repositories call named GraphQL operations, and SqlConnectClient sends those operations to Data Connect. DTO classes translate the GraphQL response into the API field names consumed by Vue. Use revision fe3e361 when reproducing this edition; later repository code uses a different persistence implementation.",
+    "files": [
+      "resources/js/pages and components \u2014 application screens and reusable interface elements",
+      "resources/js/services/http.js \u2014 authenticated JSON requests",
+      "app/Http/Controllers/Api and app/Repositories \u2014 feature logic and data access",
+      "app/Services/SqlConnectClient.php \u2014 Data Connect transport",
+      "dataconnect/schema/schema.gql \u2014 six core entities",
+      "dataconnect/example/queries.gql and mutations.gql \u2014 named operations"
+    ],
+    "api": "All feature URLs in these manuals begin with /api. GET /api/me is the initial identity and profile check. Protected requests use Authorization: Bearer <Firebase ID token>.",
+    "one": {
+      "title": "Local development setup",
+      "code": "composer install\ncopy .env.example .env\nphp artisan key:generate\nnpm ci\nphp artisan serve\n# In a second terminal\nnpm run dev",
+      "label": "Windows commands to run from the Firebase baseline checkout",
+      "explanation": "Use PHP 8.2 or a compatible version accepted by composer.lock, Composer, and a Node version supported by the locked Vite release. Install from the existing lockfiles. Copy the environment template only for a new local setup. Laravel serves the application; Vite provides development assets. Create the local Laravel framework database if the chosen cache/session drivers need it. Laravel framework migrations do not create the Data Connect domain schema.",
+      "physical": [
+        "composer install resolves the PHP libraries, including kreait/firebase-php, from composer.lock.",
+        "key:generate creates the Laravel application key. npm ci installs the JavaScript lockfile without selecting arbitrary newer versions.",
+        "php artisan serve starts the PHP application, while npm run dev starts Vite. npm run build produces production assets; neither command deploys the backend."
+      ],
+      "extra": "Set the six VITE_FIREBASE_* names read by resources/js/services/firebase.js. On the server, set FIREBASE_PROJECT_ID, FIREBASE_CREDENTIALS, FIREBASE_DATACONNECT_LOCATION, FIREBASE_DATACONNECT_SERVICE and FIREBASE_DATACONNECT_CONNECTOR. Credential paths are resolved relative to the repository by this implementation. Keep the service-account JSON outside the public directory and source control."
+    },
+    "two": {
+      "title": "Data Connect request implementation",
+      "snippet": {
+        "source": "app/Services/SqlConnectClient.php",
+        "start": "public function execute(string $operationName",
+        "end": null,
+        "n": 25
+      },
+      "explanation": "Each repository selects an operation by its exact GraphQL name and supplies a variables array. The service loads the definition from the connector files. A server OAuth access token authorises the request in the hosted environment; DATA_CONNECT_EMULATOR_HOST selects the local emulator and skips that token path.",
+      "physical": [
+        "loadOperation locates the named query or mutation and caches its text. A missing operation name throws an exception.",
+        "Http::timeout(15) bounds the external request. withToken supplies the server access token; it is separate from the browser Firebase ID token.",
+        "The request posts query, operationName and variables. An empty variables array is cast to an object so GraphQL receives the expected JSON shape."
+      ],
+      "extra": "User is linked to Firebase through firebaseUid. Court and TimeSlot describe bookable cells; Booking reserves a court/date/slot; BookingPlayer records participants; CoachAvailability has a composite coach/slot/date key. Connector operations use NO_ACCESS for privileged server access. Firestore collections and Storage rules from the example manual do not describe this relational data model."
+    },
+    "tests": [
+      "Run npm run build and php artisan test in the configured Firebase checkout. Record the actual output; these manuals do not claim a test run has passed.",
+      "Confirm GET /api/me works with a valid token and returns 401 without one. Confirm a Data Connect query reaches the intended project and service.",
+      "Use the Firebase CLI and the repository dataconnect configuration to prepare the emulator or deploy the schema and connector in a development project before seeding courts and slots. Review schema changes before deployment.",
+      "Check every one-hour TimeSlot and court before testing bookings. Keep production credentials and production data out of local tests."
+    ],
+    "notes": [
+      "The checked firebase.json configures Data Connect and its emulator. It has no complete hosting configuration for the Laravel PHP backend. Provision a PHP-capable HTTPS host and deploy Vite assets with Laravel; do not assume firebase deploy hosts the whole application.",
+      "The specifications require transaction-safe reservations, booking limits and additional Phase 2 tools. Comments about uniqueness are not proof that a PostgreSQL constraint exists. Validate deployed constraints and add integration tests. Time-slot administration and configurable rules have no complete admin API in this baseline."
+    ],
+    "refs": [
+      "https://firebase.google.com/docs/sql-connect/admin-sdk"
+    ]
+  },
+  {
+    "id": "01",
+    "title": "Registration Login and Access Control",
+    "purpose": "This functionality creates a Firebase email and password account, sends email verification, signs the user in and supplies verified identity to Laravel. The Firebase account owns the credentials. The PukSquash User record owns the application name, student number, role and account status.",
+    "workflow": "SignUpPage calls registerUser and waits for verification. It reloads the Firebase user every three seconds and stops the timer when the component unmounts. GET /api/me creates the minimal Data Connect profile if it is missing. LoginPage signs in, checks emailVerified and refreshes the account. Vue route guards guide navigation; Laravel verifies protected requests independently.",
+    "files": [
+      "resources/js/pages/SignUpPage.vue and LoginPage.vue \u2014 forms and verification flow",
+      "resources/js/features/auth/authService.js \u2014 registration, login and logout",
+      "resources/js/composables/useAuth.js and useAccount.js \u2014 shared identity and profile state",
+      "app/Services/FirebaseAuthService.php \u2014 Firebase server client",
+      "app/Http/Middleware/FirebaseAuth.php and AdminMiddleware.php \u2014 access checks",
+      "app/Http/Controllers/Api/UserController.php \u2014 GET /api/me"
+    ],
+    "api": "Firebase SDK calls handle registration and login. GET /api/me reads or creates the application profile. There is no Laravel password-login endpoint in this edition.",
+    "one": {
+      "title": "Firebase registration implementation",
+      "snippet": {
+        "source": "resources/js/features/auth/authService.js",
+        "start": "export async function registerUser",
+        "end": "export async function loginUser",
+        "n": null
+      },
+      "explanation": "The authentication service uses the Firebase auth instance imported from services/firebase.js, creates the account and sends the verification email. It converts common Firebase error codes to readable messages. The shared loading indicator starts before the request and stops in finally, including on failure. Account creation and email verification are separate steps.",
+      "physical": [
+        "The auth instance is statically imported in this revision. startLoading begins shared feedback, and stopLoading in finally resets it. Configure Firebase before loading the authentication pages.",
+        "createUserWithEmailAndPassword receives the trimmed email and original password. Passwords are handled by Firebase, not stored in the Data Connect User entity.",
+        "sendEmailVerification sends the verification link. If sending fails after account creation, the account may already exist; retry and recovery must account for that partial outcome.",
+        "loginUser uses signInWithEmailAndPassword. logoutUser delegates to Firebase signOut. useAuth observes onAuthStateChanged for application-wide session state."
+      ],
+      "extra": "The signup form prevents repeated submission while waiting for verification. A verified signup proceeds to the booking page. The baseline has no registration payment gate. Payment-dependent registration is covered separately as an extension."
+    },
+    "two": {
+      "title": "Profile creation after authentication",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/UserController.php",
+        "start": "public function me(Request $request)",
+        "end": "public function update",
+        "n": null
+      },
+      "explanation": "FirebaseAuth verifies the bearer token, resolves its subject UID and fetches the Firebase user. It places the UID, email and verification flag in request attributes. GET /api/me is deliberately allowed before email verification so the minimal profile can be created; other protected API requests reject an unverified account.",
+      "physical": [
+        "The controller reads firebase_uid and firebase_email from middleware attributes, not from browser input.",
+        "findByFirebaseUid links the Firebase identity to its application profile. If absent, the email prefix supplies a temporary display name and student number.",
+        "UserRepository::upsert defaults role to USER and status to ACTIVE, then executes the UpsertUser insert mutation. The controller reads the created record and returns its DTO array.",
+        "AdminMiddleware additionally requires an ACTIVE profile with role ADMIN. Coach controllers explicitly require an ACTIVE COACH. Client-side requiresRole metadata controls the screen, not the authority to call the API."
+      ],
+      "extra": "The method named UpsertUser is implemented with user_insert and duplicate-error handling in this baseline. It is not a general update-on-conflict mutation. Keep retries and cache invalidation consistent with that behaviour."
+    },
+    "tests": [
+      "Register a new test address: expect a Firebase account and verification email; verify the link and confirm navigation and GET /api/me.",
+      "Try a duplicate email, invalid email, weak password, incorrect password and unavailable network. Confirm an understandable error and a usable retry path.",
+      "Call a protected endpoint without a token or with an invalid token: expect 401. Call with an unverified account: expect 403, except GET /api/me.",
+      "Use USER, COACH and ADMIN test accounts against the actual protected APIs. A hidden link or blocked browser route alone is not an authorisation test.",
+      "Navigate away during verification and check that polling stops. Log out, then attempt to reuse the authenticated page and confirm that a new protected request requires authentication."
+    ],
+    "notes": [
+      "The specifications require university email eligibility. The baseline trims email but does not implement an NWU domain allowlist. Add a server-enforced eligibility policy before claiming NWU-only registration.",
+      "FirebaseAuth in this baseline does not globally reject suspended or inactive application profiles; some role-specific controllers do. This is a known access-control gap for general booking routes. Password-reset and Google sign-in screens from the example manual are not implemented here."
+    ],
+    "refs": [
+      "https://firebase.google.com/docs/auth/web/password-auth",
+      "https://firebase.google.com/docs/auth/admin/verify-id-tokens"
+    ]
+  },
+  {
+    "id": "02",
+    "title": "User Profile Management",
+    "purpose": "Profile management lets a signed-in user edit the name shown in the application and on bookings. The Firebase edition keeps authentication credentials separate from the relational profile. User, Coach and Admin accounts use the same profile page.",
+    "workflow": "UserProfile loads refreshAccount on mount, splits full_name into first and remaining names, and displays account details. Edit enables the name fields. Save opens a confirmation dialog, updateAccount sends PATCH /api/me, and the successful response replaces the shared profile. Cancel restores the last saved account values.",
+    "files": [
+      "resources/js/pages/UserProfile.vue \u2014 editable form and confirmation",
+      "resources/js/composables/useAccount.js \u2014 shared profile and updateAccount",
+      "app/Http/Controllers/Api/UserController.php \u2014 update validation",
+      "app/Repositories/UserRepository.php \u2014 UpdateUserProfile and cache invalidation"
+    ],
+    "api": "GET /api/me returns the profile. PATCH /api/me accepts full_name (required string, maximum 120 characters) and student_number (nullable string, maximum 30). The caller is identified from the verified Firebase token.",
+    "one": {
+      "title": "Profile update from the page",
+      "snippet": {
+        "source": "resources/js/pages/UserProfile.vue",
+        "start": "const saveProfile = async () => {",
+        "end": "</script>",
+        "n": null
+      },
+      "explanation": "The page combines the first and last name and sends the existing student number with the updated full_name. It waits for the account service before displaying success. saving disables repeat submission and is reset in finally, including when the API fails.",
+      "physical": [
+        "The confirmation flag is cleared before saving and the prior error is removed.",
+        "fullName joins the two editable name fields and trims outer whitespace.",
+        "updateAccount receives only the fields permitted by this screen. applyFromAccount then reloads the returned shared profile.",
+        "The success message clears after three seconds. catch stores the error text; finally restores the button state."
+      ],
+      "extra": "Email, role and student number are displayed as account details. In this baseline the screen edits names, although the backend also accepts a student_number value. Phone-number and email-edit functionality belongs to later code, not this Firebase profile implementation."
+    },
+    "two": {
+      "title": "Data Connect profile persistence",
+      "snippet": {
+        "source": "app/Repositories/UserRepository.php",
+        "start": "public function updateProfile",
+        "end": null,
+        "n": 30
+      },
+      "explanation": "The repository resolves the current user, invalidates UID and application-ID cache entries, executes UpdateUserProfile, and invalidates again. The mutation updates fullName and studentNumber for the verified firebaseUid. The controller rereads the record so the browser receives persisted values.",
+      "physical": [
+        "The UID-specific cache key is built from the verified identity; the application ID cache is also cleared if a record exists.",
+        "execute passes camelCase variables to GraphQL even though the REST payload uses snake_case. This mapping is deliberate.",
+        "UpdateUserProfile changes only the profile fields in its mutation. It does not update Firebase Authentication credentials or promote a role."
+      ],
+      "extra": "When adding a profile field, change the schema, query selections, mutation variables, DTO conversion, request validation and Vue form together. Merely adding an input cannot make the field persist."
+    },
+    "tests": [
+      "Change the name, confirm Save, refresh the page and verify the value in the API response and in a booking label.",
+      "Cancel editing and confirm the original name is restored without a request.",
+      "Send a missing or over-length full_name: expect Laravel validation failure with HTTP 422.",
+      "Attempt to send another firebase_uid or role in the request: the update must remain scoped to the authenticated user and must not change privileges.",
+      "Simulate API failure and confirm the form remains recoverable and saving returns to false."
+    ],
+    "notes": [
+      "The screen treats student number as read-only while the API permits its update. Decide whether it should be immutable and enforce that decision on the backend.",
+      "A new display name can appear in several cached or already-loaded views. Refresh the shared account and any affected booking data after changes; do not treat stale browser labels as a failed database update."
+    ],
+    "refs": []
+  },
+  {
+    "id": "03",
+    "title": "Court Availability Grid",
+    "purpose": "The availability grid shows the state of every court and fixed time slot for a selected date. It provides the entry point for creating a booking or joining an Open booking. Laravel returns both the display state and action flags so the browser uses one set of availability rules.",
+    "workflow": "BookCourtPage requests the selected date through bookingService. AvailabilityRepository fetches courts, active slots and confirmed bookings in one Data Connect operation. AvailabilityController orders the courts and slots, identifies past times and the current user\u2019s occupied times, then produces the cells rendered by AvailabilityGrid and explained by GridLegend.",
+    "files": [
+      "resources/js/pages/BookCourtPage.vue \u2014 selected date and grid refresh",
+      "resources/js/components/AvailabilityGrid.vue and GridLegend.vue \u2014 display",
+      "resources/js/features/booking/bookingService.js \u2014 availability request",
+      "app/Http/Controllers/Api/AvailabilityController.php \u2014 state calculation",
+      "app/Repositories/AvailabilityRepository.php \u2014 GetAvailabilityData"
+    ],
+    "api": "GET /api/availability?date=YYYY-MM-DD returns booking_window_days, courts, time_slots and cells. Each cell includes court_id, time_slot_id, state, label, can_book, can_join, is_mine and booking_id; occupied cells also include players.",
+    "one": {
+      "title": "Fetching the date snapshot",
+      "snippet": {
+        "source": "app/Repositories/AvailabilityRepository.php",
+        "start": "public function getForDate",
+        "end": null,
+        "n": 30
+      },
+      "explanation": "GetAvailabilityData returns the related data required to compute a complete grid. The repository maps the response into CourtDTO, TimeSlotDTO and BookingDTO objects. The controller then works with predictable property names instead of repeating raw GraphQL response handling.",
+      "physical": [
+        "The bookingDate variable selects the day. The operation name must match queries.gql exactly.",
+        "Each array_map converts a returned row to a typed DTO; missing response arrays default to empty arrays.",
+        "The returned snapshot keeps courts, timeSlots and bookings separate. Cells are derived by the controller, not persisted as a second availability table."
+      ],
+      "extra": "Times are interpreted in Africa/Johannesburg. The controller indexes confirmed bookings by court ID and slot ID, checks user participation, and disables free cells when the user is already booked in that time slot."
+    },
+    "two": {
+      "title": "Choosing the occupied cell state",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/AvailabilityController.php",
+        "start": "$state = match (true)",
+        "end": "$isMine = false;",
+        "n": null
+      },
+      "explanation": "An existing booking determines the occupied state. A Private Coach or Locked booking remains closed to joining. An Open booking with fewer than two players is joinable only if the current caller is not already involved, the time has not started and the caller is free.",
+      "physical": [
+        "The match expression gives PRIVATE_COACH and LOCKED priority. OPEN is returned only for an Open booking with fewer than two players; other occupied cases become FULL.",
+        "The label uses participant and coach names when available and falls back to a readable state label.",
+        "Later in the method, canJoin also checks isMine, slotIsPast and userBusy. booking_id is provided for an eligible join; otherwise it is null."
+      ],
+      "extra": "A grid snapshot can become stale immediately after it is read. Recheck in the create and join endpoints. After a mutation or HTTP 409 conflict, refresh the selected date instead of silently showing the earlier grid."
+    },
+    "tests": [
+      "Use fixtures for AVAILABLE, OPEN, FULL, LOCKED, PRIVATE_COACH and UNAVAILABLE. Check both the legend colour and the action enabled on the cell.",
+      "Compare Court 2 and Court 10 ordering and check TimeSlot displayOrder.",
+      "Check today immediately before and after a slot starts, using South African time. Past cells must not offer booking or joining.",
+      "Book one court at a time slot, then check the other courts for that same user. Confirm overlapping participation is disabled.",
+      "Use two browser sessions: mutate a booking in one, refresh the other and verify the updated state."
+    ],
+    "notes": [
+      "The payload advertises a fourteen-day booking window, but that field alone is not server enforcement of the window. The ordinary booking controller needs its own boundary check.",
+      "Live availability in this baseline means refreshed API snapshots. No WebSocket or Firestore realtime subscription is part of this feature."
+    ],
+    "refs": []
+  },
+  {
+    "id": "04",
+    "title": "Court Booking Creation",
+    "purpose": "This functionality reserves one court for one fixed time slot on one date. OPEN creates a session another user can join. LOCKED reserves the cell without a join action. PRIVATE_COACH also references a coach who has published availability for that date and slot.",
+    "workflow": "The user selects an available cell in BookCourtPage and completes BookingDialog. bookingService posts the selected identifiers and booking type. Laravel resolves the creator from the Firebase identity, validates the request, checks the court and time, checks conflicting user participation and court occupancy, and validates any selected coach. It creates the booking and then the creator\u2019s Player 1 record.",
+    "files": [
+      "resources/js/components/BookingDialog.vue \u2014 booking type and coach selection",
+      "resources/js/features/booking/bookingService.js \u2014 createBooking and availableCoaches",
+      "app/Http/Controllers/Api/BookingController.php \u2014 store",
+      "app/Repositories/BookingRepository.php and BookingPlayerRepository.php \u2014 mutations",
+      "dataconnect/example/mutations.gql \u2014 CreateBooking and AddBookingPlayer"
+    ],
+    "api": "POST /api/bookings accepts court_id, time_slot_id, booking_date, booking_type and optional coach_id. PRIVATE_COACH requires coach_id. Success is HTTP 201 with {\"id\":\"<booking ID>\"}. The caller cannot choose created_by_user_id.",
+    "one": {
+      "title": "Validation and identity resolution",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/BookingController.php",
+        "start": "public function store(Request $request)",
+        "end": "if (! $user) {",
+        "n": null
+      },
+      "explanation": "The controller validates the external REST fields before doing the domain checks. All three booking types share the endpoint. The Firebase UID comes from middleware and resolves the application user, ensuring the reservation belongs to the authenticated caller.",
+      "physical": [
+        "The request validation fixes the date format and limits booking_type to OPEN, LOCKED or PRIVATE_COACH.",
+        "coach_id is nullable at initial validation because it is irrelevant to normal bookings. A later branch requires it for PRIVATE_COACH.",
+        "The controller reads firebase_uid from request attributes and queries the application user. It does not trust a user ID submitted by the client."
+      ],
+      "extra": "The remaining checks return 422 for an inactive/missing court, a past or current slot, or overlapping user participation; SLOT_TAKEN and COACH_UNAVAILABLE use 409. They must run again even when the browser offered the cell as available."
+    },
+    "two": {
+      "title": "Creating the relational booking",
+      "snippet": {
+        "source": "dataconnect/example/mutations.gql",
+        "start": "mutation CreateBooking(",
+        "end": "mutation CancelBooking(",
+        "n": null
+      },
+      "explanation": "The repository passes the controller\u2019s camelCase variables to CreateBooking. The mutation inserts a CONFIRMED Booking linked to the Court, TimeSlot, creator and optional coach. The response key is used for a separate AddBookingPlayer call with player position 1.",
+      "physical": [
+        "UUID variables identify the related entities, while bookingDate is a GraphQL Date and bookedAt is a Timestamp.",
+        "createdById is derived from the verified user. The stored status is explicitly CONFIRMED.",
+        "NO_ACCESS keeps ordinary client operation execution closed; Laravel uses privileged server access.",
+        "The controller accepts several insertion-key response shapes, extracts id, then adds Player 1. A missing key becomes HTTP 500."
+      ],
+      "extra": "This excerpt is the Firebase baseline implementation. The two inserts are separate external calls, and the preceding slot check is also separate. Do not describe them as a single transaction or a demonstrated concurrency guarantee."
+    },
+    "tests": [
+      "Create OPEN and LOCKED bookings in different free cells. Verify the Booking row and Player 1 relation, then refresh the grid.",
+      "Attempt the same court/date/slot again: expect 409 SLOT_TAKEN when the existing booking is observed.",
+      "Attempt a second booking at the same date/slot on another court: expect 422 USER_ALREADY_BOOKED.",
+      "Create PRIVATE_COACH without a coach and with an unavailable coach: expect 422 and 409 respectively.",
+      "Run concurrent requests and simulate a failure between Booking and Player 1 creation. Inspect for duplicate cells or orphan bookings; these are required integrity tests, not proven passing behaviour."
+    ],
+    "notes": [
+      "The supplied specification requires normal booking limits, consecutive-booking limits and transactional conflict protection. The baseline store method does not fully implement those limits or one atomic reservation operation.",
+      "The schema contains comments describing composite booking and player uniqueness but does not declare all those constraints. Implement and verify a transaction-safe operation and database constraints before relying on concurrent booking safety."
+    ],
+    "refs": []
+  },
+  {
+    "id": "05",
+    "title": "Joining an Open Booking",
+    "purpose": "Joining adds the authenticated user as Player 2 to an existing OPEN booking. It reuses the same reservation, court, date and time slot. It must never create a second Booking for the same cell.",
+    "workflow": "The availability response exposes a join action only for eligible Open cells. The browser passes the existing booking ID to joinBooking. Laravel checks the user and booking, then checks status, type, time, the user\u2019s other participation, capacity and duplicate membership. It inserts one BookingPlayer relation at position 2 and returns the original booking ID.",
+    "files": [
+      "resources/js/features/booking/bookingService.js \u2014 joinBooking",
+      "resources/js/pages/BookCourtPage.vue \u2014 join action and refresh",
+      "app/Http/Controllers/Api/BookingController.php \u2014 join",
+      "app/Repositories/BookingPlayerRepository.php \u2014 add",
+      "dataconnect/example/mutations.gql \u2014 AddBookingPlayer"
+    ],
+    "api": "POST /api/bookings/{id}/join has no user-ID payload. Success returns HTTP 200 and the existing id. Missing user/booking returns 404; invalid type, time or participation returns 422; an observed full booking returns 409 SLOT_TAKEN.",
+    "one": {
+      "title": "Eligibility and capacity checks",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/BookingController.php",
+        "start": "// Check if slot is full (2 players).",
+        "end": "/**\n     * GET /api/bookings/mine",
+        "n": null
+      },
+      "explanation": "After verifying that the booking is confirmed and Open and that the time is still eligible, this part rejects a full booking and duplicate participation. The caller is added only when both checks pass. The response identifies the booking that was joined.",
+      "physical": [
+        "count($booking->players) >= 2 rejects an already full booking with HTTP 409.",
+        "The participant loop compares application user IDs, preventing the same user from occupying both positions.",
+        "players->add receives the existing booking ID, the verified user ID and player position 2. No CreateBooking mutation is called.",
+        "The final response returns the same ID so the frontend can refresh the affected booking and date."
+      ],
+      "extra": "The controller also rejects a user who already participates in any booking at that date and time slot. Treat 409 as a normal contention result: tell the user the place is unavailable and refresh the grid."
+    },
+    "two": {
+      "title": "Persisting Player 2",
+      "snippet": {
+        "source": "dataconnect/example/mutations.gql",
+        "start": "mutation AddBookingPlayer(",
+        "end": "mutation LeaveBooking(",
+        "n": null
+      },
+      "explanation": "AddBookingPlayer inserts the relationship between the reservation and the participant. It stores the player position and join timestamp. The position is selected on the server rather than accepted from the browser.",
+      "physical": [
+        "bookingId and userId are foreign-key identifiers. playerPosition is the server-selected 1 or 2 convention.",
+        "joinedAt records when the participant joined. The mutation itself is a privileged server operation.",
+        "The standalone mutation does not read the current capacity and write the new participant atomically. The preceding controller check cannot eliminate a simultaneous Player 2 race."
+      ],
+      "extra": "Use uniqueness on the booking/position and booking/user pairs and perform eligibility plus insertion in a transaction-safe operation. Repeated or concurrent requests should return a controlled conflict without overwriting a participant."
+    },
+    "tests": [
+      "Join an Open booking owned by another account. Verify one new BookingPlayer at position 2 and no additional Booking row.",
+      "Try to join LOCKED, PRIVATE_COACH and cancelled bookings: expect rejection.",
+      "Try joining as the creator or an existing player. Confirm there is no second membership for the same user.",
+      "Try to join after the slot starts and while already booked at the same time on another court.",
+      "Submit two Player 2 requests concurrently. Verify one successful membership and one controlled failure after the required database protection is implemented."
+    ],
+    "notes": [
+      "Composite uniqueness is described in schema comments but is not fully declared in the baseline BookingPlayer type. A capacity check followed by a separate insert is a known implementation gap.",
+      "When Player 2 later leaves, remove only that participant relationship. The creator\u2019s Booking and Player 1 record continue to reserve the court."
+    ],
+    "refs": []
+  },
+  {
+    "id": "06",
+    "title": "My Bookings History and Cancellation",
+    "purpose": "My Bookings displays the authenticated user\u2019s reservations and Open sessions they joined. It supports upcoming, past and cancelled scopes. The cancellation endpoint distinguishes cancelling the creator\u2019s reservation from leaving another user\u2019s Open session.",
+    "workflow": "MyBookingsPage requests a scope and renders BookingCard components. The repository returns reservations where the user is the creator or a participant. The controller applies date/time filtering and sorts the result. When the user confirms cancellation or leaving, the endpoint derives the caller from Firebase and checks ownership or participation before changing data.",
+    "files": [
+      "resources/js/pages/MyBookingsPage.vue and components/BookingCard.vue \u2014 list and actions",
+      "resources/js/components/ConfirmDialog.vue \u2014 confirmation pattern",
+      "resources/js/features/booking/bookingService.js \u2014 myBookings and cancelBooking",
+      "app/Http/Controllers/Api/BookingController.php \u2014 mine and cancel",
+      "app/Repositories/BookingRepository.php and BookingPlayerRepository.php \u2014 cancellation and leaving"
+    ],
+    "api": "GET /api/bookings/mine?scope=upcoming|past|cancelled returns an array. POST /api/bookings/{id}/cancel returns {\"left\":false} for creator cancellation or {\"left\":true} for leaving an Open session.",
+    "one": {
+      "title": "Creator and participant behaviour",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/BookingController.php",
+        "start": "// Only the creator can cancel.",
+        "end": "private function timeSlotIsPastOrCurrent",
+        "n": null
+      },
+      "explanation": "Only the creator can cancel the reservation itself. A non-creator may leave only if the booking is Open and the user is one of its participants. A caller with no relationship to the booking is denied. This distinction preserves the original reservation when Player 2 leaves.",
+      "physical": [
+        "isCreator compares the booking creator ID with the verified application user ID.",
+        "A non-creator is rejected with 403 unless the type is OPEN and their membership is found.",
+        "players->remove deletes that user\u2019s participation and returns left=true.",
+        "For the creator, bookings->cancel marks the reservation cancelled and returns left=false. Earlier checks reject missing or already cancelled bookings."
+      ],
+      "extra": "The list uses Africa/Johannesburg time. In the baseline, upcoming/past classification is based on the slot start, while the coach schedule keeps sessions until their end. That difference is intentional to document rather than silently normalise."
+    },
+    "two": {
+      "title": "Cancellation and leaving mutations",
+      "snippet": {
+        "source": "app/Repositories/BookingRepository.php",
+        "start": "public function cancel(string $id)",
+        "end": "    /**\n     * Check whether",
+        "n": null
+      },
+      "explanation": "Cancellation changes the Booking status to CANCELLED and sets cancelledAt through the CancelBooking mutation. Availability queries consider confirmed bookings, so the cancelled reservation no longer blocks the court. Leaving an Open booking instead calls the LeaveBooking mutation, which deletes the participant relation matching both booking ID and user ID.",
+      "physical": [
+        "execute selects CancelBooking and provides the booking key plus the server\u2019s cancellation timestamp.",
+        "The GraphQL mutation updates the status rather than deleting the booking, retaining a cancelled record for history.",
+        "LeaveBooking uses a constrained deleteMany matching bookingId and userId; it does not remove the creator or other participants."
+      ],
+      "extra": "My Bookings fetches confirmed or cancelled data and then filters by creator or participant. The baseline repository fetches all bookings of the selected status before filtering in PHP; a server-side user filter and pagination would improve scalability."
+    },
+    "tests": [
+      "Confirm a creator appears in My Bookings and Player 2 also sees the joined Open booking.",
+      "As Player 2, leave: expect left=true, the creator still listed and the grid Open again.",
+      "As the creator, cancel: expect left=false, a cancelled history record and a free cell after refresh.",
+      "Try cancelling another user\u2019s Locked booking: expect 403. Try cancelling an already cancelled booking: expect 422.",
+      "Check today\u2019s boundaries for upcoming and past, and verify cancelled entries are selected by status."
+    ],
+    "notes": [
+      "The cancel method does not enforce a future-time cutoff in this baseline. A disabled frontend action is not a backend cancellation policy; add the agreed rule explicitly if required.",
+      "Unsupported scope values are not explicitly validated in mine. Validate the accepted scopes before extending the endpoint, and add tests for unexpected values."
+    ],
+    "refs": []
+  },
+  {
+    "id": "07",
+    "title": "Coach Availability and Notice Board",
+    "purpose": "Coaches publish the fixed time slots during which they can offer private coaching. Students browse those published times through the coach notice board. Availability describes a coach\u2019s offer; it does not itself reserve a court.",
+    "workflow": "An ACTIVE COACH submits a date and one or more time-slot IDs. The request validator rejects malformed or duplicate IDs and past dates. The controller checks active slots and times, skips availability already published, and creates missing rows. The coach can retrieve their published slots and remove an eligible slot. The notice board groups valid rows by coach and sorts slots for display.",
+    "files": [
+      "resources/js/pages/CoachBookings.vue \u2014 availability management",
+      "resources/js/pages/CoachNoticeBoardPage.vue \u2014 coach notice board",
+      "app/Http/Requests/PublishCoachAvailabilityRequest.php \u2014 input rules",
+      "app/Http/Controllers/Api/CoachAvailabilityController.php \u2014 publish, mine, destroy and noticeBoard",
+      "app/Repositories/CoachAvailabilityRepository.php \u2014 named Data Connect operations"
+    ],
+    "api": "PUT /api/coach/availability accepts availability_date and time_slot_ids. GET and DELETE /api/coach/availability manage the caller\u2019s slots. GET /api/notice-board/coaches?date=YYYY-MM-DD lists coaches. GET /api/coaches/available also takes time_slot_id.",
+    "one": {
+      "title": "Validating published availability",
+      "snippet": {
+        "source": "app/Http/Requests/PublishCoachAvailabilityRequest.php",
+        "start": "public function rules(): array",
+        "end": null,
+        "n": 31
+      },
+      "explanation": "The FormRequest validates the date and selected slot identifiers before the controller writes anything. Authorisation remains in Firebase middleware and the controller\u2019s ACTIVE COACH check; authorize returning true does not grant every user coaching privileges.",
+      "physical": [
+        "availability_date must use YYYY-MM-DD and cannot be before today.",
+        "time_slot_ids must contain at least one item.",
+        "Each item must be a distinct 32-character hexadecimal string in this baseline. Do not substitute a hyphenated UUID in a test without matching the actual validator.",
+        "The controller separately checks that every requested ID belongs to an active TimeSlot and that today\u2019s selected times have not started."
+      ],
+      "extra": "Publishing returns created_time_slot_ids and existing_time_slot_ids. Repeating the same selection should not create duplicates. The controller batches missing rows through createMany and treats recognised duplicate errors as existing availability."
+    },
+    "two": {
+      "title": "Composite availability identity",
+      "snippet": {
+        "source": "dataconnect/schema/schema.gql",
+        "start": "type CoachAvailability @table",
+        "end": null,
+        "n": 18
+      },
+      "explanation": "A CoachAvailability row is identified by coach, timeSlot and availabilityDate. That composite identity reflects the rule that one coach publishes a given date/slot once. Unlike ordinary Bookings, an availability row has no court relation.",
+      "physical": [
+        "The @table key declares the composite identity in the schema.",
+        "coach points to a User, so the server must enforce that the user is an ACTIVE COACH. A relation alone does not prove the role.",
+        "timeSlot points to the fixed slot shared with bookings. availabilityDate distinguishes the same hour on different days.",
+        "createdAt records when the availability was published."
+      ],
+      "extra": "The management response adds has_confirmed_booking. Removal checks for a confirmed coaching booking and returns 409 when one exists. The notice board filters out inactive coaches and inactive slots, deduplicates slots by ID and orders coaches by name. Published availability and actual bookability must still be distinguished at booking time."
+    },
+    "tests": [
+      "Publish valid slots as an ACTIVE COACH and verify both the management list and notice board. Repeat the request and check existing IDs are reported without duplicates.",
+      "Submit as USER or ADMIN: the active-coach endpoints must return 403.",
+      "Try duplicate, malformed, inactive and past slot selections. Verify rejection before new availability is created.",
+      "Remove an unbooked slot, then try removing one with a confirmed private session: expect success and 409 respectively.",
+      "Run PublishCoachAvailabilityTest, PublishCoachAvailabilityRequestTest and ManageCoachAvailabilityTest; separately verify the real Data Connect behaviour because mocked repositories do not test the deployed connector."
+    ],
+    "notes": [
+      "Today comparisons in publishing use the Laravel application timezone, while several booking paths explicitly use Africa/Johannesburg. Configure and test the timezone consistently.",
+      "Batch publication uses separate operations and is not an all-or-nothing transaction. A non-duplicate failure can leave earlier successful rows published; handle retry and feedback accordingly."
+    ],
+    "refs": []
+  },
+  {
+    "id": "08",
+    "title": "Private Coaching Schedule",
+    "purpose": "The coaching schedule shows confirmed private sessions assigned to the authenticated coach. It includes sessions that have not started and sessions still in progress, then removes them when their end time passes.",
+    "workflow": "CoachBookings calls myCoachBookingsUpcoming through the booking service. Laravel resolves the caller\u2019s profile, requires ACTIVE COACH, retrieves confirmed private-coaching reservations for that coach, filters by the session end time and sorts by date, start time and ID. The response contains the student, court, slot and status needed by the coach table.",
+    "files": [
+      "resources/js/pages/CoachBookings.vue \u2014 schedule table",
+      "resources/js/features/booking/bookingService.js \u2014 myCoachBookingsUpcoming",
+      "app/Http/Controllers/Api/CoachBookingController.php \u2014 upcoming and toResponseArray",
+      "app/Repositories/BookingRepository.php \u2014 getConfirmedByCoach",
+      "dataconnect/example/queries.gql \u2014 GetConfirmedBookingsByCoach"
+    ],
+    "api": "GET /api/coach/bookings/upcoming returns an array of id, player, booking_date, time_slot, court and status. The API determines the coach from the Firebase token; there is no caller-supplied coach ID.",
+    "one": {
+      "title": "Filtering current and future sessions",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/CoachBookingController.php",
+        "start": "$now = CarbonImmutable::now('Africa/Johannesburg');",
+        "end": "// order the schedule",
+        "n": null
+      },
+      "explanation": "The schedule deliberately uses the end time. A coaching session remains visible during its full hour even after its start. Cancelled or differently assigned sessions are excluded by the repository query before this time filter is applied.",
+      "physical": [
+        "CarbonImmutable establishes the current time in Africa/Johannesburg.",
+        "getConfirmedByCoach selects the authenticated coach\u2019s confirmed coaching reservations.",
+        "The filter reads endTime, combines it with bookingDate, and keeps the row only when endsAt is later than now.",
+        "A row without an end time is excluded. The array is reindexed so JSON remains a normal list."
+      ],
+      "extra": "The controller then sorts by booking date, start time and ID for deterministic ordering. The page receives only the fields needed for the schedule rather than a raw GraphQL response."
+    },
+    "two": {
+      "title": "Retrieving the coach reservations",
+      "snippet": {
+        "source": "app/Repositories/BookingRepository.php",
+        "start": "public function getConfirmedByCoach",
+        "end": "public function getTeamPracticeByCoachAndDate",
+        "n": null
+      },
+      "explanation": "The repository delegates selection to GetConfirmedBookingsByCoach and converts each result to BookingDTO. The controller maps these DTOs into the schedule response. Keeping this conversion in one place prevents GraphQL camelCase fields from leaking inconsistently into the Vue table.",
+      "physical": [
+        "coachId is the application User ID, not the Firebase UID. The middleware and UserRepository lookup establish the relationship.",
+        "execute sends the named query and its variables to Data Connect.",
+        "array_map constructs one BookingDTO per result; an empty result becomes an empty list."
+      ],
+      "extra": "Private coaching booking creation is documented in Court Booking Creation. This schedule does not publish coach availability, collect a coaching fee or create an additional reservation."
+    },
+    "tests": [
+      "Book a private session with the test coach and check the student name, court, date and time in the schedule.",
+      "Confirm the session is present before its start and while in progress, and absent at or after its end.",
+      "Use a different coach account and verify the session is not returned.",
+      "Verify USER, inactive COACH and unverified accounts cannot retrieve a coach schedule.",
+      "Run UpcomingCoachBookingsTest for the controller contract, then verify the actual connector query in a development Firebase project."
+    ],
+    "notes": [
+      "A historical coaching endpoint is not implemented by this upcoming method. Add a distinct history contract if Phase 2 requires it rather than reusing an endpoint that filters past sessions out.",
+      "Private coaching payments are a specification extension. A confirmed booking in this Firebase baseline does not demonstrate that a fee was collected."
+    ],
+    "refs": []
+  },
+  {
+    "id": "09",
+    "title": "Team Practice Bookings",
+    "purpose": "Team practice lets an ACTIVE COACH select several court/date/time-slot cells and reserve them for squad training. Each selected cell becomes a Booking with bookingType TEAM_PRACTICE. The operation does not overwrite another reservation.",
+    "workflow": "The team-practice page requests a dedicated availability grid and builds a selections array. Laravel validates the complete selection list, including duplicate cells, dates, active courts and slots and existing reservations. It prepares one booking row per cell and sends them through createMany. Successful booking IDs are returned to the page and can be retrieved for the coach\u2019s selected date.",
+    "files": [
+      "resources/js/pages/CoachTeamPracticeBookingPage.vue \u2014 multiple selection interface",
+      "resources/js/features/booking/bookingService.js \u2014 team-practice requests",
+      "app/Http/Controllers/Api/TeamPracticeController.php \u2014 availability, store and mine",
+      "app/Repositories/BookingRepository.php \u2014 createMany and team-practice query"
+    ],
+    "api": "GET /api/coach/team-practice/availability?date=YYYY-MM-DD. POST /api/coach/team-practices accepts {selections:[{court_id,time_slot_id,booking_date}]}. GET /api/coach/team-practices?date=YYYY-MM-DD reads the coach\u2019s sessions.",
+    "one": {
+      "title": "Preparing the selected reservations",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/TeamPracticeController.php",
+        "start": "$bookedAt = now()->toIso8601ZuluString();",
+        "end": "$createdBookingIds = [];",
+        "n": null
+      },
+      "explanation": "After all selections pass validation, the controller maps REST field names to the GraphQL variables used for ordinary booking insertion. The same timestamp groups the submitted cells operationally, but the database stores a separate Booking for each one.",
+      "physical": [
+        "bookedAt is created once for the submission.",
+        "Each row contains the court, slot, booking date and the authenticated coach as createdById.",
+        "coachId is null because this is a team practice rather than a private lesson assigned through the coach relation.",
+        "bookingType is TEAM_PRACTICE. createMany sends the prepared rows to the repository."
+      ],
+      "extra": "The backend checks a fourteen-day window, rejects past or started cells, verifies active slots and courts, and rejects duplicate or occupied selections. The team route does not apply ordinary per-user overlapping or count checks, which supports multiple courts at the same time."
+    },
+    "two": {
+      "title": "Batch insertion through Data Connect",
+      "snippet": {
+        "source": "app/Repositories/BookingRepository.php",
+        "start": "public function createMany(array $rows)",
+        "end": "public function cancel",
+        "n": null
+      },
+      "explanation": "The repository maps each row and asks SqlConnectClient::executeMany to issue multiple CreateBooking requests. The client returns an ok flag and either data or an error for each request. This is parallel request execution, not a single PostgreSQL transaction.",
+      "physical": [
+        "The operation name remains CreateBooking, so the same core insertion contract is reused.",
+        "array_map ensures each request has exactly the required GraphQL variables. coachId falls back to null.",
+        "executeMany preserves result order for the caller to examine and returns successes and failures separately."
+      ],
+      "extra": "The controller attempts to cancel IDs already accumulated when it encounters a failure. This compensation can itself fail, and later requests may already have succeeded. A failed batch can therefore leave residual reservations. Replace this with a verified atomic operation before promising all-or-nothing booking."
+    },
+    "tests": [
+      "Book several free cells across courts and inspect the returned booking_ids and TEAM_PRACTICE rows.",
+      "Submit an occupied cell, inactive court, inactive slot, duplicate cell, past date and date beyond fourteen days; verify the specified 409 or 422 rejection.",
+      "Call the endpoints as a non-coach or inactive coach: expect 403.",
+      "Inject failure into the middle of a batch and inspect every selected cell, including later successes. Reconcile residual bookings rather than assuming rollback.",
+      "Run TeamPracticeBookingTest, then add real connector tests for concurrent batches and compensation failures."
+    ],
+    "notes": [
+      "TEAM_PRACTICE is used by the implementation even though older schema comments enumerate only the three ordinary booking types. The field is a string, so documentation and validation must be maintained together.",
+      "This baseline does not create ordinary Player 1 rows for team-practice insertions. The creator identifies the responsible coach; avoid interpreting an empty participant list as a free court."
+    ],
+    "refs": []
+  },
+  {
+    "id": "10",
+    "title": "Administrator User Management",
+    "purpose": "User management lets an ACTIVE ADMIN inspect application users, change role or status, and delete an account. The application role is held in Data Connect rather than inferred from a browser flag. Account deletion touches both Firebase Authentication and the relational profile.",
+    "workflow": "ManageUsers loads the admin user list and submits selected changes. The routes run FirebaseAuth followed by AdminMiddleware. The controller validates allowed role and status values and delegates to UserRepository. Deletion first removes the Firebase Authentication account and then removes the Data Connect User record.",
+    "files": [
+      "resources/js/pages/ManageUsersPage.vue \u2014 user list and edit actions",
+      "app/Http/Middleware/AdminMiddleware.php \u2014 ACTIVE ADMIN requirement",
+      "app/Http/Controllers/Api/AdminUserController.php \u2014 list, show, update and destroy",
+      "app/Repositories/UserRepository.php \u2014 Data Connect user operations",
+      "app/Services/FirebaseAuthService.php \u2014 Firebase account deletion"
+    ],
+    "api": "GET /api/admin/users and GET /api/admin/users/{id} read users. PUT /api/admin/users/{id} accepts role and/or status. DELETE /api/admin/users/{id} removes the account. Allowed roles: USER, COACH, ADMIN. Allowed statuses: ACTIVE, INACTIVE, SUSPENDED.",
+    "one": {
+      "title": "Validating an administrative update",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/AdminUserController.php",
+        "start": "public function update(Request $request",
+        "end": "public function destroy",
+        "n": null
+      },
+      "explanation": "The update endpoint permits role and status changes but rejects an empty change request. It passes validated fields to the repository and returns the reread profile. AdminMiddleware must run before this method; the controller itself is not the complete access boundary.",
+      "physical": [
+        "sometimes allows changing one permitted field without sending the other. Each value is constrained to its known set.",
+        "The empty-change branch returns HTTP 422 instead of submitting a no-op update.",
+        "updateUser sends the update to Data Connect and invalidates cached user data.",
+        "findById retrieves the updated record for the response so the table can display server-authoritative values."
+      ],
+      "extra": "The baseline has no explicit last-administrator or self-demotion safeguard. Add an agreed policy and tests before treating such changes as operationally safe."
+    },
+    "two": {
+      "title": "Updating Data Connect user fields",
+      "snippet": {
+        "source": "app/Repositories/UserRepository.php",
+        "start": "public function updateUser(string $id",
+        "end": "public function deleteUser",
+        "n": null
+      },
+      "explanation": "The repository clears the current profile\u2019s caches before and after UpdateUser. The GraphQL mutation targets the application user ID and writes role/status. Clearing both the ID and Firebase UID caches prevents old privileges being retained merely because a cached profile was returned.",
+      "physical": [
+        "findById obtains the existing identity needed to invalidate both cache keys.",
+        "array_merge adds the target id to the validated update fields.",
+        "execute invokes UpdateUser using the server Data Connect transport.",
+        "The second invalidation prevents a stale lookup made during the update sequence from remaining cached."
+      ],
+      "extra": "destroy removes the Firebase user first; an already missing Firebase identity is tolerated. The subsequent relational deletion is separate. A failed relational delete can leave a profile whose Firebase identity is gone, so account deletion needs a recoverable operational procedure."
+    },
+    "tests": [
+      "Attempt every admin user route as USER and COACH: expect 403. Test an inactive ADMIN as well.",
+      "Change USER to COACH and refresh the account in the affected session. Confirm coach APIs check the updated server role.",
+      "Send an unknown role, unknown status or empty update: expect validation failure.",
+      "Delete a disposable account without related bookings and verify both identity and profile removal.",
+      "Test deletion with existing booking references and a simulated Firebase or Data Connect failure. Record and repair partial outcomes; do not use real accounts for this test."
+    ],
+    "notes": [
+      "The global Firebase middleware in the baseline does not enforce application status for all ordinary endpoints. Changing status is persisted, but complete suspension enforcement requires a shared backend check.",
+      "The baseline deletion path does not first resolve booking references or provide a cross-service transaction. Prefer controlled deactivation where history must be retained and define the referential policy."
+    ],
+    "refs": []
+  },
+  {
+    "id": "11",
+    "title": "Administrator Court Management",
+    "purpose": "Court management maintains the physical courts offered in the availability grid. An ACTIVE ADMIN can create a court, change its name or description, change its ACTIVE/INACTIVE status, or request deletion. An inactive court must not be offered for new bookings.",
+    "workflow": "ManageCourts calls the protected admin endpoints. Laravel validates submitted fields and uses CourtRepository to run the corresponding Data Connect operation. Changes are reread where appropriate, and the user-facing availability grid must be refreshed so new court status is visible.",
+    "files": [
+      "resources/js/pages/ManageCourtsPage.vue \u2014 administrative court interface",
+      "app/Http/Controllers/Api/AdminCourtController.php \u2014 court CRUD endpoints",
+      "app/Repositories/CourtRepository.php \u2014 queries, mutations and cache handling",
+      "dataconnect/schema/schema.gql \u2014 Court type",
+      "dataconnect/example/mutations.gql \u2014 CreateCourt, UpdateCourt and DeleteCourt"
+    ],
+    "api": "GET /api/admin/courts lists courts. POST creates one and returns 201. PUT /api/admin/courts/{id} updates an existing court. DELETE /api/admin/courts/{id} returns 204 on successful deletion. Public feature reads still use authenticated /api/courts endpoints.",
+    "one": {
+      "title": "Creating a court",
+      "snippet": {
+        "source": "app/Http/Controllers/Api/AdminCourtController.php",
+        "start": "public function store(Request $request)",
+        "end": "public function update",
+        "n": null
+      },
+      "explanation": "The controller accepts a required court name and optional description and status. Request validation restricts field lengths and the status vocabulary. CourtRepository provides defaults and executes CreateCourt; the endpoint responds with a success message rather than a complete court object.",
+      "physical": [
+        "name must be a string no longer than 255 characters.",
+        "description is optional but, when supplied to store, must be a string no longer than 255 characters.",
+        "status is optional and must be ACTIVE or INACTIVE.",
+        "The repository handles persistence; response()->json sends HTTP 201 so the frontend can reload the court list."
+      ],
+      "extra": "For an update, the controller verifies the court exists, validates optional fields, and chooses UpdateCourt or the status-only operation. Missing courts return 404 and requests with no recognised changes return 422."
+    },
+    "two": {
+      "title": "Court schema and identity",
+      "snippet": {
+        "source": "dataconnect/schema/schema.gql",
+        "start": "type Court @table {",
+        "end": "# ------------------------------------------------------------\n# TimeSlot",
+        "n": null
+      },
+      "explanation": "The Court entity has a unique name, optional description and status defaulting to ACTIVE. Bookings reference its generated application key. Deactivation preserves those references while preventing new selection of unused inactive cells.",
+      "physical": [
+        "name is non-null and unique. A duplicate name is a database conflict, even if the form\u2019s string validation passes.",
+        "description is nullable in the schema. The update controller permits null, while the creation controller expects a string if supplied.",
+        "status is a string with an ACTIVE default. The allowed vocabulary is constrained by request validation, not an enum declaration in this schema.",
+        "createdAt and updatedAt have request-time defaults; update timestamps must be explicitly maintained where required by the chosen mutation."
+      ],
+      "extra": "Deleting a court can fail when reservations reference it. The baseline DeleteCourt path does not implement an archive workflow or a custom conflict response. Treat deactivation as the normal operational option for temporarily unavailable courts."
+    },
+    "tests": [
+      "Create a new court with and without optional fields. Confirm its appearance in the admin list and the availability grid.",
+      "Rename a court and verify natural ordering, including names containing 2 and 10.",
+      "Deactivate a court and confirm a fresh booking request for it returns 422 even if the browser had an older grid snapshot.",
+      "Try an unknown ID, over-length name, duplicate name and invalid status. Verify controlled UI feedback.",
+      "Delete a disposable court without bookings and confirm 204 is handled without JSON parsing. Test the referenced-court case separately."
+    ],
+    "notes": [
+      "There is no complete administrator time-slot maintenance endpoint in this Firebase baseline. Court management must not be documented as providing time-slot CRUD.",
+      "The later admin dashboard statistics are not part of the documented Firebase baseline. Implement equivalent Data Connect queries before documenting live counts or utilisation as supported Firebase behaviour."
+    ],
+    "refs": []
+  },
+  {
+    "id": "12",
+    "title": "Registration Payments and Firebase Extension",
+    "purpose": "The functional and technical specifications introduce PayFast registration and private-coaching payments in Phase 2. This part describes the Firebase integration boundary and the work required to add those payments to the documented Firebase edition. It is an extension design, not a claim that revision fe3e361 already collects fees.",
+    "workflow": "The later repository contains registration checkout and PayFast callback code. Its business flow can guide the extension: authenticate with Firebase, verify email, create a pending registration and payment attempt, send the user to hosted checkout, validate the server callback, then complete registration idempotently. The Data Connect schema and operations for this flow still need implementation.",
+    "files": [
+      "resources/js/pages/RegistrationPaymentPage.vue, PaymentReturnPage.vue and PaymentCancelPage.vue \u2014 later checkout screens",
+      "app/Http/Controllers/Api/RegistrationController.php and PayfastItnController.php \u2014 later flow reference",
+      "app/Services/PayfastService.php and config/payfast.php \u2014 gateway logic",
+      "dataconnect/schema/schema.gql and connector operations \u2014 required Firebase extension",
+      "app/Http/Middleware/EnsureRegisteredUser.php \u2014 later registration gate to adapt"
+    ],
+    "api": "Later reference routes are GET /api/registration/status, POST /api/registration/payment/initiate, POST /api/registration/reconcile and POST /api/payfast/itn/registration. These are not present in the fe3e361 route set. The ITN callback authenticates the payment notification rather than a browser Firebase token.",
+    "one": {
+      "title": "Proposed registration state handling",
+      "code": "Firebase account created\n        -> Email verification pending\nVerified Firebase identity\n        -> Pending registration\nPayment attempt created on the server\n        -> Hosted PayFast checkout\nVerified COMPLETE notification\n        -> Record payment as paid\n        -> Create or activate application profile\n        -> Mark registration completed\nDuplicate notification\n        -> Return the same completed result",
+      "label": "Proposed state flow for the Firebase extension",
+      "explanation": "Keep identity creation separate from payment completion. A browser return URL is navigation, not payment proof. The backend must compare the callback with the stored payment attempt and validate the gateway notification before recording a successful payment or granting paid access.",
+      "physical": [
+        "Pending registration stores the verified Firebase UID and the profile fields waiting for activation. It must not contain the user\u2019s password.",
+        "A payment attempt has a unique merchant payment reference, server-selected amount in integer cents, currency, status and gateway reference.",
+        "A verified callback can arrive more than once or before the browser returns. Completion must produce one profile and one paid result.",
+        "If payment is verified but profile completion fails, retain enough durable state for reconciliation without charging again."
+      ],
+      "extra": "The fee is server configuration, not a browser-controlled amount. Keep PAYFAST_MERCHANT_ID, PAYFAST_MERCHANT_KEY and PAYFAST_PASSPHRASE server-side. Configure return, cancel and notify URLs for the correct environment."
+    },
+    "two": {
+      "title": "Required Data Connect persistence contract",
+      "code": "Required new entities\n  PendingRegistration\n  RegistrationPayment\n\nRequired server operations\n  ReadRegistrationStatus\n  CreateRegistrationPaymentAttempt\n  CompleteRegistrationPayment\n  ReconcileRegistration\n\nCompletion invariants\n  Unique merchant payment reference\n  Unique provider transaction reference where applicable\n  Exact stored amount and currency match\n  One application profile per Firebase UID\n  Repeat completion has no duplicate side effects",
+      "label": "Design contract \u2014 names are proposed, not existing GraphQL operations",
+      "explanation": "Add and review the new schema and privileged operations before connecting the later checkout screens to the Firebase edition. Payment completion needs a transaction-safe database operation. Independent calls to SqlConnectClient::execute do not become atomic simply because a Laravel DB::transaction surrounds them.",
+      "physical": [
+        "ReadRegistrationStatus must be scoped to the verified caller. A caller must not inspect another user\u2019s payment by supplying their UID.",
+        "CreateRegistrationPaymentAttempt records the expected fee before checkout so the callback can be checked against a server record.",
+        "CompleteRegistrationPayment validates the stored state and applies idempotent changes atomically within the persistence layer.",
+        "ReconcileRegistration safely retries incomplete activation after payment verification; it must not trust a browser assertion that payment succeeded."
+      ],
+      "extra": "Check PayFast signature, merchant, expected amount, allowed payment status and server confirmation, with source validation configured correctly for the deployment. Production must not enable relaxed validation or demo-completion routes. See the official PayFast integration documentation for the exact callback validation rules."
+    },
+    "tests": [
+      "Test verified payment, cancellation, failure and a browser return before callback processing. Access must follow server registration state.",
+      "Send a duplicate COMPLETE notification and concurrent completion requests. Confirm only one payment result and application profile.",
+      "Reject wrong signature, merchant, reference and amount without activating the account.",
+      "Simulate Firebase lookup failure and Data Connect failure after payment verification. Confirm reconciliation can recover without another charge.",
+      "Adapt RegistrationPaymentInitiationTest and PayfastItnRegistrationTest to the Data Connect repositories and add real connector integration coverage. Their later direct-database mocks are not proof that this extension works."
+    ],
+    "notes": [
+      "The Firebase baseline GET /api/me automatically creates a profile. A paid-registration extension must revise that behaviour so profile existence cannot bypass the registration gate. Keep status and checkout routes reachable by a verified but not-yet-registered identity.",
+      "Private coaching payments need a separate booking reservation and expiry policy. Registration payment code does not implement coaching checkout, fee ownership or refund handling. Define those contracts before enabling paid coaching."
+    ],
+    "refs": [
+      "https://developers.payfast.co.za/",
+      "https://firebase.google.com/docs/sql-connect/admin-sdk"
+    ]
+  }
+]

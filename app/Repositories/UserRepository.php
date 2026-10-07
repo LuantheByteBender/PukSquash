@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\DataTransferObjects\UserDTO;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -126,10 +127,47 @@ class UserRepository
 
         $this->forgetCachedFirebaseUid($firebaseUid);
 
+        $email = $params['email'] ?? null;
+        if (is_string($email)) {
+            $email = trim($email);
+        }
+        if (is_string($email) && $email !== '') {
+            $existingEmailRow = DB::table('users')
+                ->where('email', $email)
+                ->first();
+
+            if ($existingEmailRow) {
+                $existingEmailDto = $this->dtoFromRow($existingEmailRow);
+                $this->forgetCachedUser($existingEmailDto);
+
+                $updates = [
+                    'firebase_uid'   => $firebaseUid,
+                    'student_number' => $params['studentNumber'] ?? $params['student_number'] ?? $existingEmailRow->student_number ?? null,
+                    'full_name'      => $params['fullName'] ?? $params['full_name'] ?? $existingEmailRow->full_name ?? null,
+                    'role'           => $params['role'] ?? $existingEmailRow->role ?? 'USER',
+                    'status'         => $params['status'] ?? $existingEmailRow->status ?? 'ACTIVE',
+                    'updated_at'     => $now,
+                ];
+
+                if (Schema::hasColumn('users', 'phone_number')) {
+                    $updates['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? $existingEmailRow->phone_number ?? null;
+                }
+
+                DB::table('users')
+                    ->where('id', (string) $existingEmailRow->id)
+                    ->update($updates);
+
+                $this->forgetCachedUser($existingEmailDto);
+                $this->forgetCachedFirebaseUid($firebaseUid);
+
+                return;
+            }
+        }
+
         $insert = [
             'id'             => $params['id'] ?? Str::uuid()->toString(),
             'firebase_uid'   => $firebaseUid,
-            'email'          => $params['email'] ?? null,
+            'email'          => $email,
             'student_number' => $params['studentNumber'] ?? $params['student_number'] ?? null,
             'full_name'      => $params['fullName'] ?? $params['full_name'] ?? null,
             'role'           => $params['role'] ?? 'USER',
@@ -142,7 +180,38 @@ class UserRepository
             $insert['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? null;
         }
 
-        DB::table('users')->insert($insert);
+        try {
+            DB::table('users')->insert($insert);
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? null;
+            $message = $e->getMessage();
+
+            if ($sqlState === '23505' && is_string($message) && str_contains($message, 'users_email_key') && is_string($email) && $email !== '') {
+                $existingEmailRow = DB::table('users')
+                    ->where('email', $email)
+                    ->first();
+
+                if ($existingEmailRow) {
+                    $existingEmailDto = $this->dtoFromRow($existingEmailRow);
+                    $this->forgetCachedUser($existingEmailDto);
+
+                    $updates = [
+                        'firebase_uid' => $firebaseUid,
+                        'updated_at' => $now,
+                    ];
+
+                    DB::table('users')
+                        ->where('id', (string) $existingEmailRow->id)
+                        ->update($updates);
+
+                    $this->forgetCachedUser($existingEmailDto);
+                    $this->forgetCachedFirebaseUid($firebaseUid);
+                    return;
+                }
+            }
+
+            throw $e;
+        }
 
         Cache::forget('sqlconnect_user_id_' . $insert['id']);
         $this->forgetCachedFirebaseUid($firebaseUid);
@@ -256,6 +325,35 @@ class UserRepository
         DB::table('users')
             ->where('firebase_uid', $firebaseUid)
             ->update($updates);
+
+        Cache::forget($keyFirebase);
+        if ($existing) {
+            Cache::forget('sqlconnect_user_id_' . $existing->id);
+        }
+    }
+
+    public function updateEmailForFirebaseUid(string $firebaseUid, string $email): void
+    {
+        $email = trim($email);
+        if ($firebaseUid === '' || $email === '') {
+            return;
+        }
+
+        $keyFirebase = 'sqlconnect_user_firebase_uid_' . $firebaseUid;
+
+        $existing = $this->findByFirebaseUid($firebaseUid);
+
+        Cache::forget($keyFirebase);
+        if ($existing) {
+            Cache::forget('sqlconnect_user_id_' . $existing->id);
+        }
+
+        DB::table('users')
+            ->where('firebase_uid', $firebaseUid)
+            ->update([
+                'email' => $email,
+                'updated_at' => now(),
+            ]);
 
         Cache::forget($keyFirebase);
         if ($existing) {

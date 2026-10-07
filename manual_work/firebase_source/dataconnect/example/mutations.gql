@@ -1,0 +1,267 @@
+# ============================================================
+# PukSquash — Phase 1 Mutations
+# ============================================================
+# Every mutation here is called by Laravel through the SQL
+# Connect GraphQL endpoint. The frontend never calls these
+# directly. All are NO_ACCESS — only the service account can
+# execute them.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# User mutations
+# ------------------------------------------------------------
+
+mutation UpsertUser(
+  $firebaseUid: String!
+  $fullName: String!
+  $email: String!
+  $studentNumber: String
+  $role: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  user_insert(
+    data: {
+      firebaseUid: $firebaseUid
+      fullName: $fullName
+      email: $email
+      studentNumber: $studentNumber
+      role: $role
+      status: $status
+    }
+  )
+}
+
+mutation UpdateUserProfile(
+  $firebaseUid: String!
+  $fullName: String!
+  $studentNumber: String
+)
+@auth(level: NO_ACCESS) {
+  user_updateMany(
+    where: { firebaseUid: { eq: $firebaseUid } }
+    data: {
+      fullName: $fullName
+      studentNumber: $studentNumber
+    }
+  )
+}
+
+mutation UpdateUser(
+  $id: UUID!
+  $role: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  user_update(
+    key: { id: $id }
+    data: {
+      role: $role
+      status: $status
+    }
+  )
+}
+
+mutation DeleteUser(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  user_delete(
+    key: { id: $id }
+  )
+}
+
+
+# ------------------------------------------------------------
+# Court mutations
+# ------------------------------------------------------------
+
+mutation CreateCourt(
+  $name: String!
+  $description: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  court_insert(
+    data: {
+      name: $name
+      description: $description
+      status: $status
+    }
+  )
+}
+
+mutation UpdateCourtStatus(
+  $id: UUID!
+  $status: String!
+)
+@auth(level: NO_ACCESS) {
+  court_update(
+    key: { id: $id }
+    data: { status: $status }
+  )
+}
+
+mutation UpdateCourt(
+  $id: UUID!
+  $name: String
+  $description: String
+  $status: String
+)
+@auth(level: NO_ACCESS) {
+  court_update(
+    key: { id: $id }
+    data: {
+      name: $name
+      description: $description
+      status: $status
+    }
+  )
+}
+
+mutation DeleteCourt(
+  $id: UUID!
+)
+@auth(level: NO_ACCESS) {
+  court_delete(
+    key: { id: $id }
+  )
+}
+
+
+# ------------------------------------------------------------
+# TimeSlot mutations
+# ------------------------------------------------------------
+
+mutation CreateTimeSlot(
+  $startTime: String!
+  $endTime: String!
+  $displayOrder: Int!
+  $isActive: Boolean
+)
+@auth(level: NO_ACCESS) {
+  timeSlot_insert(
+    data: {
+      startTime: $startTime
+      endTime: $endTime
+      displayOrder: $displayOrder
+      isActive: $isActive
+    }
+  )
+}
+
+
+# ------------------------------------------------------------
+# Booking mutations
+# ------------------------------------------------------------
+
+mutation CreateBooking(
+  $courtId: UUID!
+  $timeSlotId: UUID!
+  $createdById: UUID!
+  $coachId: UUID
+  $bookingDate: Date!
+  $bookingType: String!
+  $bookedAt: Timestamp!
+)
+@auth(level: NO_ACCESS) {
+  booking_insert(
+    data: {
+      courtId: $courtId
+      timeSlotId: $timeSlotId
+      createdById: $createdById
+      coachId: $coachId
+      bookingDate: $bookingDate
+      bookingType: $bookingType
+      status: "CONFIRMED"
+      bookedAt: $bookedAt
+    }
+  )
+}
+
+mutation CancelBooking(
+  $id: UUID!
+  $cancelledAt: Timestamp!
+)
+@auth(level: NO_ACCESS) {
+  booking_update(
+    key: { id: $id }
+    data: {
+      status: "CANCELLED"
+      cancelledAt: $cancelledAt
+    }
+  )
+}
+
+
+# ------------------------------------------------------------
+# BookingPlayer mutations
+# ------------------------------------------------------------
+
+mutation AddBookingPlayer(
+  $bookingId: UUID!
+  $userId: UUID!
+  $playerPosition: Int!
+  $joinedAt: Timestamp!
+)
+@auth(level: NO_ACCESS) {
+  bookingPlayer_insert(
+    data: {
+      bookingId: $bookingId
+      userId: $userId
+      playerPosition: $playerPosition
+      joinedAt: $joinedAt
+    }
+  )
+}
+
+mutation LeaveBooking(
+  $bookingId: UUID!
+  $userId: UUID!
+)
+@auth(level: NO_ACCESS) {
+  bookingPlayer_deleteMany(
+    where: {
+      bookingId: { eq: $bookingId }
+      userId: { eq: $userId }
+    }
+  )
+}
+
+
+# ------------------------------------------------------------
+# CoachAvailability mutations
+# ------------------------------------------------------------
+
+mutation CreateCoachAvailability(
+  $coachId: UUID!
+  $timeSlotId: UUID!
+  $availabilityDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  coachAvailability_insert(
+    data: {
+      coachId: $coachId
+      timeSlotId: $timeSlotId
+      availabilityDate: $availabilityDate
+    }
+  )
+}
+
+
+# Remove one Coach's availability for a specific date and time slot
+mutation DeleteCoachAvailabilityForSlot(
+  $coachId: UUID!
+  $timeSlotId: UUID!
+  $availabilityDate: Date!
+)
+@auth(level: NO_ACCESS) {
+  coachAvailability_delete(
+    key: {
+      coachId: $coachId
+      timeSlotId: $timeSlotId
+      availabilityDate: $availabilityDate
+    }
+  )
+}

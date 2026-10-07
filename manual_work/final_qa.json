@@ -1,0 +1,340 @@
+[
+  {
+    "document": "00_Project_Setup_and_Firebase_Data_Layer",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1904,
+        "first": "1\r\nPukSquash Developer Manual\r\nProject Setup and Firebase Data Layer\r\nFirebase Data Connect edition "
+      },
+      {
+        "page": 2,
+        "chars": 1534,
+        "first": "2\r\n2 Local development setup\r\nWindows commands to run from the Firebase baseline checkout\r\ncomposer "
+      },
+      {
+        "page": 3,
+        "chars": 1911,
+        "first": "3\r\n3 Data Connect request implementation\r\napp/Services/SqlConnectClient.php | source line 69 onward;"
+      },
+      {
+        "page": 4,
+        "chars": 1778,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Run npm run build and php artisan test "
+      }
+    ]
+  },
+  {
+    "document": "01_Registration_Login_and_Access_Control",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1803,
+        "first": "1\r\nPukSquash Developer Manual\r\nRegistration Login and Access Control\r\nFirebase Data Connect edition "
+      },
+      {
+        "page": 2,
+        "chars": 1870,
+        "first": "2\r\n2 Firebase registration implementation\r\nresources/js/features/auth/authService.js | source line 4"
+      },
+      {
+        "page": 3,
+        "chars": 2006,
+        "first": "3\r\n3 Profile creation after authentication\r\napp/Http/Controllers/Api/UserController.php | source lin"
+      },
+      {
+        "page": 4,
+        "chars": 1858,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Register a new test address: expect a F"
+      }
+    ]
+  },
+  {
+    "document": "02_User_Profile_Management",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1578,
+        "first": "1\r\nPukSquash Developer Manual\r\nUser Profile Management\r\nFirebase Data Connect edition | Source revis"
+      },
+      {
+        "page": 2,
+        "chars": 1713,
+        "first": "2\r\n2 Profile update from the page\r\nresources/js/pages/UserProfile.vue | source line 73 onward; blank"
+      },
+      {
+        "page": 3,
+        "chars": 1683,
+        "first": "3\r\n3 Data Connect profile persistence\r\napp/Repositories/UserRepository.php | source line 135 onward;"
+      },
+      {
+        "page": 4,
+        "chars": 1347,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Change the name, confirm Save, refresh "
+      }
+    ]
+  },
+  {
+    "document": "03_Court_Availability_Grid",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1742,
+        "first": "1\r\nPukSquash Developer Manual\r\nCourt Availability Grid\r\nFirebase Data Connect edition | Source revis"
+      },
+      {
+        "page": 2,
+        "chars": 1623,
+        "first": "2\r\n2 Fetching the date snapshot\r\napp/Repositories/AvailabilityRepository.php | source line 16 onward"
+      },
+      {
+        "page": 3,
+        "chars": 1716,
+        "first": "3\r\n3 Choosing the occupied cell state\r\napp/Http/Controllers/Api/AvailabilityController.php | source "
+      },
+      {
+        "page": 4,
+        "chars": 1347,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Use fixtures for AVAILABLE, OPEN, FULL,"
+      }
+    ]
+  },
+  {
+    "document": "04_Court_Booking_Creation",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1777,
+        "first": "1\r\nPukSquash Developer Manual\r\nCourt Booking Creation\r\nFirebase Data Connect edition | Source revisi"
+      },
+      {
+        "page": 2,
+        "chars": 1514,
+        "first": "2\r\n2 Validation and identity resolution\r\napp/Http/Controllers/Api/BookingController.php | source lin"
+      },
+      {
+        "page": 3,
+        "chars": 1555,
+        "first": "3\r\n3 Creating the relational booking\r\ndataconnect/example/mutations.gql | source line 159 onward; bl"
+      },
+      {
+        "page": 4,
+        "chars": 1565,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Create OPEN and LOCKED bookings in diff"
+      }
+    ]
+  },
+  {
+    "document": "05_Joining_an_Open_Booking",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1575,
+        "first": "1\r\nPukSquash Developer Manual\r\nJoining an Open Booking\r\nFirebase Data Connect edition | Source revis"
+      },
+      {
+        "page": 2,
+        "chars": 1503,
+        "first": "2\r\n2 Eligibility and capacity checks\r\napp/Http/Controllers/Api/BookingController.php | source line 2"
+      },
+      {
+        "page": 3,
+        "chars": 1306,
+        "first": "3\r\n3 Persisting Player 2\r\ndataconnect/example/mutations.gql | source line 202 onward; blank and comm"
+      },
+      {
+        "page": 4,
+        "chars": 1357,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Join an Open booking owned by another a"
+      }
+    ]
+  },
+  {
+    "document": "06_My_Bookings_History_and_Cancellation",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1743,
+        "first": "1\r\nPukSquash Developer Manual\r\nMy Bookings History and Cancellation\r\nFirebase Data Connect edition |"
+      },
+      {
+        "page": 2,
+        "chars": 1799,
+        "first": "2\r\n2 Creator and participant behaviour\r\napp/Http/Controllers/Api/BookingController.php | source line"
+      },
+      {
+        "page": 3,
+        "chars": 1324,
+        "first": "3\r\n3 Cancellation and leaving mutations\r\napp/Repositories/BookingRepository.php | source line 93 onw"
+      },
+      {
+        "page": 4,
+        "chars": 1299,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Confirm a creator appears in My Booking"
+      }
+    ]
+  },
+  {
+    "document": "07_Coach_Availability_and_Notice_Board",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1768,
+        "first": "1\r\nPukSquash Developer Manual\r\nCoach Availability and Notice Board\r\nFirebase Data Connect edition | "
+      },
+      {
+        "page": 2,
+        "chars": 1462,
+        "first": "2\r\n2 Validating published availability\r\napp/Http/Requests/PublishCoachAvailabilityRequest.php | sour"
+      },
+      {
+        "page": 3,
+        "chars": 1341,
+        "first": "3\r\n3 Composite availability identity\r\ndataconnect/schema/schema.gql | source line 173 onward; blank "
+      },
+      {
+        "page": 4,
+        "chars": 1525,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Publish valid slots as an ACTIVE COACH "
+      }
+    ]
+  },
+  {
+    "document": "08_Private_Coaching_Schedule",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1609,
+        "first": "1\r\nPukSquash Developer Manual\r\nPrivate Coaching Schedule\r\nFirebase Data Connect edition | Source rev"
+      },
+      {
+        "page": 2,
+        "chars": 1462,
+        "first": "2\r\n2 Filtering current and future sessions\r\napp/Http/Controllers/Api/CoachBookingController.php | so"
+      },
+      {
+        "page": 3,
+        "chars": 1214,
+        "first": "3\r\n3 Retrieving the coach reservations\r\napp/Repositories/BookingRepository.php | source line 143 onw"
+      },
+      {
+        "page": 4,
+        "chars": 1307,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Book a private session with the test co"
+      }
+    ]
+  },
+  {
+    "document": "09_Team_Practice_Bookings",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1676,
+        "first": "1\r\nPukSquash Developer Manual\r\nTeam Practice Bookings\r\nFirebase Data Connect edition | Source revisi"
+      },
+      {
+        "page": 2,
+        "chars": 1482,
+        "first": "2\r\n2 Preparing the selected reservations\r\napp/Http/Controllers/Api/TeamPracticeController.php | sour"
+      },
+      {
+        "page": 3,
+        "chars": 1513,
+        "first": "3\r\n3 Batch insertion through Data Connect\r\napp/Repositories/BookingRepository.php | source line 74 o"
+      },
+      {
+        "page": 4,
+        "chars": 1458,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Book several free cells across courts a"
+      }
+    ]
+  },
+  {
+    "document": "10_Administrator_User_Management",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1711,
+        "first": "1\r\nPukSquash Developer Manual\r\nAdministrator User Management\r\nFirebase Data Connect edition | Source"
+      },
+      {
+        "page": 2,
+        "chars": 1537,
+        "first": "2\r\n2 Validating an administrative update\r\napp/Http/Controllers/Api/AdminUserController.php | source "
+      },
+      {
+        "page": 3,
+        "chars": 1393,
+        "first": "3\r\n3 Updating Data Connect user fields\r\napp/Repositories/UserRepository.php | source line 104 onward"
+      },
+      {
+        "page": 4,
+        "chars": 1447,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Attempt every admin user route as USER "
+      }
+    ]
+  },
+  {
+    "document": "11_Administrator_Court_Management",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 1660,
+        "first": "1\r\nPukSquash Developer Manual\r\nAdministrator Court Management\r\nFirebase Data Connect edition | Sourc"
+      },
+      {
+        "page": 2,
+        "chars": 1373,
+        "first": "2\r\n2 Creating a court\r\napp/Http/Controllers/Api/AdminCourtController.php | source line 25 onward; bl"
+      },
+      {
+        "page": 3,
+        "chars": 1428,
+        "first": "3\r\n3 Court schema and identity\r\ndataconnect/schema/schema.gql | source line 57 onward; blank and com"
+      },
+      {
+        "page": 4,
+        "chars": 1396,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Create a new court with and without opt"
+      }
+    ]
+  },
+  {
+    "document": "12_Registration_Payments_and_Firebase_Extension",
+    "pages": 4,
+    "stats": [
+      {
+        "page": 1,
+        "chars": 2044,
+        "first": "1\r\nPukSquash Developer Manual\r\nRegistration Payments and Firebase Extension\r\nFirebase Data Connect e"
+      },
+      {
+        "page": 2,
+        "chars": 1582,
+        "first": "2\r\n2 Proposed registration state handling\r\nProposed state flow for the Firebase extension\r\nFirebase "
+      },
+      {
+        "page": 3,
+        "chars": 1836,
+        "first": "3\r\n3 Required Data Connect persistence contract\r\nDesign contract \u2014 names are proposed, not existing "
+      },
+      {
+        "page": 4,
+        "chars": 1978,
+        "first": "4\r\n4 Verification and Maintenance\r\nVerification checklist\r\n1 Test verified payment, cancellation, fa"
+      }
+    ]
+  }
+]
