@@ -3,6 +3,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
     sendEmailVerification,
+    sendPasswordResetEmail,
 } from 'firebase/auth';
 
 async function getAuthInstance() {
@@ -89,4 +90,13 @@ export async function loginUser(email, password) {
 export function logoutUser() {
     return getAuthInstance()
         .then((auth) => signOut(auth));
+}
+
+export async function sendPasswordReset(email) {
+    try {
+        const auth = await getAuthInstance();
+        await sendPasswordResetEmail(auth, normalizeEmail(email));
+    } catch (error) {
+        throw new Error(friendlyAuthError(error));
+    }
 }

@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { loginUser, logoutUser } from '../features/auth/authService';
+import { loginUser, logoutUser, sendPasswordReset } from '../features/auth/authService';
 import { refreshAccount, clearAccount } from '../composables/useAccount.js';
 import { useToast } from '../composables/useToast.js';
 import { useAuth } from '../composables/useAuth.js';
@@ -18,6 +18,11 @@ const password = ref('');
 const showPassword = ref(false);
 const message = ref('');
 const isLoggingIn = ref(false);
+const showForgotPassword = ref(false);
+const forgotEmail = ref('');
+const isSendingReset = ref(false);
+const resetMessage = ref('');
+const resetError = ref('');
 
 if (typeof route.query.email === 'string' && route.query.email) {
     email.value = route.query.email;
@@ -113,6 +118,38 @@ async function login() {
         toast.dismiss(loginToastId);
         isLoggingIn.value = false;
     }
+}
+
+async function handleForgotPassword() {
+    if (isSendingReset.value) return;
+
+    resetMessage.value = '';
+    resetError.value = '';
+
+    if (!forgotEmail.value.trim()) {
+        resetError.value = 'Please enter your email address.';
+        return;
+    }
+
+    isSendingReset.value = true;
+
+    try {
+        await sendPasswordReset(forgotEmail.value);
+        resetMessage.value = 'Password reset email sent. Check your inbox.';
+        toast.success('Password reset email sent!');
+    } catch (error) {
+        resetError.value = error?.message ?? 'Unable to send reset email.';
+        toast.error(resetError.value);
+    } finally {
+        isSendingReset.value = false;
+    }
+}
+
+function openForgotPassword() {
+    forgotEmail.value = email.value;
+    resetMessage.value = '';
+    resetError.value = '';
+    showForgotPassword.value = true;
 }
 
 onMounted(async () => {
@@ -232,6 +269,12 @@ onMounted(async () => {
                         </button>
                     </div>
 
+                    <div class="forgot-password-row">
+                        <button type="button" class="forgot-password-link" @click="openForgotPassword">
+                            Forgot password?
+                        </button>
+                    </div>
+
                     <!-- Bottom section of screen: Login button and back button -->
                     <div class="login-buttons">
                         <button type="submit" :disabled="isLoggingIn">
@@ -244,7 +287,7 @@ onMounted(async () => {
                     </p>
 
                     <p class="login-message">
-                        Don’t have an account?
+                        Don't have an account?
                         <RouterLink
                             :to="{ name: 'signup' }"
                         >
@@ -252,6 +295,44 @@ onMounted(async () => {
                         </RouterLink>
                     </p>
                 </form>
+
+                <div v-if="showForgotPassword" class="forgot-overlay">
+                    <div class="forgot-card">
+                        <h3 class="forgot-title">Reset your password</h3>
+                        <p class="forgot-subtitle">Enter your email and we'll send you a link to reset your password.</p>
+
+                        <label class="forgot-label" for="forgot-email">Email</label>
+                        <input
+                            id="forgot-email"
+                            v-model="forgotEmail"
+                            type="email"
+                            class="forgot-input"
+                            placeholder="your@email.com"
+                            @keyup.enter="handleForgotPassword"
+                        />
+
+                        <p v-if="resetError" class="forgot-feedback forgot-feedback--error">{{ resetError }}</p>
+                        <p v-if="resetMessage" class="forgot-feedback forgot-feedback--success">{{ resetMessage }}</p>
+
+                        <div class="forgot-actions">
+                            <button
+                                type="button"
+                                class="forgot-btn forgot-btn--cancel"
+                                @click="showForgotPassword = false"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                class="forgot-btn forgot-btn--send"
+                                :disabled="isSendingReset"
+                                @click="handleForgotPassword"
+                            >
+                                {{ isSendingReset ? 'Sending…' : 'Send reset link' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -579,6 +660,139 @@ onMounted(async () => {
     .login-buttons button {
         flex-basis: 100%;
     }
+}
+
+.forgot-password-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.25rem;
+}
+
+.forgot-password-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #6c3e94;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.forgot-password-link:hover {
+    color: #56306f;
+    text-decoration: underline;
+}
+
+.forgot-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(23, 18, 29, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.forgot-card {
+    width: min(100%, 24rem);
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    color: #1c1922;
+}
+
+.forgot-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.forgot-subtitle {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.45;
+}
+
+.forgot-label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.forgot-input {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    box-sizing: border-box;
+    border: 1.5px solid rgba(23, 18, 29, 0.18);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.forgot-input:focus {
+    outline: none;
+    border-color: #6c3e94;
+    box-shadow: 0 0 0 3px rgba(108, 62, 148, 0.15);
+}
+
+.forgot-feedback {
+    margin: 0.5rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.forgot-feedback--error { color: #dc2626; }
+.forgot-feedback--success { color: #16a34a; }
+
+.forgot-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.forgot-btn {
+    padding: 0.55rem 1rem;
+    border: none;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.forgot-btn--cancel {
+    background: rgba(23, 18, 29, 0.06);
+    color: #1c1922;
+}
+
+.forgot-btn--cancel:hover {
+    background: rgba(23, 18, 29, 0.1);
+}
+
+.forgot-btn--send {
+    background: linear-gradient(135deg, #7b4fa6 0%, #6C3D91 50%, #56306f 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(108, 61, 145, 0.25);
+}
+
+.forgot-btn--send:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(108, 61, 145, 0.35);
+}
+
+.forgot-btn--send:disabled {
+    opacity: 0.65;
+    cursor: wait;
 }
 
 @keyframes login-slide-down {
