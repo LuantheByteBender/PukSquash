@@ -166,6 +166,16 @@ class PayfastDemoController extends Controller
                 }
 
                 if ($payment->status !== 'PAID') {
+                    $alreadyPaid = DB::table('registration_payments')
+                        ->where('pending_registration_id', (string) $payment->pending_registration_id)
+                        ->where('status', 'PAID')
+                        ->lockForUpdate()
+                        ->exists();
+
+                    if ($alreadyPaid) {
+                        return;
+                    }
+
                     try {
                         $this->payments->markPaid((string) $payment->id, $payfastPaymentId);
                     } catch (\Throwable) {

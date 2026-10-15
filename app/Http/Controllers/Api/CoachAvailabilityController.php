@@ -53,6 +53,7 @@ class CoachAvailabilityController extends Controller
             $coaches[$coach['id']] = [
                 'id' => $coach['id'],
                 'name' => $coach['name'] ?? $coach['fullName'] ?? null,
+                'private_coaching_fee_cents' => (int) ($coach['privateCoachingFeeCents'] ?? 0),
             ];
         }
 
@@ -248,6 +249,7 @@ class CoachAvailabilityController extends Controller
                 $coaches[$coachId] = [
                     'id' => $coachId,
                     'name' => $coach['fullName'] ?? $coach['name'] ?? null,
+                    'private_coaching_fee_cents' => (int) ($coach['privateCoachingFeeCents'] ?? 0),
                     'time_slots' => [],
                 ];
             }

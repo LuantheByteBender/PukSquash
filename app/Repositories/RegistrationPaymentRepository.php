@@ -22,6 +22,15 @@ class RegistrationPaymentRepository
             ->first();
     }
 
+    public function findPendingForPendingRegistration(string $pendingRegistrationId): ?object
+    {
+        return DB::table('registration_payments')
+            ->where('pending_registration_id', $pendingRegistrationId)
+            ->where('status', 'PENDING')
+            ->orderByDesc('created_at')
+            ->first();
+    }
+
     public function findLatestForPendingRegistration(string $pendingRegistrationId): ?object
     {
         return DB::table('registration_payments')
@@ -95,5 +104,30 @@ class RegistrationPaymentRepository
             ->update([
                 'status' => 'CANCELLED',
             ]);
+    }
+
+    public function listAll(): array
+    {
+        return DB::table('registration_payments as rp')
+            ->leftJoin('pending_registrations as pr', 'rp.pending_registration_id', '=', 'pr.id')
+            ->select([
+                'rp.id',
+                'rp.pending_registration_id',
+                'rp.merchant_payment_id',
+                'rp.payfast_payment_id',
+                'rp.provider',
+                'rp.amount_cents',
+                'rp.currency',
+                'rp.status',
+                'rp.paid_at',
+                'rp.created_at',
+                'pr.full_name',
+                'pr.email',
+                'pr.student_number',
+                'pr.phone_number',
+            ])
+            ->orderByDesc('rp.created_at')
+            ->get()
+            ->toArray();
     }
 }

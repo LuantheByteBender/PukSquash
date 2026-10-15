@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 
@@ -16,6 +16,10 @@ const registrationFee = ref(null);
 
 const message = ref('');
 const submitting = ref(false);
+const initializing = ref(false);
+
+const overlayOpen = computed(() => initializing.value || submitting.value);
+const overlayText = computed(() => (submitting.value ? 'Redirecting to PayFast...' : 'Preparing payment...'));
 
 function loadDraft() {
     try {
@@ -160,18 +164,24 @@ async function initiatePayment() {
 }
 
 onMounted(async () => {
-    loadDraft();
-    await checkIfAlreadyRegistered();
-    await attemptDemoCompletionIfPossible();
+    initializing.value = true;
+
+    try {
+        loadDraft();
+        await checkIfAlreadyRegistered();
+        await attemptDemoCompletionIfPossible();
+    } finally {
+        initializing.value = false;
+    }
 });
 </script>
 
 <template>
     <main class="payment-page">
-        <div v-if="submitting" class="redirect-overlay" aria-live="polite" aria-busy="true">
+        <div v-if="overlayOpen" class="redirect-overlay" aria-live="polite" aria-busy="true">
             <div class="redirect-card">
                 <span class="spinner" aria-hidden="true" />
-                <p>Redirecting to PayFast...</p>
+                <p>{{ overlayText }}</p>
             </div>
         </div>
 
@@ -205,7 +215,10 @@ onMounted(async () => {
                     id="student-number"
                     v-model="studentNumber"
                     type="text"
-                    placeholder="Student number"
+                    placeholder="7-digit student number"
+                    inputmode="numeric"
+                    pattern="\d{7}"
+                    maxlength="7"
                 />
 
                 <label for="phone-number">Phone Number (optional)</label>
@@ -213,12 +226,15 @@ onMounted(async () => {
                     id="phone-number"
                     v-model="phoneNumber"
                     type="tel"
-                    placeholder="Phone number"
+                    placeholder="10-digit phone number"
                     autocomplete="tel"
+                    inputmode="numeric"
+                    pattern="\d{10}"
+                    maxlength="10"
                 />
 
-                <button type="submit" :disabled="submitting">
-                    {{ submitting ? 'Redirecting...' : `Pay with PayFast (Sandbox) - ${registrationFee?.currency ?? 'ZAR'} ${registrationFee?.amount ?? ''}` }}
+                <button type="submit" :disabled="overlayOpen">
+                    {{ overlayOpen ? overlayText : `Pay with PayFast (Sandbox) - ${registrationFee?.currency ?? 'ZAR'} ${registrationFee?.amount ?? ''}` }}
                 </button>
 
                 <p v-if="message" class="message" role="status">

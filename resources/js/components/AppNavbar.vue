@@ -7,10 +7,20 @@ import { useAccount, refreshAccount, clearAccount } from '../composables/useAcco
 const router = useRouter();
 const route = useRoute();
 const { isSignedIn, displayName } = useAuth();
-const { role } = useAccount();
+const { profile, role } = useAccount();
 
 const open = ref(false);
 const confirmingSignOut = ref(false);
+
+const fundsBalanceLabel = computed(() => {
+    const amount = Number(profile.value?.funds_balance_cents ?? 0) / 100;
+
+    return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: 'ZAR',
+        minimumFractionDigits: 2,
+    }).format(amount);
+});
 
 const userInitials = computed(() => {
     const name = displayName.value || '';
@@ -116,6 +126,7 @@ async function signOut() {
                         <div class="sidebar-avatar">{{ userInitials }}</div>
                         <div class="sidebar-user-info">
                             <p class="sidebar-user-name">{{ displayName || 'User' }}</p>
+                            <p class="sidebar-user-funds">Available: {{ fundsBalanceLabel }}</p>
                             <span class="sidebar-user-role">{{ role || 'USER' }}</span>
                         </div>
                     </div>
@@ -174,6 +185,11 @@ async function signOut() {
                         <RouterLink :to="{ name: 'admin-courts' }" class="sidebar-link" @click="open = false">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                             <span>Manage courts</span>
+                        </RouterLink>
+
+                        <RouterLink :to="{ name: 'admin-registration-payments' }" class="sidebar-link" @click="open = false">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" x2="23" y1="10" y2="10"/></svg>
+                            <span>Registration payments</span>
                         </RouterLink>
                     </div>
 
@@ -437,6 +453,13 @@ async function signOut() {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.sidebar-user-funds {
+    margin: 0.1rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ps-brand);
 }
 
 .sidebar-user-role {

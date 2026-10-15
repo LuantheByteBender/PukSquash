@@ -1790,6 +1790,30 @@ input User_Data {
   """
   fullName_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents` of type `Int!`
+  """
+  fundsBalanceCents: Int
+  """
+  ✨ `_expr` server value variant of `fundsBalanceCents` (✨ Generated from Field `User`.`fundsBalanceCents` of type `Int!`)
+  """
+  fundsBalanceCents_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `fundsBalanceCents` (✨ Generated from Field `User`.`fundsBalanceCents` of type `Int!`)
+  """
+  fundsBalanceCents_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents` of type `Int!`
+  """
+  privateCoachingFeeCents: Int
+  """
+  ✨ `_expr` server value variant of `privateCoachingFeeCents` (✨ Generated from Field `User`.`privateCoachingFeeCents` of type `Int!`)
+  """
+  privateCoachingFeeCents_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `privateCoachingFeeCents` (✨ Generated from Field `User`.`privateCoachingFeeCents` of type `Int!`)
+  """
+  privateCoachingFeeCents_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `User`.`role` of type `String!`
   """
   role: String
@@ -1883,6 +1907,14 @@ input User_Filter {
   """
   fullName: String_Filter
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents` of type `Int!`
+  """
+  fundsBalanceCents: Int_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents` of type `Int!`
+  """
+  privateCoachingFeeCents: Int_Filter
+  """
   ✨ Generated from Field `User`.`role` of type `String!`
   """
   role: String_Filter
@@ -1969,9 +2001,17 @@ input User_Having {
   """
   fullName_count: Int_Filter
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents_count` of type `Int!`
+  """
+  fundsBalanceCents_count: Int_Filter
+  """
   ✨ Generated from Field `User`.`id_count` of type `Int!`
   """
   id_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_count` of type `Int!`
+  """
+  privateCoachingFeeCents_count: Int_Filter
   """
   ✨ Generated from Field `User`.`role_count` of type `Int!`
   """
@@ -1989,9 +2029,33 @@ input User_Having {
   """
   updatedAt_count: Int_Filter
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents_sum` of type `Int`
+  """
+  fundsBalanceCents_sum: Int_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_sum` of type `Int`
+  """
+  privateCoachingFeeCents_sum: Int_Filter
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_avg` of type `Float`
+  """
+  fundsBalanceCents_avg: Float_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_avg` of type `Float`
+  """
+  privateCoachingFeeCents_avg: Float_Filter
+  """
   ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
   """
   createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_min` of type `Int`
+  """
+  fundsBalanceCents_min: Int_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_min` of type `Int`
+  """
+  privateCoachingFeeCents_min: Int_Filter
   """
   ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
   """
@@ -2000,6 +2064,14 @@ input User_Having {
   ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
   """
   createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_max` of type `Int`
+  """
+  fundsBalanceCents_max: Int_Filter
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_max` of type `Int`
+  """
+  privateCoachingFeeCents_max: Int_Filter
   """
   ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
   """
@@ -2056,6 +2128,14 @@ input User_Order {
   """
   fullName: OrderDirection
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents` of type `Int!`
+  """
+  fundsBalanceCents: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents` of type `Int!`
+  """
+  privateCoachingFeeCents: OrderDirection
+  """
   ✨ Generated from Field `User`.`role` of type `String!`
   """
   role: OrderDirection
@@ -2092,9 +2172,17 @@ input User_Order {
   """
   fullName_count: OrderDirection
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents_count` of type `Int!`
+  """
+  fundsBalanceCents_count: OrderDirection
+  """
   ✨ Generated from Field `User`.`id_count` of type `Int!`
   """
   id_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_count` of type `Int!`
+  """
+  privateCoachingFeeCents_count: OrderDirection
   """
   ✨ Generated from Field `User`.`role_count` of type `Int!`
   """
@@ -2112,9 +2200,33 @@ input User_Order {
   """
   updatedAt_count: OrderDirection
   """
+  ✨ Generated from Field `User`.`fundsBalanceCents_sum` of type `Int`
+  """
+  fundsBalanceCents_sum: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_sum` of type `Int`
+  """
+  privateCoachingFeeCents_sum: OrderDirection
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_avg` of type `Float`
+  """
+  fundsBalanceCents_avg: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_avg` of type `Float`
+  """
+  privateCoachingFeeCents_avg: OrderDirection
+  """
   ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
   """
   createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_min` of type `Int`
+  """
+  fundsBalanceCents_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_min` of type `Int`
+  """
+  privateCoachingFeeCents_min: OrderDirection
   """
   ✨ Generated from Field `User`.`updatedAt_min` of type `Timestamp`
   """
@@ -2123,6 +2235,14 @@ input User_Order {
   ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
   """
   createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `User`.`fundsBalanceCents_max` of type `Int`
+  """
+  fundsBalanceCents_max: OrderDirection
+  """
+  ✨ Generated from Field `User`.`privateCoachingFeeCents_max` of type `Int`
+  """
+  privateCoachingFeeCents_max: OrderDirection
   """
   ✨ Generated from Field `User`.`updatedAt_max` of type `Timestamp`
   """

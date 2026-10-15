@@ -26,6 +26,12 @@ class UserRepository
             status:        (string) ($row->status ?? 'ACTIVE'),
             createdAt:     (string) ($row->created_at ?? ''),
             updatedAt:     (string) ($row->updated_at ?? ''),
+            fundsBalanceCents: Schema::hasColumn('users', 'funds_balance_cents')
+                ? (int) ($row->funds_balance_cents ?? 0)
+                : 0,
+            privateCoachingFeeCents: Schema::hasColumn('users', 'private_coaching_fee_cents')
+                ? (int) ($row->private_coaching_fee_cents ?? 0)
+                : 0,
         );
     }
 
@@ -116,6 +122,14 @@ class UserRepository
                 $updates['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? $existing->phone_number ?? null;
             }
 
+            if (Schema::hasColumn('users', 'funds_balance_cents')) {
+                $updates['funds_balance_cents'] = $params['fundsBalanceCents'] ?? $params['funds_balance_cents'] ?? $existing->funds_balance_cents ?? 0;
+            }
+
+            if (Schema::hasColumn('users', 'private_coaching_fee_cents')) {
+                $updates['private_coaching_fee_cents'] = $params['privateCoachingFeeCents'] ?? $params['private_coaching_fee_cents'] ?? $existing->private_coaching_fee_cents ?? 0;
+            }
+
             DB::table('users')
                 ->where('firebase_uid', $firebaseUid)
                 ->update($updates);
@@ -153,6 +167,14 @@ class UserRepository
                     $updates['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? $existingEmailRow->phone_number ?? null;
                 }
 
+                if (Schema::hasColumn('users', 'funds_balance_cents')) {
+                    $updates['funds_balance_cents'] = $params['fundsBalanceCents'] ?? $params['funds_balance_cents'] ?? $existingEmailRow->funds_balance_cents ?? 0;
+                }
+
+                if (Schema::hasColumn('users', 'private_coaching_fee_cents')) {
+                    $updates['private_coaching_fee_cents'] = $params['privateCoachingFeeCents'] ?? $params['private_coaching_fee_cents'] ?? $existingEmailRow->private_coaching_fee_cents ?? 0;
+                }
+
                 DB::table('users')
                     ->where('id', (string) $existingEmailRow->id)
                     ->update($updates);
@@ -178,6 +200,14 @@ class UserRepository
 
         if (Schema::hasColumn('users', 'phone_number')) {
             $insert['phone_number'] = $params['phoneNumber'] ?? $params['phone_number'] ?? null;
+        }
+
+        if (Schema::hasColumn('users', 'funds_balance_cents')) {
+            $insert['funds_balance_cents'] = $params['fundsBalanceCents'] ?? $params['funds_balance_cents'] ?? 0;
+        }
+
+        if (Schema::hasColumn('users', 'private_coaching_fee_cents')) {
+            $insert['private_coaching_fee_cents'] = $params['privateCoachingFeeCents'] ?? $params['private_coaching_fee_cents'] ?? 0;
         }
 
         try {

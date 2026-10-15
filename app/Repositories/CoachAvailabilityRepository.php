@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\DataTransferObjects\CoachAvailabilityDTO;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CoachAvailabilityRepository
 {
@@ -27,6 +28,9 @@ class CoachAvailabilityRepository
                 'u.email as coach_email',
                 'u.role as coach_role',
                 'u.status as coach_status',
+                Schema::hasColumn('users', 'private_coaching_fee_cents')
+                    ? 'u.private_coaching_fee_cents as coach_private_coaching_fee_cents'
+                    : DB::raw('0 as coach_private_coaching_fee_cents'),
                 'ts.id as ts_id',
                 'ts.start_time as ts_start_time',
                 'ts.end_time as ts_end_time',
@@ -48,6 +52,7 @@ class CoachAvailabilityRepository
                         'email' => (string) ($row->coach_email ?? ''),
                         'role' => (string) ($row->coach_role ?? ''),
                         'status' => (string) ($row->coach_status ?? ''),
+                        'privateCoachingFeeCents' => (int) ($row->coach_private_coaching_fee_cents ?? 0),
                     ]
                     : null,
                 'timeSlot' => ! empty($row->ts_id)
@@ -134,6 +139,9 @@ class CoachAvailabilityRepository
                 'u.email as coach_email',
                 'u.role as coach_role',
                 'u.status as coach_status',
+                Schema::hasColumn('users', 'private_coaching_fee_cents')
+                    ? 'u.private_coaching_fee_cents as coach_private_coaching_fee_cents'
+                    : DB::raw('0 as coach_private_coaching_fee_cents'),
                 'ts.id as ts_id',
                 'ts.start_time as ts_start_time',
                 'ts.end_time as ts_end_time',
@@ -155,6 +163,7 @@ class CoachAvailabilityRepository
                         'email' => (string) ($row->coach_email ?? ''),
                         'role' => (string) ($row->coach_role ?? ''),
                         'status' => (string) ($row->coach_status ?? ''),
+                        'privateCoachingFeeCents' => (int) ($row->coach_private_coaching_fee_cents ?? 0),
                     ]
                     : null,
                 'timeSlot' => ! empty($row->ts_id)
@@ -191,6 +200,9 @@ class CoachAvailabilityRepository
                 'u.full_name as coach_full_name',
                 'u.role as coach_role',
                 'u.status as coach_status',
+                Schema::hasColumn('users', 'private_coaching_fee_cents')
+                    ? 'u.private_coaching_fee_cents as coach_private_coaching_fee_cents'
+                    : DB::raw('0 as coach_private_coaching_fee_cents'),
                 'ts.id as ts_id',
                 'ts.start_time as ts_start_time',
                 'ts.end_time as ts_end_time',
@@ -211,6 +223,7 @@ class CoachAvailabilityRepository
                         'fullName' => (string) ($row->coach_full_name ?? ''),
                         'role' => (string) ($row->coach_role ?? ''),
                         'status' => (string) ($row->coach_status ?? ''),
+                        'privateCoachingFeeCents' => (int) ($row->coach_private_coaching_fee_cents ?? 0),
                     ]
                     : null,
                 'timeSlot' => ! empty($row->ts_id)

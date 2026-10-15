@@ -73,8 +73,8 @@ class RegistrationController extends Controller
     {
         $request->validate([
             'full_name' => 'required|string|max:120',
-            'student_number' => 'nullable|string|max:30',
-            'phone_number' => 'nullable|string|max:30',
+            'student_number' => 'nullable|digits:7',
+            'phone_number' => 'nullable|digits:10',
         ]);
 
         $firebaseUid = (string) $request->attributes->get('firebase_uid');
@@ -126,15 +126,22 @@ class RegistrationController extends Controller
 
         $this->pendingRegistrations->markEmailVerifiedChecked((string) $pending->id);
 
-        $merchantPaymentId = (string) Str::uuid();
+        $existingPending = $this->registrationPayments->findPendingForPendingRegistration((string) $pending->id);
 
-        $payment = $this->registrationPayments->createPending(
-            (string) $pending->id,
-            $merchantPaymentId,
-            $amountCents,
-            'ZAR',
-            'PAYFAST',
-        );
+        if ($existingPending) {
+            $payment = $existingPending;
+            $merchantPaymentId = (string) $existingPending->merchant_payment_id;
+        } else {
+            $merchantPaymentId = (string) Str::uuid();
+
+            $payment = $this->registrationPayments->createPending(
+                (string) $pending->id,
+                $merchantPaymentId,
+                $amountCents,
+                'ZAR',
+                'PAYFAST',
+            );
+        }
 
         $fields = [
             'merchant_id' => $merchantId,

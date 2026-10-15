@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { friendlyAuthError } from '../features/auth/authService.js';
-import { refreshAccount, updateAccount, clearAccount, useAccount } from '../composables/useAccount.js';
+import { refreshAccount, updateAccount, addAccountFunds, updatePrivateCoachingFee, clearAccount, useAccount } from '../composables/useAccount.js';
 
 const router = useRouter();
 
@@ -46,6 +46,20 @@ const passwordUpdate = ref({
     error: '',
 });
 
+const fundsForm = ref({
+    amount: '100',
+    working: false,
+    saved: false,
+    error: '',
+});
+
+const coachFeeForm = ref({
+    amount: '',
+    working: false,
+    saved: false,
+    error: '',
+});
+
 const initials = computed(() => {
     const first = (profile.value.firstName || '').trim();
     const last = (profile.value.lastName || '').trim();
@@ -58,6 +72,9 @@ const initials = computed(() => {
 });
 
 const roleLabel = computed(() => profile.value.role || 'USER');
+const isCoach = computed(() => roleLabel.value === 'COACH');
+const fundsBalanceLabel = computed(() => formatCents(accountProfile.value?.funds_balance_cents ?? 0));
+const privateCoachingFeeLabel = computed(() => formatCents(accountProfile.value?.private_coaching_fee_cents ?? 0));
 
 const registeredLabel = computed(() => {
     const raw = profile.value.registeredAt;
@@ -66,6 +83,33 @@ const registeredLabel = computed(() => {
     if (isNaN(d.getTime())) return raw;
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 });
+
+const expiresLabel = computed(() => {
+    const raw = profile.value.registeredAt;
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return '—';
+    d.setDate(d.getDate() + 365);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+});
+
+function formatCents(value) {
+    const amount = Number(value ?? 0) / 100;
+    return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: 'ZAR',
+    }).format(amount);
+}
+
+function randsToCents(value) {
+    const amount = Number(String(value ?? '').replace(',', '.'));
+
+    if (!Number.isFinite(amount)) {
+        return null;
+    }
+
+    return Math.round(amount * 100);
+}
 
 function applyFromAccount(next) {
     if (!next) return;
@@ -107,6 +151,54 @@ async function reauthenticate(currentPassword) {
 async function syncProfileFromBackend() {
     const next = await refreshAccount();
     applyFromAccount(next);
+}
+
+async function submitAddFunds() {
+    fundsForm.value.error = '';
+    fundsForm.value.saved = false;
+
+    const amountCents = randsToCents(fundsForm.value.amount);
+
+    if (!amountCents || amountCents < 100) {
+        fundsForm.value.error = 'Please enter an amount of at least R1.00.';
+        return;
+    }
+
+    fundsForm.value.working = true;
+
+    try {
+        await addAccountFunds(amountCents);
+        fundsForm.value.saved = true;
+        setTimeout(() => { fundsForm.value.saved = false; }, 3000);
+    } catch (e) {
+        fundsForm.value.error = e?.message ?? String(e);
+    } finally {
+        fundsForm.value.working = false;
+    }
+}
+
+async function submitPrivateCoachingFee() {
+    coachFeeForm.value.error = '';
+    coachFeeForm.value.saved = false;
+
+    const amountCents = randsToCents(coachFeeForm.value.amount);
+
+    if (amountCents === null || amountCents < 0) {
+        coachFeeForm.value.error = 'Please enter a valid private coaching fee.';
+        return;
+    }
+
+    coachFeeForm.value.working = true;
+
+    try {
+        await updatePrivateCoachingFee(amountCents);
+        coachFeeForm.value.saved = true;
+        setTimeout(() => { coachFeeForm.value.saved = false; }, 3000);
+    } catch (e) {
+        coachFeeForm.value.error = e?.message ?? String(e);
+    } finally {
+        coachFeeForm.value.working = false;
+    }
 }
 
 async function updateEmailAddress() {
@@ -219,6 +311,7 @@ onMounted(async () => {
     try {
         const next = await refreshAccount();
         applyFromAccount(next);
+        coachFeeForm.value.amount = String(Number(next?.private_coaching_fee_cents ?? 0) / 100);
     } catch (e) {
         error.value = e?.message ?? String(e);
     }
@@ -243,6 +336,21 @@ const saveProfile = async () => {
     error.value = '';
     confirmingSave.value = false;
     saving.value = true;
+
+    const studentNum = profile.value.studentNumber;
+    const phoneNum = profile.value.phoneNumber;
+
+    if (studentNum && !/^\d{7}$/.test(studentNum)) {
+        error.value = 'Student number must be exactly 7 digits.';
+        saving.value = false;
+        return;
+    }
+
+    if (phoneNum && !/^\d{10}$/.test(phoneNum)) {
+        error.value = 'Phone number must be exactly 10 digits.';
+        saving.value = false;
+        return;
+    }
 
     try {
         const fullName = `${profile.value.firstName} ${profile.value.lastName}`.trim();
@@ -350,6 +458,7 @@ const saveProfile = async () => {
                             <div class="detail">
                                 <span class="detail-label">Registered</span>
                                 <span class="detail-value">{{ registeredLabel }}</span>
+                                <span v-if="expiresLabel !== '—'" class="detail-expires">Expires {{ expiresLabel }}</span>
                             </div>
                         </div>
                     </div>
@@ -384,7 +493,10 @@ const saveProfile = async () => {
                                 v-model="profile.studentNumber"
                                 type="text"
                                 class="field-input field-input--active"
-                                placeholder="Student number"
+                                placeholder="7-digit student number"
+                                inputmode="numeric"
+                                pattern="\d{7}"
+                                maxlength="7"
                             />
                         </div>
 
@@ -395,7 +507,10 @@ const saveProfile = async () => {
                                 v-model="profile.phoneNumber"
                                 type="tel"
                                 class="field-input field-input--active"
-                                placeholder="Phone number"
+                                placeholder="10-digit phone number"
+                                inputmode="numeric"
+                                pattern="\d{10}"
+                                maxlength="10"
                             />
                         </div>
                     </div>
@@ -414,6 +529,116 @@ const saveProfile = async () => {
                         >
                             <svg v-if="saving" class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                             {{ saving ? 'Saving…' : 'Save changes' }}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" style="margin-top: 1rem;">
+                <div class="card-header">
+                    <h2 class="card-title">Funds</h2>
+                    <p class="card-subtitle">Add funds to pay for court bookings and private coaching.</p>
+                </div>
+
+                <div class="card-body">
+                    <div v-if="fundsForm.error" class="banner banner--error">
+                        {{ fundsForm.error }}
+                    </div>
+
+                    <div v-if="fundsForm.saved" class="banner banner--success">
+                        Funds added successfully
+                    </div>
+
+                    <div class="details">
+                        <div class="details-grid">
+                            <div class="detail">
+                                <span class="detail-label">Available balance</span>
+                                <span class="detail-value">{{ fundsBalanceLabel }}</span>
+                            </div>
+
+                            <div class="detail">
+                                <span class="detail-label">Squash booking fee</span>
+                                <span class="detail-value">R25.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-grid" style="margin-top: 1rem;">
+                        <div class="field">
+                            <label class="field-label" for="funds-amount">Amount to add</label>
+                            <input
+                                id="funds-amount"
+                                v-model="fundsForm.amount"
+                                type="number"
+                                class="field-input field-input--active"
+                                min="1"
+                                step="0.01"
+                                placeholder="100.00"
+                            />
+                            <p class="field-help">For demo purposes only.</p>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button
+                            type="button"
+                            class="btn btn--primary"
+                            :disabled="fundsForm.working"
+                            @click="submitAddFunds"
+                        >
+                            {{ fundsForm.working ? 'Adding…' : 'Add funds' }}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="isCoach" class="card" style="margin-top: 1rem;">
+                <div class="card-header">
+                    <h2 class="card-title">Private coaching fee</h2>
+                    <p class="card-subtitle">Publish the fee that students pay when booking your private coaching slots.</p>
+                </div>
+
+                <div class="card-body">
+                    <div v-if="coachFeeForm.error" class="banner banner--error">
+                        {{ coachFeeForm.error }}
+                    </div>
+
+                    <div v-if="coachFeeForm.saved" class="banner banner--success">
+                        Private coaching fee updated successfully
+                    </div>
+
+                    <div class="details">
+                        <div class="details-grid">
+                            <div class="detail">
+                                <span class="detail-label">Current private coaching fee</span>
+                                <span class="detail-value">{{ privateCoachingFeeLabel }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-grid" style="margin-top: 1rem;">
+                        <div class="field">
+                            <label class="field-label" for="coach-fee">Fee amount</label>
+                            <input
+                                id="coach-fee"
+                                v-model="coachFeeForm.amount"
+                                type="number"
+                                class="field-input field-input--active"
+                                min="0"
+                                step="0.01"
+                                placeholder="150.00"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button
+                            type="button"
+                            class="btn btn--primary"
+                            :disabled="coachFeeForm.working"
+                            @click="submitPrivateCoachingFee"
+                        >
+                            {{ coachFeeForm.working ? 'Saving…' : 'Save fee' }}
                         </button>
                     </div>
                 </div>
@@ -921,6 +1146,14 @@ const saveProfile = async () => {
     gap: 0.85rem;
 }
 
+.detail-expires {
+    margin-top: 0.1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9061c2;
+    opacity: 0.8;
+}
+
 .detail {
     background: linear-gradient(135deg, rgba(242, 236, 247, 0.6) 0%, rgba(242, 236, 247, 0.9) 100%);
     border: 1px solid rgba(221, 207, 233, 0.5);
@@ -985,6 +1218,12 @@ const saveProfile = async () => {
     font-size: .78rem;
     font-weight: 700;
     color: #4b3b6b;
+}
+
+.field-help {
+    margin: 0.45rem 0 0;
+    font-size: 0.78rem;
+    color: #6b7280;
 }
 
 .field-input {

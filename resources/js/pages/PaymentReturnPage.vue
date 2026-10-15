@@ -8,11 +8,40 @@ import { logoutUser } from '../features/auth/authService';
 
 const router = useRouter();
 
+const RETRY_DELAYS_MS = [2000, 3000, 5000, 8000, 12000];
+
 const message = ref('Processing your payment...');
 const loading = ref(true);
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function reconcileWithRetry() {
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+        try {
+            await http.post('/registration/reconcile');
+            return;
+        } catch (e) {
+            const isStillProcessing =
+                (e instanceof ApiError && e.code === 'REGISTRATION_PAYMENT_REQUIRED') ||
+                e?.status === 409;
+
+            if (!isStillProcessing || attempt === RETRY_DELAYS_MS.length) {
+                throw e;
+            }
+
+            const delay = RETRY_DELAYS_MS[attempt];
+            const seconds = Math.round(delay / 1000);
+            message.value = `Payment received — confirming registration (retry ${attempt + 1}/${RETRY_DELAYS_MS.length}, waiting ${seconds}s)...`;
+            await sleep(delay);
+        }
+    }
+}
+
 async function processReturn() {
     loading.value = true;
+    message.value = 'Processing your payment...';
 
     try {
         try {
@@ -20,7 +49,7 @@ async function processReturn() {
         } catch {
         }
 
-        await http.post('/registration/reconcile');
+        await reconcileWithRetry();
 
         const profile = await refreshAccount();
         const role = profile?.role ?? null;
@@ -45,8 +74,11 @@ async function processReturn() {
 
         await router.replace({ name: 'book' });
     } catch (e) {
-        if (e instanceof ApiError && e.code === 'REGISTRATION_PAYMENT_REQUIRED') {
-            message.value = 'Payment is still processing. Please wait a moment and refresh this page.';
+        if (
+            (e instanceof ApiError && e.code === 'REGISTRATION_PAYMENT_REQUIRED') ||
+            e?.status === 409
+        ) {
+            message.value = 'Payment is still being confirmed by the payment provider. Please click "Check again" in a moment.';
             return;
         }
 

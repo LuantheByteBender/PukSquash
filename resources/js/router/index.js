@@ -114,6 +114,12 @@ const routes = [
         meta: { requiresRole: 'ADMIN' },
     },
     {
+        path: '/admin/registration-payments',
+        name: 'admin-registration-payments',
+        component: () => import('../pages/RegistrationPaymentsPage.vue'),
+        meta: { requiresRole: 'ADMIN' },
+    },
+    {
         path: '/profile',
         name: 'user-profile',
         component: () => import('../pages/UserProfile.vue'),
@@ -189,10 +195,18 @@ router.beforeEach(async (to) => {
         try {
             const status = await http.get('/registration/status');
             if (!status?.registered) {
-                return {
-                    name: 'registration-payment',
-                    query: to.fullPath ? { redirect: to.fullPath } : undefined,
-                };
+                try {
+                    await http.post('/registration/reconcile');
+                    await refreshAccount();
+                } catch {
+                }
+
+                if (!role.value) {
+                    return {
+                        name: 'registration-payment',
+                        query: to.fullPath ? { redirect: to.fullPath } : undefined,
+                    };
+                }
             }
         } catch (e) {
             if (e instanceof ApiError && e.code === 'EMAIL_NOT_VERIFIED') {

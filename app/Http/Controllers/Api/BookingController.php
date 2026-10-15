@@ -8,9 +8,11 @@ use App\Repositories\BookingRepository;
 use App\Repositories\CoachAvailabilityRepository;
 use App\Repositories\CourtRepository;
 use App\Repositories\TimeSlotRepository;
+use App\Repositories\UserFundsRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
@@ -21,6 +23,7 @@ class BookingController extends Controller
         private CoachAvailabilityRepository $coachAvailability,
         private CourtRepository         $courts,
         private TimeSlotRepository      $timeSlots,
+        private UserFundsRepository     $funds,
     ) {}
 
     /**
@@ -116,41 +119,85 @@ class BookingController extends Controller
             }
         }
 
-        // Create the booking.
-        $result = $this->bookings->create([
-            'courtId'         => $request->input('court_id'),
-            'timeSlotId'      => $request->input('time_slot_id'),
-            'createdById'     => $user->id,
-            'coachId'         => $coachId,
-            'bookingDate'     => $request->input('booking_date'),
-            'bookingType'     => $bookingType,
-            'bookedAt'        => now()->toIso8601ZuluString(),
-        ]);
+        $totalCostCents = UserFundsRepository::COURT_BOOKING_FEE_CENTS;
 
-        // The insert returns the key — extract the booking id.
-        $bookingId = null;
+        try {
+            if ($bookingType === 'PRIVATE_COACH') {
+                $totalCostCents += $this->funds->privateCoachingFeeForCoach($coachId);
+            }
+
+            $bookingId = DB::transaction(function () use ($request, $user, $coachId, $bookingType, $totalCostCents): string {
+                $this->funds->deductFunds($user->id, $totalCostCents);
+
+                $result = $this->bookings->create([
+                    'courtId'         => $request->input('court_id'),
+                    'timeSlotId'      => $request->input('time_slot_id'),
+                    'createdById'     => $user->id,
+                    'coachId'         => $coachId,
+                    'bookingDate'     => $request->input('booking_date'),
+                    'bookingType'     => $bookingType,
+                    'bookedAt'        => now()->toIso8601ZuluString(),
+                ]);
+
+                $bookingId = $this->bookingIdFromInsertResult($result);
+
+                if (! $bookingId) {
+                    throw new \RuntimeException('BOOKING_CREATION_FAILED');
+                }
+
+                $this->players->add($bookingId, $user->id, 1);
+
+                return $bookingId;
+            });
+        } catch (\RuntimeException $exception) {
+            return $this->paymentExceptionResponse($exception);
+        }
+
+        return response()->json([
+            'id' => $bookingId,
+            'amount_paid_cents' => $totalCostCents,
+        ], 201);
+    }
+
+    private function bookingIdFromInsertResult(array $result): ?string
+    {
         $bookingKey = $result['booking_insert'] ?? null;
 
         if (is_array($bookingKey)) {
-            $bookingId = $bookingKey['id'] ?? null;
-        } elseif (is_string($bookingKey) && $bookingKey !== '') {
+            return $bookingKey['id'] ?? null;
+        }
+
+        if (is_string($bookingKey) && $bookingKey !== '') {
             $decoded = json_decode($bookingKey, true);
 
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                $bookingId = $decoded['id'] ?? null;
-            } else {
-                $bookingId = $bookingKey;
+                return $decoded['id'] ?? null;
             }
+
+            return $bookingKey;
         }
 
-        if (! $bookingId) {
+        return null;
+    }
+
+    private function paymentExceptionResponse(\RuntimeException $exception): JsonResponse
+    {
+        if ($exception->getMessage() === 'INSUFFICIENT_FUNDS') {
+            return response()->json([
+                'message' => 'Insufficient funds. Please add funds to your profile before booking.',
+                'code' => 'INSUFFICIENT_FUNDS',
+            ], 402);
+        }
+
+        if ($exception->getMessage() === 'FUNDS_COLUMNS_MISSING') {
+            return response()->json(['message' => 'Funds have not been configured yet.'], 503);
+        }
+
+        if ($exception->getMessage() === 'BOOKING_CREATION_FAILED') {
             return response()->json(['message' => 'Booking creation failed.'], 500);
         }
 
-        // Add the creator as Player 1.
-        $this->players->add($bookingId, $user->id, 1);
-
-        return response()->json(['id' => $bookingId], 201);
+        throw $exception;
     }
 
     /**
@@ -219,9 +266,19 @@ class BookingController extends Controller
             }
         }
 
-        $this->players->add($id, $user->id, 2);
+        try {
+            DB::transaction(function () use ($id, $user): void {
+                $this->funds->deductFunds($user->id, UserFundsRepository::COURT_BOOKING_FEE_CENTS);
+                $this->players->add($id, $user->id, 2);
+            });
+        } catch (\RuntimeException $exception) {
+            return $this->paymentExceptionResponse($exception);
+        }
 
-        return response()->json(['id' => $id]);
+        return response()->json([
+            'id' => $id,
+            'amount_paid_cents' => UserFundsRepository::COURT_BOOKING_FEE_CENTS,
+        ]);
     }
 
     /**

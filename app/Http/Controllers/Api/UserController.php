@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Repositories\PendingRegistrationRepository;
 use App\Repositories\RegistrationPaymentRepository;
+use App\Repositories\UserFundsRepository;
 use App\Repositories\UserRepository;
 use App\Services\FirebaseAuthService;
 use Illuminate\Database\QueryException;
@@ -18,6 +19,7 @@ class UserController extends Controller
         private RegistrationPaymentRepository $registrationPayments,
         private FirebaseAuthService $firebase,
         private UserRepository $users,
+        private UserFundsRepository $funds,
     ) {}
 
     /**
@@ -100,8 +102,8 @@ class UserController extends Controller
     {
         $request->validate([
             'full_name'      => 'required|string|max:120',
-            'student_number' => 'nullable|string|max:30',
-            'phone_number'   => 'nullable|string|max:30',
+            'student_number' => 'nullable|digits:7',
+            'phone_number'   => 'nullable|digits:10',
         ]);
 
         $firebaseUid = $request->attributes->get('firebase_uid');
@@ -140,5 +142,78 @@ class UserController extends Controller
         $updated = $this->users->findByFirebaseUid($firebaseUid);
 
         return response()->json($updated?->toArray());
+    }
+
+    public function addFunds(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'amount_cents' => 'required|integer|min:100|max:1000000',
+        ]);
+
+        $user = $this->users->findByFirebaseUid(
+            (string) $request->attributes->get('firebase_uid')
+        );
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'Registration payment required.',
+                'code' => 'REGISTRATION_PAYMENT_REQUIRED',
+            ], 403);
+        }
+
+        try {
+            $balance = $this->funds->addFunds($user->id, (int) $validated['amount_cents']);
+        } catch (\RuntimeException $exception) {
+            if ($exception->getMessage() === 'FUNDS_COLUMNS_MISSING') {
+                return response()->json(['message' => 'Funds have not been configured yet.'], 503);
+            }
+
+            throw $exception;
+        }
+
+        $updated = $this->users->findByFirebaseUid($user->firebaseUid);
+
+        return response()->json([
+            'funds_balance_cents' => $balance,
+            'user' => $updated?->toArray(),
+        ]);
+    }
+
+    public function updatePrivateCoachingFee(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'private_coaching_fee_cents' => 'required|integer|min:0|max:1000000',
+        ]);
+
+        $user = $this->users->findByFirebaseUid(
+            (string) $request->attributes->get('firebase_uid')
+        );
+
+        if (! $user) {
+            return response()->json(['message' => 'User profile not found.'], 404);
+        }
+
+        if ($user->role !== 'COACH' || $user->status !== 'ACTIVE') {
+            return response()->json([
+                'message' => 'Only active Coaches may publish private coaching fees.',
+            ], 403);
+        }
+
+        try {
+            $fee = $this->funds->updatePrivateCoachingFee($user->id, (int) $validated['private_coaching_fee_cents']);
+        } catch (\RuntimeException $exception) {
+            if ($exception->getMessage() === 'FUNDS_COLUMNS_MISSING') {
+                return response()->json(['message' => 'Funds have not been configured yet.'], 503);
+            }
+
+            throw $exception;
+        }
+
+        $updated = $this->users->findByFirebaseUid($user->firebaseUid);
+
+        return response()->json([
+            'private_coaching_fee_cents' => $fee,
+            'user' => $updated?->toArray(),
+        ]);
     }
 }

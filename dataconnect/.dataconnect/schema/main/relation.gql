@@ -806,6 +806,15 @@ extend type User {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "User.fullName", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `User` table where the `fundsBalanceCents` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fundsBalanceCents_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "User.fundsBalanceCents", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `User` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   id_count(
@@ -814,6 +823,15 @@ extend type User {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "User.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `User` table where the `privateCoachingFeeCents` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  privateCoachingFeeCents_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "User.privateCoachingFeeCents", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `User` table where the `role` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -851,9 +869,53 @@ extend type User {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "User.updatedAt", purpose: QUERY_COUNT)
   """
+  ✨ Sum the `fundsBalanceCents` field in the `User` table.
+  """
+  fundsBalanceCents_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "User.fundsBalanceCents", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `privateCoachingFeeCents` field in the `User` table.
+  """
+  privateCoachingFeeCents_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "User.privateCoachingFeeCents", purpose: QUERY_SUM)
+  """
+  ✨ Average the `fundsBalanceCents` field in the `User` table.
+  """
+  fundsBalanceCents_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "User.fundsBalanceCents", purpose: QUERY_AVG)
+  """
+  ✨ Average the `privateCoachingFeeCents` field in the `User` table.
+  """
+  privateCoachingFeeCents_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "User.privateCoachingFeeCents", purpose: QUERY_AVG)
+  """
   ✨ Minimum of the `createdAt` field in the `User` table.
   """
   createdAt_min: Timestamp @fdc_generated(from: "User.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `fundsBalanceCents` field in the `User` table.
+  """
+  fundsBalanceCents_min: Int @fdc_generated(from: "User.fundsBalanceCents", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `privateCoachingFeeCents` field in the `User` table.
+  """
+  privateCoachingFeeCents_min: Int @fdc_generated(from: "User.privateCoachingFeeCents", purpose: QUERY_MIN)
   """
   ✨ Minimum of the `updatedAt` field in the `User` table.
   """
@@ -862,6 +924,14 @@ extend type User {
   ✨ Maximum of the `createdAt` field in the `User` table.
   """
   createdAt_max: Timestamp @fdc_generated(from: "User.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `fundsBalanceCents` field in the `User` table.
+  """
+  fundsBalanceCents_max: Int @fdc_generated(from: "User.fundsBalanceCents", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `privateCoachingFeeCents` field in the `User` table.
+  """
+  privateCoachingFeeCents_max: Int @fdc_generated(from: "User.privateCoachingFeeCents", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `updatedAt` field in the `User` table.
   """

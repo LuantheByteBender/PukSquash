@@ -7,6 +7,7 @@ import { http } from '../services/http.js';
 const quickActions = ref([
     { label: 'Manage users', to: { name: 'admin-users' } },
     { label: 'Manage courts', to: { name: 'admin-courts' } },
+    { label: 'Registration payments', to: { name: 'admin-registration-payments' } },
 ]);
 
 const defaultStats = [

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TimeSlotController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminCourtController;
+use App\Http\Controllers\Api\AdminRegistrationPaymentController;
 use App\Http\Controllers\Api\AdminDashboardController;
 use App\Http\Controllers\Api\TeamPracticeController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -29,6 +30,8 @@ Route::middleware('firebase.auth')->group(function () {
 
     Route::middleware('registered')->group(function () {
         Route::patch('/me', [UserController::class, 'update']);
+        Route::post('/me/funds', [UserController::class, 'addFunds']);
+        Route::patch('/me/private-coaching-fee', [UserController::class, 'updatePrivateCoachingFee']);
 
         // Courts
         Route::get('/courts', [CourtController::class, 'index']);
@@ -60,6 +63,8 @@ Route::middleware('firebase.auth')->group(function () {
             Route::get('/admin/users/{id}', [AdminUserController::class, 'show']);
             Route::put('/admin/users/{id}', [AdminUserController::class, 'update']);
             Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy']);
+
+            Route::get('/admin/registration-payments', [AdminRegistrationPaymentController::class, 'index']);
 
             Route::get('/admin/courts', [AdminCourtController::class, 'index']);
             Route::post('/admin/courts', [AdminCourtController::class, 'store']);

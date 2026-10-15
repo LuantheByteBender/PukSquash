@@ -33,6 +33,7 @@ const loadingCoaches = ref(false);
 const coachError = ref(null);
 
 const hhmm = (time) => (time || '').slice(0, 5);
+const courtBookingFeeCents = 2500;
 
 const when = computed(
     () =>
@@ -46,6 +47,25 @@ function formatDate(iso) {
         month: 'long',
     });
 }
+
+function formatCents(value) {
+    return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: 'ZAR',
+    }).format(Number(value ?? 0) / 100);
+}
+
+const selectedCoach = computed(() => coaches.value.find((coach) => coach.id === coachId.value) ?? null);
+const totalCostCents = computed(() => {
+    if (joining.value) return courtBookingFeeCents;
+
+    if (type.value === 'PRIVATE_COACH') {
+        return courtBookingFeeCents + Number(selectedCoach.value?.private_coaching_fee_cents ?? 0);
+    }
+
+    return courtBookingFeeCents;
+});
+const totalCostLabel = computed(() => formatCents(totalCostCents.value));
 
 async function loadCoaches() {
     loadingCoaches.value = true;
@@ -138,6 +158,8 @@ const sessionTypes = [
                     booking — it does not reserve another court.
                 </p>
 
+                <p class="muted">Payment due: {{ totalCostLabel }}</p>
+
                 <p v-if="error" class="alert alert-error">{{ error }}</p>
 
                 <div class="actions">
@@ -186,10 +208,12 @@ const sessionTypes = [
                     <select v-else id="coach-select" v-model="coachId">
                         <option :value="null" disabled>Select a coach…</option>
                         <option v-for="coach in coaches" :key="coach.id" :value="coach.id">
-                            {{ coach.name }}
+                            {{ coach.name }} · {{ formatCents(coach.private_coaching_fee_cents) }}
                         </option>
                     </select>
                 </div>
+
+                <p class="muted">Payment due: {{ totalCostLabel }}</p>
 
                 <p v-if="error" class="alert alert-error">{{ error }}</p>
 

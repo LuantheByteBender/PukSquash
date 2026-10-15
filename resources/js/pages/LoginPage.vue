@@ -1,15 +1,17 @@
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { loginUser, logoutUser } from '../features/auth/authService';
 import { refreshAccount, clearAccount } from '../composables/useAccount.js';
 import { useToast } from '../composables/useToast.js';
+import { useAuth } from '../composables/useAuth.js';
 
 const router = useRouter();
 const route = useRoute();
 
 const toast = useToast();
+const { isSignedIn, emailVerified, ready, user } = useAuth();
 
 const email = ref('');
 const password = ref('');
@@ -112,6 +114,26 @@ async function login() {
         isLoggingIn.value = false;
     }
 }
+
+onMounted(async () => {
+    if (!ready.value) {
+        await new Promise((resolve) => {
+            const stop = watch(ready, (value) => {
+                if (!value) return;
+                stop();
+                resolve();
+            });
+        });
+    }
+
+    if (isSignedIn.value && emailVerified.value) {
+        const redirect = typeof route.query.redirect === 'string' && route.query.redirect
+            ? route.query.redirect
+            : null;
+
+        await finishLoginFlow({ user: user.value }, redirect);
+    }
+});
 
 
 </script>

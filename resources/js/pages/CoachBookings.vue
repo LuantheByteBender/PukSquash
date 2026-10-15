@@ -860,6 +860,8 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 360px;
+    overflow-y: auto;
 }
 
 .ca-pub-row {

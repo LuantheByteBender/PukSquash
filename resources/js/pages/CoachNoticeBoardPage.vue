@@ -62,7 +62,10 @@
                 {{ initials(coach.name) }}
               </div>
               <div class="coach-meta">
-                <p class="coach-name">{{ coach.name || 'Coach' }}</p>
+                <p class="coach-name">
+                  {{ coach.name || 'Coach' }}
+                  <span class="coach-fee">{{ formatCents(coach.private_coaching_fee_cents ?? 0) }}</span>
+                </p>
                 <p class="coach-slots muted">{{ coach.time_slots.length }} slot{{ coach.time_slots.length !== 1 ? 's' : '' }}</p>
               </div>
             </div>
@@ -127,6 +130,15 @@ const formattedSelectedDate = computed(() => {
     year: 'numeric'
   })
 })
+
+function formatCents(value) {
+  const amount = Number(value ?? 0) / 100
+  return new Intl.NumberFormat('en-ZA', {
+    style: 'currency',
+    currency: 'ZAR',
+    minimumFractionDigits: 2,
+  }).format(amount)
+}
 
 const hhmm = (value) => String(value || '').slice(0, 5)
 function slotLabel(slot) {
@@ -375,15 +387,22 @@ onMounted(() => {
     margin: 0;
     font-size: 0.875rem;
     font-weight: 700;
-    color: var(--ps-text);
+    color: #1f1630;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+.coach-fee {
+    margin-left: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7e22ce;
+}
+
 .coach-slots {
-    margin: 0.1rem 0 0;
-    font-size: 0.78rem;
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
 }
 
 .caret {

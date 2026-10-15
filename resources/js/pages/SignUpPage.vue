@@ -1,14 +1,16 @@
 <script setup>
-import { onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
     registerUser,
 } from '../features/auth/authService';
 import { useToast } from '../composables/useToast.js';
+import { useAuth } from '../composables/useAuth.js';
 
 const router = useRouter();
 const toast = useToast();
+const { isSignedIn, emailVerified, ready } = useAuth();
 
 const email = ref('');
 const password = ref('');
@@ -92,6 +94,22 @@ async function register() {
         submitting.value = false;
     }
 }
+
+onMounted(async () => {
+    if (!ready.value) {
+        await new Promise((resolve) => {
+            const stop = watch(ready, (value) => {
+                if (!value) return;
+                stop();
+                resolve();
+            });
+        });
+    }
+
+    if (isSignedIn.value && emailVerified.value) {
+        await router.replace({ name: 'registration-payment' });
+    }
+});
 
 onUnmounted(() => {
     stopVerificationTimer();

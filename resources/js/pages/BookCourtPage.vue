@@ -10,6 +10,7 @@
  */
 import { ref, computed, onMounted } from 'vue';
 import { bookingService, ApiConflict } from '../features/booking/bookingService.js';
+import { refreshAccount } from '../composables/useAccount.js';
 import { useToast } from '../composables/useToast.js';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
 import GridLegend from '../components/GridLegend.vue';
@@ -116,6 +117,7 @@ async function createBooking(payload) {
 
     try {
         await bookingService.createBooking(payload);
+        await refreshAccount().catch(() => null);
         selection.value = null;
 
         if (selected?.court?.name && when) {
@@ -144,6 +146,7 @@ async function joinBooking(bookingId) {
 
     try {
         await bookingService.joinBooking(bookingId);
+        await refreshAccount().catch(() => null);
         selection.value = null;
 
         if (host && selected?.court?.name) {
