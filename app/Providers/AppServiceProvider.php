@@ -14,7 +14,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(SqlConnectClient::class, fn () => new SqlConnectClient());
+        $this->app->singleton(
+            SqlConnectClient::class,
+            fn () => new SqlConnectClient()
+        );
     }
 
     /**
@@ -22,7 +25,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS for generated URLs in production
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }
