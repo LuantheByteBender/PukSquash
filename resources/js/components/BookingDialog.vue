@@ -33,6 +33,7 @@ const loadingCoaches = ref(false);
 const coachError = ref(null);
 
 const hhmm = (time) => (time || '').slice(0, 5);
+const courtBookingFeeCents = 2500;
 
 const when = computed(
     () =>
@@ -46,6 +47,25 @@ function formatDate(iso) {
         month: 'long',
     });
 }
+
+function formatCents(value) {
+    return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: 'ZAR',
+    }).format(Number(value ?? 0) / 100);
+}
+
+const selectedCoach = computed(() => coaches.value.find((coach) => coach.id === coachId.value) ?? null);
+const totalCostCents = computed(() => {
+    if (joining.value) return courtBookingFeeCents;
+
+    if (type.value === 'PRIVATE_COACH') {
+        return courtBookingFeeCents + Number(selectedCoach.value?.private_coaching_fee_cents ?? 0);
+    }
+
+    return courtBookingFeeCents;
+});
+const totalCostLabel = computed(() => formatCents(totalCostCents.value));
 
 async function loadCoaches() {
     loadingCoaches.value = true;
@@ -138,6 +158,8 @@ const sessionTypes = [
                     booking — it does not reserve another court.
                 </p>
 
+                <p class="muted">Payment due: {{ totalCostLabel }}</p>
+
                 <p v-if="error" class="alert alert-error">{{ error }}</p>
 
                 <div class="actions">
@@ -186,10 +208,12 @@ const sessionTypes = [
                     <select v-else id="coach-select" v-model="coachId">
                         <option :value="null" disabled>Select a coach…</option>
                         <option v-for="coach in coaches" :key="coach.id" :value="coach.id">
-                            {{ coach.name }}
+                            {{ coach.name }} · {{ formatCents(coach.private_coaching_fee_cents) }}
                         </option>
                     </select>
                 </div>
+
+                <p class="muted">Payment due: {{ totalCostLabel }}</p>
 
                 <p v-if="error" class="alert alert-error">{{ error }}</p>
 
@@ -209,10 +233,12 @@ const sessionTypes = [
     position: fixed;
     inset: 0;
     z-index: 50;
-    background: rgba(24, 14, 33, 0.5);
+    background: rgba(23, 18, 29, 0.55);
+    backdrop-filter: blur(4px);
     display: grid;
     place-items: center;
     padding: 1rem;
+    animation: bd-fade 0.2s ease;
 }
 
 .dialog {
@@ -220,10 +246,11 @@ const sessionTypes = [
     max-width: 460px;
     max-height: 90vh;
     overflow-y: auto;
-    background: var(--ps-surface);
-    border-radius: var(--ps-radius);
-    box-shadow: 0 10px 30px rgba(24, 14, 33, 0.25);
-    padding: 1.1rem;
+    background: var(--ps-surface-elevated, #fff);
+    border-radius: var(--ps-radius-lg, 16px);
+    box-shadow: var(--ps-shadow-xl);
+    padding: 1.5rem;
+    animation: bd-scale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .head {
@@ -235,30 +262,40 @@ const sessionTypes = [
 
 .head h2 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
 .close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border: 0;
-    background: none;
-    font-size: 1.5rem;
+    background: transparent;
+    font-size: 1.3rem;
     line-height: 1;
     cursor: pointer;
     color: var(--ps-text-muted);
+    border-radius: 8px;
+    transition: all var(--ps-transition-fast);
     padding: 0;
 }
 
 .close:hover {
     color: var(--ps-text);
+    background: var(--ps-brand-tint);
 }
 
 .summary {
-    margin: 0.9rem 0;
-    padding: 0.7rem 0.8rem;
-    background: var(--ps-brand-tint);
-    border-radius: var(--ps-radius-sm);
+    margin: 1rem 0;
+    padding: 0.75rem 0.9rem;
+    background: linear-gradient(135deg, rgba(242, 236, 247, 0.6) 0%, rgba(242, 236, 247, 0.9) 100%);
+    border: 1px solid rgba(221, 207, 233, 0.5);
+    border-radius: var(--ps-radius);
     display: grid;
-    gap: 0.3rem;
+    gap: 0.35rem;
 }
 
 .summary div {
@@ -270,42 +307,50 @@ const sessionTypes = [
     width: 54px;
     flex: none;
     color: var(--ps-text-muted);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
 }
 
 .summary dd {
     margin: 0;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 650;
+    font-size: 0.875rem;
 }
 
 .types {
     border: 0;
     padding: 0;
-    margin: 0 0 0.9rem;
+    margin: 0 0 1rem;
 }
 
 .types legend {
-    font-weight: 600;
-    font-size: 0.88rem;
+    font-weight: 700;
+    font-size: 0.85rem;
     padding: 0;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
 }
 
 .type {
     display: flex;
-    gap: 0.6rem;
+    gap: 0.65rem;
     align-items: flex-start;
-    padding: 0.6rem 0.7rem;
-    border: 1px solid var(--ps-border);
-    border-radius: var(--ps-radius-sm);
+    padding: 0.65rem 0.8rem;
+    border: 1.5px solid var(--ps-border-soft);
+    border-radius: var(--ps-radius);
     cursor: pointer;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.45rem;
+    transition: all var(--ps-transition-fast);
+}
+
+.type:hover {
+    border-color: var(--ps-brand-light);
+    background: rgba(242, 236, 247, 0.4);
 }
 
 .type.on {
     border-color: var(--ps-brand);
     background: var(--ps-brand-tint);
+    box-shadow: 0 0 0 1px var(--ps-brand) inset;
 }
 
 .type input {
@@ -315,31 +360,43 @@ const sessionTypes = [
 
 .type-title {
     display: block;
-    font-weight: 650;
-    font-size: 0.92rem;
+    font-weight: 700;
+    font-size: 0.875rem;
 }
 
 .type-blurb {
     display: block;
     color: var(--ps-text-muted);
-    font-size: 0.83rem;
+    font-size: 0.8rem;
+    margin-top: 0.1rem;
+    line-height: 1.4;
 }
 
 .coach {
-    margin-bottom: 0.9rem;
+    margin-bottom: 1rem;
 }
 
 .coach label {
     display: block;
-    font-weight: 600;
-    font-size: 0.88rem;
-    margin-bottom: 0.25rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
 }
 
 .actions {
     display: flex;
     gap: 0.6rem;
     justify-content: flex-end;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+@keyframes bd-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes bd-scale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
 }
 </style>

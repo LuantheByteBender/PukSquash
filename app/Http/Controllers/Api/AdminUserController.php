@@ -62,6 +62,13 @@ class AdminUserController extends Controller
             return response()->json(['message' => 'User not found.'], 404);
         }
 
+        if ($this->users->hasBookingReferences($id)) {
+            return response()->json([
+                'message' => 'This user cannot be deleted because they are still referenced by existing bookings.',
+                'code' => 'USER_HAS_BOOKING_REFERENCES',
+            ], 409);
+        }
+
         try {
             $this->firebase->deleteUser($user->firebaseUid);
         } catch (UserNotFound $exception) {

@@ -10,6 +10,7 @@
  */
 import { ref, computed, onMounted } from 'vue';
 import { bookingService, ApiConflict } from '../features/booking/bookingService.js';
+import { refreshAccount } from '../composables/useAccount.js';
 import { useToast } from '../composables/useToast.js';
 import AvailabilityGrid from '../components/AvailabilityGrid.vue';
 import GridLegend from '../components/GridLegend.vue';
@@ -32,6 +33,7 @@ const date = ref(todayIso);
 const data = ref(null);
 const loading = ref(false);
 const loadError = ref(null);
+const coachSlotIds = ref([]);
 
 const selection = ref(null); // { court, slot, cell }
 const submitting = ref(false);
@@ -58,9 +60,25 @@ const prettyDate = computed(() =>
 async function load() {
     loading.value = true;
     loadError.value = null;
+    coachSlotIds.value = [];
 
     try {
-        data.value = await bookingService.availability(date.value);
+        const [availability, noticeBoard] = await Promise.all([
+            bookingService.availability(date.value),
+            bookingService.coachNoticeBoard(date.value).catch(() => null),
+        ]);
+
+        data.value = availability;
+
+        const slotSet = new Set();
+        const rows = noticeBoard?.data || [];
+        for (const coach of rows) {
+            for (const slot of coach?.time_slots || []) {
+                if (slot?.id) slotSet.add(String(slot.id));
+            }
+        }
+
+        coachSlotIds.value = Array.from(slotSet);
     } catch (error) {
         loadError.value = error.message;
     } finally {
@@ -99,6 +117,7 @@ async function createBooking(payload) {
 
     try {
         await bookingService.createBooking(payload);
+        await refreshAccount().catch(() => null);
         selection.value = null;
 
         if (selected?.court?.name && when) {
@@ -127,6 +146,7 @@ async function joinBooking(bookingId) {
 
     try {
         await bookingService.joinBooking(bookingId);
+        await refreshAccount().catch(() => null);
         selection.value = null;
 
         if (host && selected?.court?.name) {
@@ -197,8 +217,8 @@ const gridEmpty = computed(
             </div>
         </div>
 
-        <div v-if="loading && !data" class="card centred">
-            <LoadingSpinner label="Checking availability…" />
+        <div v-if="loading" class="card centred centred-grid">
+            <LoadingSpinner label="Refreshing availability…" />
         </div>
 
         <p v-else-if="loadError" class="alert alert-error">{{ loadError }}</p>
@@ -207,7 +227,6 @@ const gridEmpty = computed(
             <div class="card">
                 <div class="grid-head">
                     <h2>{{ prettyDate }}</h2>
-                    <LoadingSpinner v-if="loading" label="refreshing" />
                 </div>
 
                 <p v-if="gridEmpty" class="muted empty">
@@ -223,6 +242,7 @@ const gridEmpty = computed(
                         :courts="data.courts"
                         :time-slots="data.time_slots"
                         :cells="data.cells"
+                        :coach-slot-ids="coachSlotIds"
                         :busy-key="busyKey"
                         @select="onSelect"
                     />
@@ -252,11 +272,14 @@ const gridEmpty = computed(
     justify-content: space-between;
     gap: 1rem;
     flex-wrap: wrap;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
 .page-head h1 {
-    margin: 0 0 0.15rem;
+    margin: 0 0 0.2rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
 .page-head p {
@@ -266,12 +289,27 @@ const gridEmpty = computed(
 .datebar {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
+    background: var(--ps-surface);
+    padding: 0.3rem;
+    border-radius: var(--ps-radius);
+    border: 1px solid var(--ps-border-soft);
+    box-shadow: var(--ps-shadow-sm);
 }
 
 .datebar input {
     width: auto;
     min-width: 150px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    min-height: 34px;
+    font-weight: 600;
+}
+
+.datebar input:focus {
+    box-shadow: none;
+    border: none;
 }
 
 .grid-head {
@@ -279,22 +317,27 @@ const gridEmpty = computed(
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
 .grid-head h2 {
     margin: 0;
     font-size: 1rem;
+    font-weight: 700;
 }
 
 .centred {
     display: grid;
     place-items: center;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1rem;
+}
+
+.centred-grid {
+    min-height: 420px;
 }
 
 .legend-above {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
 .empty {

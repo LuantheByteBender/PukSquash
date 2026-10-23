@@ -13,8 +13,6 @@
  *    ApiConflict, tell the user plainly and refresh the availability grid.
  */
 
-import { startLoading, stopLoading } from './loading.js';
-
 export class ApiError extends Error {
     constructor(message, status, code) {
         super(message);
@@ -41,16 +39,20 @@ export class ApiConflict extends ApiError {
  * request is simply sent without a token and Laravel answers 401, which is the
  * correct outcome anyway.
  */
-async function authHeader() {
+async function authHeader(forceRefresh = false) {
     try {
-        const { auth } = await import('./firebase.js');
+        const { auth, authReady } = await import('./firebase.js');
+        try {
+            await authReady;
+        } catch {
+        }
         const user = auth?.currentUser;
 
         if (!user) {
             return {};
         }
 
-        const token = await user.getIdToken();
+        const token = await user.getIdToken(forceRefresh);
 
         return { Authorization: `Bearer ${token}` };
     } catch {
@@ -68,46 +70,50 @@ function defaultMessage(status) {
     return 'Something went wrong. Please try again.';
 }
 
+async function doFetch(method, path, body, forceRefresh) {
+    const response = await fetch(`/api${path}`, {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            ...(await authHeader(forceRefresh)),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+    });
+
+    return response;
+}
+
 export async function request(method, path, body) {
-    startLoading();
+    let response = await doFetch(method, path, body, false);
+
+    if (response.status === 401) {
+        response = await doFetch(method, path, body, true);
+    }
+
+    if (response.status === 204) {
+        return null;
+    }
+
+    let payload = null;
 
     try {
-        const response = await fetch(`/api${path}`, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                ...(await authHeader()),
-            },
-            body: body === undefined ? undefined : JSON.stringify(body),
-        });
-
-        if (response.status === 204) {
-            return null;
-        }
-
-        let payload = null;
-
-        try {
-            payload = await response.json();
-        } catch {
-            // Empty or non-JSON body — leave payload as null.
-        }
-
-        if (response.ok) {
-            return payload;
-        }
-
-        const message = payload?.message || defaultMessage(response.status);
-
-        if (response.status === 409) {
-            throw new ApiConflict(message, payload?.code);
-        }
-
-        throw new ApiError(message, response.status, payload?.code);
-    } finally {
-        stopLoading();
+        payload = await response.json();
+    } catch {
+        // Empty or non-JSON body — leave payload as null.
     }
+
+    if (response.ok) {
+        return payload;
+    }
+
+    const message = payload?.message || defaultMessage(response.status);
+
+    if (response.status === 409) {
+        throw new ApiConflict(message, payload?.code);
+    }
+
+    throw new ApiError(message, response.status, payload?.code);
 }
 
 export const http = {

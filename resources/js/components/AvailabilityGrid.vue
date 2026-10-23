@@ -20,6 +20,8 @@ const props = defineProps({
     selectedKeys: { type: Array, default: null },
     /** "courtId:slotId" of a cell currently being submitted. */
     busyKey: { type: String, default: null },
+    /** Array of time_slot_id values that have one or more coaches available for the selected date. */
+    coachSlotIds: { type: Array, default: null },
 });
 
 const emit = defineEmits(['select']);
@@ -27,6 +29,12 @@ const emit = defineEmits(['select']);
 const keyFor = (courtId, slotId) => `${courtId}:${slotId}`;
 
 const selectedKeySet = computed(() => new Set(props.selectedKeys || []));
+
+const coachSlotIdSet = computed(() => new Set((props.coachSlotIds || []).map(String)));
+
+function hasCoach(slotId) {
+    return coachSlotIdSet.value.has(String(slotId));
+}
 
 const index = computed(() => {
     const map = new Map();
@@ -95,7 +103,9 @@ function describe(court, slot, cell) {
     const what =
         VISUAL_DESCRIPTIONS[visualState(cell)] || STATE_DESCRIPTIONS[cell.state] || cell.state;
 
-    return `${court.name}, ${when}, ${what}`;
+    const coach = hasCoach(slot.id) && cell.can_book ? ', coach available' : '';
+
+    return `${court.name}, ${when}, ${what}${coach}`;
 }
 </script>
 
@@ -106,13 +116,17 @@ function describe(court, slot, cell) {
                 Court availability. Rows are one-hour time slots, columns are courts.
             </caption>
 
+            <colgroup>
+                <col class="time-col" />
+                <col v-for="court in courts" :key="court.id" class="court-col" />
+            </colgroup>
+
             <thead>
                 <tr>
                     <th scope="col" class="time-head">Time</th>
 
                     <th v-for="court in courts" :key="court.id" scope="col" class="court-head">
                         <span>{{ court.name }}</span>
-                        <span v-if="court.status !== 'ACTIVE'" class="pill pill-grey">Inactive</span>
                     </th>
                 </tr>
             </thead>
@@ -121,6 +135,13 @@ function describe(court, slot, cell) {
                 <tr v-for="slot in timeSlots" :key="slot.id">
                     <th scope="row" class="time">
                         {{ hhmm(slot.start_time) }}<span class="dash">–</span>{{ hhmm(slot.end_time) }}
+
+                        <span v-if="hasCoach(slot.id)" class="coach-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </span>
                     </th>
 
                     <td v-for="court in courts" :key="court.id" class="cell-td">
@@ -218,6 +239,23 @@ thead th {
     min-width: 150px;
 }
 
+.court-head {
+    padding: 3px;
+}
+
+.court-head > span {
+    display: block;
+    padding: 0.55rem 0.4rem;
+}
+
+.time-col {
+    width: 92px;
+}
+
+.court-col {
+    width: 150px;
+}
+
 .court-head .pill {
     display: block;
     margin-top: 0.15rem;
@@ -259,6 +297,13 @@ thead th {
     margin: 0 1px;
 }
 
+.coach-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.25rem;
+    color: var(--ps-brand);
+}
+
 .cell-td {
     padding: 3px;
     border-bottom: 1px solid var(--ps-border-soft);
@@ -284,16 +329,21 @@ thead th {
     line-height: 1.15;
     text-align: center;
     word-break: break-word;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .clickable {
     cursor: pointer;
-    transition: transform 0.08s ease, filter 0.12s ease;
 }
 
 .clickable:hover:not(:disabled) {
-    filter: brightness(0.97);
+    filter: brightness(0.95);
     transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.clickable:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
 }
 
 .clickable:disabled {
@@ -407,6 +457,10 @@ thead th {
         min-width: 118px;
     }
 
+    .court-col {
+        width: 118px;
+    }
+
     /* Narrower frozen column so more courts fit beside it, and a soft shadow so
        it reads as sitting above the columns sliding underneath. */
     .time-head,
@@ -414,6 +468,10 @@ thead th {
         width: 68px;
         min-width: 68px;
         box-shadow: 2px 0 6px rgba(24, 14, 33, 0.1);
+    }
+
+    .time-col {
+        width: 68px;
     }
 
     .time-head {

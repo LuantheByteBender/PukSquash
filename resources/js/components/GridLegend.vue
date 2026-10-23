@@ -34,6 +34,17 @@ const states = [
             </li>
 
             <li>
+                <span class="swatch coach-swatch" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </span>
+                <span class="label">Coach available</span>
+                <span class="hint">Coach icon shown next to the time</span>
+            </li>
+
+            <li>
                 <span class="swatch marker-mine" aria-hidden="true"></span>
                 <span class="label">Your booking</span>
                 <span class="hint">Dark outline</span>
@@ -50,19 +61,19 @@ const states = [
 
 <style scoped>
 .legend-wrap {
-    padding: 0.6rem 0.75rem;
+    padding: 0.7rem 0.85rem;
     border: 1px solid var(--ps-border-soft);
-    border-radius: var(--ps-radius-sm);
-    background: var(--ps-bg);
+    border-radius: var(--ps-radius);
+    background: linear-gradient(135deg, rgba(240, 234, 246, 0.5) 0%, rgba(250, 248, 253, 0.8) 100%);
 }
 
 .legend-title {
-    margin: 0 0 0.35rem;
-    font-size: 0.72rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--ps-text-muted);
+    color: var(--ps-text-faint);
 }
 
 .legend {
@@ -70,31 +81,32 @@ const states = [
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.35rem 0.9rem;
+    gap: 0.4rem 1rem;
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    font-size: 0.8rem;
+    font-size: 0.78rem;
 }
 
 .legend li {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.5rem;
 }
 
 .swatch {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
     border: 1px solid;
     flex: none;
 }
 
 .label {
-    font-weight: 600;
+    font-weight: 650;
 }
 
 .hint {
     color: var(--ps-text-muted);
+    font-size: 0.75rem;
 }
 
 .state-available {
@@ -148,5 +160,13 @@ const states = [
     background: var(--ps-surface);
     border-color: transparent;
     box-shadow: inset 0 0 0 2px var(--ps-brand);
+}
+
+.coach-swatch {
+    display: grid;
+    place-items: center;
+    background: var(--ps-surface);
+    border-color: var(--ps-border-soft);
+    color: var(--ps-text);
 }
 </style>

@@ -50,6 +50,7 @@ const endDate = ref(todayIso);
 const availability = ref({});
 const loading = ref(false);
 const loadError = ref('');
+const coachSlotIdsByDate = ref({});
 
 const selections = ref(new Map());
 
@@ -115,24 +116,38 @@ async function loadAvailability() {
 
     loading.value = true;
     loadError.value = '';
+    coachSlotIdsByDate.value = {};
 
     try {
         const results = await Promise.all(
             dates.map(async (date) => ({
                 date,
                 data: await bookingService.coachTeamPracticeAvailability(date),
+                noticeBoard: await bookingService.coachNoticeBoard(date).catch(() => null),
             }))
         );
 
         const next = {};
+        const nextCoachSlots = {};
         for (const item of results) {
             next[item.date] = item.data;
+
+            const slotSet = new Set();
+            const rows = item.noticeBoard?.data || [];
+            for (const coach of rows) {
+                for (const slot of coach?.time_slots || []) {
+                    if (slot?.id) slotSet.add(String(slot.id));
+                }
+            }
+            nextCoachSlots[item.date] = Array.from(slotSet);
         }
 
         availability.value = next;
+        coachSlotIdsByDate.value = nextCoachSlots;
     } catch (error) {
         loadError.value = error?.message ?? String(error);
         availability.value = {};
+        coachSlotIdsByDate.value = {};
     } finally {
         loading.value = false;
     }
@@ -140,7 +155,6 @@ async function loadAvailability() {
 
 function onConfirmDialogConfirm() {
     if (submitting.value) return;
-    confirmOpen.value = false;
     confirmBooking();
 }
 
@@ -192,6 +206,7 @@ async function confirmBooking() {
         const res = await bookingService.createTeamPractice(payload);
         lastBookedIds.value = res?.data?.booking_ids ?? [];
         clearSelections();
+        confirmOpen.value = false;
         toast.success('Team practice booked successfully.');
     } catch (error) {
         if (error instanceof ApiConflict) {
@@ -268,36 +283,6 @@ onMounted(loadAvailability);
             </div>
         </div>
 
-        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
-
-        <div v-if="loading && !Object.keys(availability).length" class="card centred">
-            <LoadingSpinner label="Checking availability…" />
-        </div>
-
-        <div v-else>
-            <GridLegend show-selected class="tp-legend" />
-
-            <div v-for="date in selectedDates" :key="date" class="card grid-card">
-                <div class="grid-head">
-                    <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
-                    <LoadingSpinner v-if="loading" label="refreshing" />
-                </div>
-
-                <p v-if="!availability[date]?.courts?.length || !availability[date]?.time_slots?.length" class="muted empty">
-                    No courts are open for booking on this date.
-                </p>
-
-                <AvailabilityGrid
-                    v-else
-                    :courts="availability[date].courts"
-                    :time-slots="availability[date].time_slots"
-                    :cells="availability[date].cells"
-                    :selected-keys="selectedKeysByDate[date]"
-                    @select="({ court, slot, cell }) => toggleSelection(date, court, slot, cell)"
-                />
-            </div>
-        </div>
-
         <div class="card review" v-if="selectionCount">
             <div class="review-head">
                 <h2>Selected reservations</h2>
@@ -323,6 +308,37 @@ onMounted(loadAvailability);
             </div>
         </div>
 
+        <p v-if="loadError" class="alert alert-error">{{ loadError }}</p>
+
+        <div v-if="loading && !Object.keys(availability).length" class="card centred">
+            <LoadingSpinner label="Checking availability…" />
+        </div>
+
+        <div v-else>
+            <GridLegend show-selected class="tp-legend" />
+
+            <div v-for="date in selectedDates" :key="date" class="card grid-card">
+                <div class="grid-head">
+                    <h2>{{ new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) }}</h2>
+                    <LoadingSpinner v-if="loading" label="refreshing" />
+                </div>
+
+                <p v-if="!availability[date]?.courts?.length || !availability[date]?.time_slots?.length" class="muted empty">
+                    No courts are open for booking on this date.
+                </p>
+
+                <AvailabilityGrid
+                    v-else
+                    :courts="availability[date].courts"
+                    :time-slots="availability[date].time_slots"
+                    :cells="availability[date].cells"
+                    :coach-slot-ids="coachSlotIdsByDate[date]"
+                    :selected-keys="selectedKeysByDate[date]"
+                    @select="({ court, slot, cell }) => toggleSelection(date, court, slot, cell)"
+                />
+            </div>
+        </div>
+
         <div class="card" v-if="lastBookedIds.length">
             <h2>Latest team practice booking</h2>
             <p class="muted">Created {{ lastBookedIds.length }} bookings.</p>
@@ -335,6 +351,8 @@ onMounted(loadAvailability);
             confirm-text="Confirm"
             cancel-text="Cancel"
             :confirm-variant="'primary'"
+            :loading="submitting"
+            loading-text="Confirming team practice…"
             @cancel="confirmOpen = false"
             @confirm="onConfirmDialogConfirm"
         />
@@ -424,6 +442,8 @@ onMounted(loadAvailability);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
 }
 
 .review-row {

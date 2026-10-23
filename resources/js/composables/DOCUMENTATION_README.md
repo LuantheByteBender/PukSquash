@@ -5,12 +5,13 @@
 This **frontend** folder holds small pieces of shared reactive state and reusable
 logic, written as Vue composition functions.
 
-## What belongs here
+## Existing composables
 
-- `useAuth.js` exposes who is currently signed in, as reactive state any component
-  can read. It wraps Firebase's `onAuthStateChanged`.
-- `useToast.js` is the application-wide message queue used to confirm an action
-  succeeded or explain why it did not.
+| Composable      | Purpose                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| `useAuth.js`    | Exposes the currently signed-in Firebase user as reactive state. Wraps `onAuthStateChanged`. |
+| `useAccount.js` | Manages the application user profile — refresh, update, add funds, update coaching fee. Shared across pages. |
+| `useToast.js`   | Application-wide toast message queue for success/error notifications.       |
 
 A composable is the lighter alternative to a state-management library. The project
 does not use one, and for the amount of shared state here it does not need one. If
@@ -24,8 +25,7 @@ statically therefore takes the whole application down with a blank white page on
 freshly cloned repository.
 
 `useAuth` imports it inside a `try`/`catch` instead, so an unconfigured environment
-degrades to "nobody is signed in" rather than to a broken application. Fixing the
-underlying issue in `services/firebase.js` would be better still.
+degrades to "nobody is signed in" rather than to a broken application.
 
 ## Important
 
@@ -38,4 +38,4 @@ security control — Laravel re-checks identity and role on every protected requ
   a `feature` from it.
 - Do not create module-level state you did not mean to share. Anything declared
   outside the exported function is shared by every component that uses it — which
-  is exactly the point in `useAuth`, and would be a bug elsewhere.
+  is exactly the point in `useAuth` and `useAccount`, and would be a bug elsewhere.

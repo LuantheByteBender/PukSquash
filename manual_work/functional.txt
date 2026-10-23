@@ -1,0 +1,404 @@
+[Normal] Functional Specifications for
+[Normal] PukSquash Web App
+[Normal] Project Manager:
+Meiring van Niekerk | 47817909
+[Normal] Group Leaders:
+Heindrich Burger | 37818430
+Luan du Plessis | 46251960
+[Normal] Group Members:
+Christoph Van Jaarsveld | 50143956
+Karla Pienaar | 48172170
+Basetsana Matsepane | 51001357
+Marco Welman | 46677828
+Stephan Van Rensburg | 49982826
+Josh Van der Walt | 45009422
+VERSION HISTORY | VERSION HISTORY | VERSION HISTORY | VERSION HISTORY | VERSION HISTORY
+VERSION | APPROVED BY | REVISION DATE | DESCRIPTION OF CHANGE | AUTHOR
+1 |  | 2026/08/21 | Upload of document | Luan du Plessis
+2 |  | 2026/08/22 | Addition of information | All students
+3 |  | 2026/08/23 | Addition information updates | All students
+4 |  | 2026/08/24 | Combine and proofread | All students
+5 |  | 2026/08/ | Finalizing and checking | 
+ |  |  |  | 
+ |  |  |  | 
+[Normal] Authorization Memorandum
+[Normal] I have carefully assessed the Functional Specifications Document for the PukSquash
+[Normal] MANAGEMENT CERTIFICATION - Please check the appropriate statement.
+[Normal] ______ The document is accepted. 
+[Normal] ______ The document is accepted pending the changes noted.
+[Normal] ______ The document is not accepted.
+[Normal] We fully accept the changes as needed improvements and authorize initiation of work to proceed.  Based on our authority and judgment, the continued operation of this system is authorized.
+[Normal] ______________________________                             _____________________
+[Normal] NAME		DATE
+[Normal] Project Manager
+[Normal] _______________________________                           _____________________
+[Normal] NAME 		DATE
+[Normal] Director
+[Normal] Add other names and roles as necessary. 
+[Normal] Table of Contents
+[Heading 1.1] 1	Introduction
+[Heading 1.3] 1.1 	Background
+[Normal] The North-West University (NWU) Potchefstroom Campus currently manages squash court bookings through a physical computer located at the squash courts. Students who want to check court availability or make a booking must therefore travel to the facility first. This limits advance planning, can result in unnecessary trips, and provides limited support for managing cancellations and booking conflicts. The current process also provides limited information about the actual utilisation of the squash facilities (PukSquash Project Team, 2026; Van Niekerk, 2026). 
+[Normal] In addition, structured private coaching is not currently managed through a central system where students can view coach availability and reserve coaching sessions. The PukSquash Business Case identified improved student access, better court utilisation and broader access to squash coaching. The Business Case and Feasibility Study evaluated alternative solutions and identified a custom-built web application as the most suitable approach for the project (PukSquash Project Team, 2026; Van Niekerk, 2026). 
+[Normal] The development of PukSquash also supports NWU's broader move towards digital services. NWU's Digital Business Strategy promotes the development of integrated technology platforms and improved digital experiences for students and other university stakeholders (North-West University, 2023). 
+[Normal] PukSquash is therefore proposed as a centralised, responsive web-based application through which authorised users can view live court availability and make bookings remotely. Court availability will be presented using predefined one-hour time slots. The accepted system design supports Open, Locked and Private Coach bookings and three primary application roles: USER, COACH and ADMIN. 
+[Heading 1.3] 1.2	Objective
+[Normal] The objective of this Functional Specifications document is to define the required behaviour and functionality of the PukSquash Squash Court Booking System. It provides a functional description of what the application must do, how users interact with it and the rules that must be applied when managing court availability, bookings, coaching sessions and administration.
+[Normal] The primary objective of PukSquash is to provide NWU Potchefstroom Campus users with a secure, reliable, and user-friendly method of viewing court availability and managing squash court bookings remotely.
+[Normal] The application must also protect the personal information that it processes. User details such as names, email addresses and student numbers or any personal information and must therefore be processed with appropriate access control and security in accordance with the Protection of Personal Information Act 4 of 2013 (POPIA) (Information Regulator South Africa, 2026). 
+
+The objective is also to guide the development of PukSquash towards a feasible and practical solution that can be completed within the available resources, technical capabilities, and realistic project timelines, while still meeting the expectations of the relevant stakeholders. The phased implementation approach supports this by prioritising the essential booking functionality in Phase 1 before introducing additional management and payment functionality in Phase 2.
+[Normal] Although PukSquash is currently intended for squash court bookings at the NWU Potchefstroom Campus, the system should be designed with flexibility and future expansion in mind. The underlying booking concepts, such as users, facilities, fixed time slots, availability and reservations, could later support other NWU sporting facilities such as tennis, padel or similar court-based sports, should the university decide to expand the platform. The current Functional Specifications, however, remain focused specifically on the PukSquash Phase 1 and Phase 2 requirements.
+[Heading 1.3] 1.3	Scope
+[Normal] The scope of PukSquash is the design and development of a responsive browser-based squash court booking system for the NWU Potchefstroom Campus. The system will be implemented in phases so that the essential booking functionality is established before additional management and payment functionality is introduced.
+[Normal] Phase 1 includes the core operational functionality of the application:
+[Normal] User registration, login and profile management. 
+[Normal] User, Coach and Admin role-based access. 
+[Normal] Live court availability. 
+[Normal] Fixed one-hour court-booking time slots. 
+[Normal] Open, Locked and Private coach bookings. 
+[Normal] Joining an eligible Open booking. 
+[Normal] Viewing upcoming bookings and cancelling bookings. 
+[Normal] Coach availability management and the Coach Availability Notice Board. 
+[Normal] Administrator management of users and courts. 
+[Normal] Court Active or Inactive status. 
+[Normal] Backend validation and booking-conflict prevention. 
+[Normal] Phase 2 extends the application with registration payments and private coach payments through PayFast, booking and coaching history, administrator booking management, fixed time-slot management, configurable booking rules, registration payment records and NWU Squash Team Practice sessions. Team-practice functionality will allow coaches to reserve multiple available court and time combinations while still preventing the use of inactive courts or already-reserved booking cells. 
+[Normal] The current technical scope uses Vue 3 for the web interface, Firebase Authentication for user authentication, a Laravel REST API for server-side business logic and validation, and Cloud SQL PostgreSQL for relational application data. Vue is designed for component-based web user interfaces (Vue.js, 2026), while Firebase Authentication provides authentication services for web applications and supports identity tokens that can be verified by backend services (Google Firebase, 2026). Laravel provides support for API routing and protected server-side application routes, and Firebase SQL Connect provides integration with PostgreSQL-backed relational database (Laravel, 2026; Google Firebase, 2026). 
+[Normal] PayFast is introduced during Phase 2 for the agreed registration and private-coaching payment processes. Its developer platform supports custom web-payment integration and server-to-server API communication (PayFast, 2026). 
+[Normal] The current approved scope does not include native Android or iOS applications, NWU Single Sign-On, automated reminder functionality, general analytics dashboards or expansion to other sporting facilities. These may be considered as future enhancements but are not part of the current scope. 
+[Heading 1.1] 2	User Requirements
+[Heading 1.2] 2.1	Product Context
+[Normal] PukSquash is an online, responsive, web-based application for booking squash courts and coaching sessions intended for the North-West University (NWU) Potchefstroom campus squash facility. The system will replace the current physical booking process, where students must visit the squash courts and use a single computer to view court availability and make bookings. As a result, the current process limits students’ ability to access and book the squash courts conveniently, causing unnecessary travel.
+[Normal] The proposed online web application will allow students to remotely view court availability, make and manage bookings from their own devices. The system will support live court availability, self-service court bookings and cancellations, coaching session bookings, and will include a mechanism to prevent conflicting or duplicate reservations. The system will also expand coaching availability by making it available to any NWU student instead of being restricted to the NWU squash team only.
+[Heading 1.2] 2.2	User Classes and Characteristics 
+Class | Role / objective | Volume | Technical maturity
+User | Phase 1:
+Use the system to remotely view court availability, make and manage court bookings, join open bookings, and book coaching sessions.
+Phase 2:
+View history of previous booking sessions. Pay coach booking fees with PayFast. | 1-Unlimited | Medium
+Coach | Phase 1:
+Manages coaching availability and views upcoming coaching bookings. Provides private coaching sessions for students.
+Phase 2:
+View history of previous coaching booking sessions. Create NWU team practice sessions. | 1-10 | Medium
+Administrator | Phase 1:
+Manages users, user roles, and courts. Ensures that the booking environment remains accurate and that users have appropriate access.
+Phase 2:
+Manage player bookings and booking rules. Create new and edit existing court time slots. View user registration payment records.  | 1-3 | high
+[Heading 1.2] 2.3	Overview of Functional Requirements
+[Normal] The PukSquash system must provide the functionality required to manage squash court availability, court bookings, coaching availability and role-based administration. The system will be implemented in phases, with Phase 1 providing the core booking functionality and Phase 2 introducing additional payment, history and management capabilities.
+[Heading 1.4] Authentication and Access Control
+[Normal] The system must provide secure registration and authentication for all users. New registrations must create an account with the default role of User. Registered users must be able to log in securely. After login, the system must determine the user's assigned role and provide access to the appropriate functionality. 
+[Normal] The system must support the following roles: 
+[List Paragraph] User
+[List Paragraph] Coach
+[List Paragraph] Admin
+[Normal] Role-based access restrictions must be enforced by the backend and not only through the user interface. An Admin must be able to change the status of a user account to Coach or Admin.  Users must be able to view and edit personal information. Users must not be able to change their own role or access functionality for which they are not authorised. 
+[Heading 1.4] 2.3.2	Court Availability and Booking
+[Normal] The main function of PukSquash is to allow users to view court availability and reserve squash courts remotely.
+[Normal] Court Availability:
+[Normal] The user must be able to select a booking date using a calendar or date picker. 
+[Normal] Court availability must be displayed using a grid where:
+[Normal] Rows represent predefined one-hour time slots, and columns represent squash courts. 
+[Normal] Each grid cell represents one specific “court + booking date + time” slot combination. 
+[Normal] Availability must be calculated from: 
+[Normal] The status of the court, the status of the time slot and existing confirmed bookings. 
+[Normal] An Inactive court must not be available for new bookings. 
+[Normal] Court Bookings:
+[Normal] The system must support three normal booking types:
+[Normal] Open Booking
+[Normal] A USER may reserve an available court as an Open booking. The user who creates the booking becomes Player 1. An Open booking with only Player 1 must remain available for one additional player to join. A second authenticated USER may join the same booking. Joining an Open booking must update the existing booking and must not create another court reservation. Once Player 2 joins, the booking becomes Full and no additional player may join. 
+[Normal] Locked Booking
+[Normal] A User may reserve an available court as a Locked booking. The booking must not allow another user to join. The selected court and time slot remain reserved for the user until the booking is cancelled or completed. 
+[Normal] Private coach Booking
+[Normal] A User may select Private Coach when reserving a court. The system must show only coaches who have published availability for the selected date and time slot. The user must then select an available coach before confirming the booking.
+[Normal] The system must reserve both the court and the selected coach for that period and, no other player may join a Private Coach booking. 
+[Normal] Before any booking is created or updated, the backend must validate the court, date, time, player and, where applicable, coach to prevent booking conflicts. 
+[Heading 1.4] 2.3.3	Booking Management
+[Normal] Users must be able to manage their own bookings.
+[Normal] Phase 1:
+[Normal] View upcoming bookings. 
+[Normal] View the court, date, time and booking type. 
+[Normal] Cancel their own eligible bookings. 
+[Normal] When a confirmed booking is cancelled its status must be changed to Cancelled. 
+[Normal] The court cell must become available again if no other valid reservation applies. 
+[Normal] Phase 2:
+[Normal] Users must be able to view a booking history. 
+[Normal] Booking history must include: 
+[Normal] previous court bookings; 
+[Normal] previous private-coaching sessions; and 
+[Normal] relevant historical booking information. 
+[Heading 1.4] 2.3.4	Coach Availability and Coaching
+[Normal] The system must support the management of coaching availability and private coaching sessions.
+[Normal] Coach Availability:
+[Normal] A Coach must be able to select a date. 
+[Normal] The coach must be able to select one or more predefined one-hour time slots during which they are available. 
+[Normal] Published coach availability must appear on the Coach Availability Notice Board. 
+[Normal] Published availability must also be used when determining which coaches may be selected for a Private Coach booking. 
+[Normal] A coach must not be assigned to conflicting coaching sessions. 
+[Normal] Phase 1 coaching functionality must allow a Coach to:
+[Normal] Publish availability. 
+[Normal] View upcoming coaching bookings. 
+[Normal] View the player, court, date and time associated with an upcoming coaching session. 
+[Normal] Phase 2 additionally allows a Coach to:
+[Normal] View previous coaching sessions and coaching history. 
+[Normal] Create an NWU Squash Team Practice Session. 
+[Normal] Select one date or a consecutive date range for a team-practice session. 
+[Normal] Select multiple available court and time-slot combinations. 
+[Normal] Bypass normal user booking limits and consecutive-booking limits. 
+[Normal] The team-practice override must never allow a coach to reserve an Inactive court or a court time that has already been booked. 
+[Heading 1.4] 2.3.5	Administrative Management
+[Normal] The admin role must provide authorised management functionality for the PukSquash system.
+[Normal] Phase 1 administration includes:
+[Normal] User Management
+[Normal] View users. 
+[Normal] Search users. 
+[Normal] Edit permitted user information. 
+[Normal] Promote a User to Coach or Admin. 
+[Normal] Change user account status. 
+[Normal] Court Management
+[Normal] Create new courts. 
+[Normal] Edit existing courts. 
+[Normal] Set a court status to ACTIVE or INACTIVE. 
+[Normal] Ensure that INACTIVE courts do not appear as available for new bookings. 
+[Normal] Phase 2 administration additionally includes:
+[Normal] View, search and filter bookings. 
+[Normal] View booking details. 
+[Normal] Manage or cancel bookings where authorised. 
+[Normal] Create and edit fixed one-hour time slots. 
+[Normal] Enable or disable time slots. 
+[Normal] Configure booking rules, including: 
+[Normal] booking window; 
+[Normal] maximum active bookings; 
+[Normal] cancellation cut-off; and 
+[Normal] Coach Team-Practice override rules. 
+[Normal] View registration payment records and PayFast payment references. 
+[Heading 1.4] 2.3.6	Payment Functionality – Phase 2
+[Normal] Payment functionality is not part of Phase 1.
+[Normal] Phase 2 introduces payment processing through PayFast.
+[Normal] Registration Payments:
+[Normal] The registration process may require payment of a registration fee. 
+[Normal] The system must handle: 
+[Normal] successful payments.
+[Normal] failed payments.
+[Normal] Successful payment must be verified by the backend. 
+[Normal] Registration payment records and PayFast references must be available to authorised Admin users. 
+[Normal] Private Coaching Payments:
+[Normal] A Private Coach booking in Phase 2 must require payment of the applicable coaching fee. 
+[Normal] Payment must occur before the booking is successfully created through the paid booking flow. 
+[Normal] PayFast payment success must be verified by the backend. 
+[Heading 1.2] 2.4	Overview of Data Requirements
+[Normal] The PukSquash application requires relational data to manage registered users, squash courts, fixed booking time slots, bookings, players participating in bookings and coach availability.
+[Normal] The current final core ERD contains six entities and is treated as the current Phase 1 data-model baseline
+Phase 2 introduces data not yet represented in the current core ERD:
+Entity | Purpose | Key fields / accepted values
+USERS | Application user identity, role and status. | id; firebase_uid UNIQUE; student_number nullable; full_name; email UNIQUE; role USER|COACH|ADMIN; status ACTIVE|INACTIVE|SUSPENDED; timestamps.
+COURTS | Squash courts are available for the booking engine. | id; name UNIQUE; description; status ACTIVE|INACTIVE; timestamps.
+TIME_SLOTS | Predefined booking periods used by availability, booking and coach availability. | id; start_time; end_time; display_order; is_active. Accepted booking unit remains one hour.
+BOOKINGS | One reservation for one court/date/time cell. | court_id; time_slot_id; created_by_user_id; optional coach_id; booking_date; booking_type OPEN|LOCKED|PRIVATE_COACH; status CONFIRMED|CANCELLED; timestamps.
+BOOKING_PLAYERS | Player participation is associated with the existing booking. | booking_id; user_id; player_position 1|2; joined_at.
+COACH_AVAILABILITY | Published coaching availability. | coach_id; time_slot_id; availability_date; created_at.
+[Heading 1.2] 2.5	Operating Environment
+[Normal] The application is browser-based and should function on modern desktop and mobile browsers. A stable internet connection is required for Firebase Authentication, live availability, booking operations, coach availability, administration and Phase 2 PayFast payment flows. The user interface must remain responsive across common screen sizes.
+Layer | Environment / responsibility
+Frontend | Vue 3 responsive browser interface.
+Authentication | Firebase Authentication for registration/login identity and ID tokens.
+Backend/API | Laravel REST API for token verification, authorization, business rules, conflict checks, CRUD orchestration and Phase 2 PayFast verification integration.
+Database | Firebase Data Connect / Cloud SQL PostgreSQL for relational application data and booking integrity.
+Payment - Phase 2 | PayFast for registration fee and private-coach fee flows.
+Client devices | Desktop, laptop, tablet or mobile phone with a modern browser and network connectivity.
+[Heading 1.2] 2.6	General Constraints, Assumptions, Dependencies, Guidelines
+[Inline Label] General Constraints
+[List Bullet] Bookings use predefined fixed one-hour units. Users do not manually enter arbitrary booking start and end times.
+[List Bullet] Phase 2 Admin time-slot management may create, edit, enable, disable fixed one-hour slot definitions, but the accepted booking unit remains one hour.
+[List Bullet] A court with status Inactive cannot receive new bookings.
+[List Bullet] A disabled Time slot cannot be offered for a new booking.
+[List Bullet] Only one Confirmed booking may reserve a specific Court + Booking Date + Time Slot combination.
+[List Bullet] The current Open booking model supports only Player Position 1 and Player Position 2.
+[List Bullet] Phase 1 booking limits and cancellation rules are hard-coded in the backend; Admin-configurable rules are introduced in Phase 2.
+[List Bullet] Phase 1 Private Coaching has no PayFast coach fee step, the payment step is Phase 2 only.
+[List Bullet] Assumptions
+[List Bullet] Each authenticated person maps to one User record and has one current application role at a time.
+[List Bullet] Coach availability uses the same fixed one-hour TIME_SLOTS used by normal bookings.
+[List Bullet] The backend can map the authenticated Firebase UID to the application USERS record.
+[List Bullet] The current core ERD is sufficient for Phase 1 functionality; Phase 2 extensions will be finalised before Phase 2 implementation.
+[List Bullet] The platform must work smoothly on both computers.
+[List Bullet] All data handling must follow South African privacy laws.
+[List Bullet] Payments must go through secure, trusted gateways.
+[List Bullet] The system should be fast and reliable for all NWU students, with room to grow.
+[List Bullet] Development must stay within the project’s budget and timeline.
+[Inline Label] Dependencies
+[List Bullet] Firebase Authentication must be available for registration, login and protected-request identity.
+[List Bullet] Laravel API must be available for booking, coach and Admin operations.
+[List Bullet] PostgreSQL must provide transactional integrity for reservations and participant updates.
+[List Bullet] Network connectivity is required for live state and booking confirmation.
+[List Bullet] Phase 2 depends on PayFast integration and backend verification of payment success.
+[List Bullet] Every user is a NWU student or verified staff member.
+[List Bullet] Students have access to devices with internet connection.
+[Inline Label] Guidelines
+[List Bullet] The UI should expose only actions that are valid for the current role and current booking-cell state.
+[List Bullet] The interface should be simple, clean, and easy to use.
+[List Bullet] Unavailable or invalid actions should return clear, recoverable messages rather than silent failures.
+[List Bullet] The platform should be built in a way that allows future expansion to other universities.
+[Heading 1.2] 2.7	User Documentation
+[Normal] User documentation should be sufficient to explain the main booking and management journeys without requiring technical knowledge. Documentation may be delivered as in-application help, short user guides or FAQs.
+[Heading 1.2] 2.8	Data Flow
+[Normal] Phase 1:
+
+https://drive.google.com/file/d/137RleUYe1ZgBZk9dgq-eCnJmOvnmQwWd/view?usp=drive_link
+
+Phase 2:
+
+https://drive.google.com/file/d/1XQgn1sMBO8eYLFJ_Nm635Ocqsn9aCyWj/view?usp=drive_link
+[Heading 1.1] 3	Functional Requirements
+[Heading 1.2] 3.1	Purpose / Description
+[Normal] The PukSquash web application aims to provide a responsive and accessible platform through which users can remotely view squash court availability and manage squash court bookings at the NWU Potchefstroom Campus. Court availability is based on fixed one-hour time slots, with each court and time-slot combination representing a reservable booking cell. The system should allow users to:
+[Normal] Register and log in: A new account is created with the User role. After login, the system determines the stored role and directs the user to the appropriate User, Coach or Admin dashboard.
+[Normal] View live court availability: Users can select a date and view the availability of courts in a grid consisting of fixed one-hour time slots and courts.
+[Normal] Create court bookings: Users can create Open, Locked or Private Coach bookings for available court and time-slot combinations.
+[Normal] Join Open bookings: A second user can join an Open booking where only the first player position is occupied. Once the second player joins, the booking becomes Full and cannot accept another player.
+[Normal] Manage own bookings: Users can view upcoming bookings and cancel their own eligible bookings according to the applicable booking rules.
+[Normal] View coach availability: Users can view published coach availability by date and available one-hour time slots.
+[Normal] Manage coaching availability: Coach users can select a date and publish one or more one-hour time slots during which they are available for private coaching.
+[Normal] View upcoming coaching sessions: Coach users can view upcoming private-coaching bookings, including the player, court, date and time.
+[Normal] Manage users and courts: Admin users can manage users and their statuses and roles, as well as create and edit courts and set courts as Active or Inactive.
+[Heading 1.2] 3.2	Inputs
+[Normal] Users will provide inputs to the system:
+[Normal] Registration details required to register a USER account.
+[Normal] Login credentials.
+[Normal] Permitted personal information when editing a user profile.
+[Normal] A selected booking date.
+[Normal] A selected court and time slot from the availability grid.
+[Normal] A booking type consisting of Open, Locked or Private Coach.
+[Normal] Selection of an available coach when making a Private Coach booking.
+[Normal] Confirmation of a new booking.
+[Normal] A request to join an eligible Open booking.
+[Normal] A request to cancel the user’s own eligible booking.
+[Normal] A date and one or more fixed one-hour time slots selected by a Coach when publishing coach availability.
+[Normal] User search criteria, edited user information, role promotions and account-status changes entered by an Admin.
+[Normal] Court information and Active or Inactive status entered or changed by an Admin.
+[Heading 1.2] 3.3	Processing
+[Normal] The system will process user inputs and perform the following actions:
+[Normal] User Authentication and Role Management: Create User accounts, authenticate registered accounts, determine the stored User, Coach or Admin role and route authenticated users to the appropriate dashboard. Role-specific access must be enforced by the backend.
+[Normal] Live Availability and Booking State Processing: Calculate court availability for the selected date using court status, time-slot status, confirmed booking information and participant or coach information. Each court + date + time-slot combination is then displayed as Available, Open, Full, Locked, Private Coach or unavailable according to its current state.
+[Normal] Court Booking Processing: Process Open, Locked and Private Coach booking requests. Before a booking is created, the backend must revalidate the court, date, time, player and, where applicable, coach information to prevent conflicting bookings.
+[Normal] Open Booking Processing: Record the creator as Player 1 when an Open booking is created. When another eligible user joins, update the existing booking and participant information with Player 2 instead of creating another court reservation. Once Player 2 has joined, the booking becomes Full.
+[Normal] Locked Booking Processing: Reserve the selected court, date and time for the booking creator without allowing another normal user to join the booking.
+[Normal] Private Coach Processing: Identify coaches who have published availability for the exact selected date and one-hour time slot, allow the user to select an available coach, validate player and coach conflicts and create a locked player-and-coach booking when validation succeeds.
+[Normal] Cancellation Processing: When an eligible confirmed booking is cancelled, change its status to Cancelled and remove its active reservation effect so that the court cell becomes available again.
+[Normal] Coach Availability Processing: Save and publish the selected one-hour coaching availability so that it is displayed on the Coach Availability Notice Board and can be used when creating a Private Coach booking.
+[Normal] User and Court Administration: Allow Admin users to search for, view and edit users; promote a User to Coach or Admin; change user status; create and edit courts; and change court status between Active and Inactive. Inactive courts must not be made available for new bookings.
+[Normal] Data Storage: Store and update the core User, Courts, Time Slots, Bookings, Booking Players and Coach Availability data required by the booking system.
+[Heading 1.2] 3.4	Outputs
+[Normal] The primary outputs of the PukSquash web application are subject to change but will include:
+[Normal] Display active courts and fixed one-hour time slots for a selected date. 
+[Normal] Show booking states such as Available, Open, Full, Locked, Private coach and Inactive. 
+[Normal] Display booking confirmations and validation errors. 
+[Normal] Display a user's upcoming bookings and, in Phase 2, booking history. 
+[Normal] Display published Coach availability and upcoming coaching sessions. 
+[Normal] Display Admin management information for users and courts. 
+[Normal] Phase 2 additionally displays payment results, booking management information and NWU team practice bookings. 
+[Heading 1.2] 3.5	External Interface Requirements
+[Normal] The PukSquash web application will use Vue 3 for the frontend, Firebase Authentication for authentication, a Laravel REST API for backend processing, and Firebase Data Connect / Cloud SQL PostgreSQL for relational data storage.
+[Normal] The system will allow users to register, log in, view court availability, create Open, Locked and Private coach bookings, join eligible Open bookings and manage their own bookings through a secure web interface.
+[Normal] Phase 2 will also integrate with PayFast for registration and Private coach payments. All important booking and payment actions must be verified by the backend before being accepted. 
+[Heading 1.2] 3.6	User Interfaces
+[Normal] The main user interface components are subject to change but will include:
+[Normal] Login / Registration 
+[Normal] Dashboard 
+[Normal] Court availability / Book court 
+[Normal] Booking confirmation 
+[Normal] My bookings 
+[Normal] User profile 
+[Normal] Coach availability notice board 
+[Normal] Coach availability management 
+[Normal] Coach upcoming bookings 
+[Normal] Admin user management 
+[Normal] Admin court management 
+[Normal] The interface must allow Users to view live court availability, create and manage bookings, join Open bookings and select available Coaches for Private coach sessions.
+[Normal] Coaches must be able to publish availability and view upcoming coaching sessions. Admin users must be able to manage users and courts.
+[Normal] Phase 2 will add booking history, coaching history, payment screens, booking-rule management, time-slot management and NWU team practice booking functionality.
+[Normal] The application must be responsive and usable on desktop, laptop, tablet and mobile browsers. It should also be designed so that future expansion to other NWU court-based sports such as tennis or padel remains possible. 
+[Heading 1.2] 3.7	Hardware Interfaces
+[Normal] PukSquash is a web-based application and does not require specialised hardware.
+[Normal] The system will use standard:
+[Normal] Desktop and laptop computers. 
+[Normal] Smartphones and tablets. 
+[Normal] Keyboard, mouse and touch input. 
+[Normal] Computer and mobile displays. 
+[Normal] Wi-Fi, Ethernet or mobile-data connections. 
+[Normal] An active internet connection is required for authentication, availability updates and booking operations.
+[Heading 1.2] 3.8	Software interfaces
+[Normal] PukSquash is assembled from a Vue 3 client, a Laravel REST API, Firebase Authentication and a Cloud SQL PostgreSQL database reached through Firebase Data Connect. The application therefore depends on several external software components for authentication, data storage and delivery to the user. The controlling principle across all these interfaces is that the frontend asks, the backend decides and the database protects the data. No external component, and in particular no component running in the student’s browser, is trusted to enforce a booking rule on the backend’s behalf. The following external software components are the main sources of dependence for the application:
+[Normal] Vue 3 – Used as the frontend framework to provide the User, Coach and Admin interfaces, including court availability, bookings, profiles and management screens (Vue.js, 2026). 
+[Normal] Laravel – Used as the REST API backend. Laravel handles business rules, role-based access, booking validation, availability calculations and conflict prevention before information is stored in the database (Laravel, 2026). 
+[Normal] Firebase Authentication – Used for user registration, login, email verification and authentication. Firebase provides an identity token which is verified by the backend before protected functionality can be accessed (Google, 2026a; Google, 2026b). 
+[Normal] Firebase Data Connect – Provides the connection between the application and the relational database used by PukSquash (Google, 2026c). 
+[Normal] Cloud SQL for PostgreSQL – Stores relational application data such as users, courts, time slots, bookings, booking players and coach availability. PostgreSQL also supports database-level controls used to help prevent conflicting court reservations (Google, 2026d; PostgreSQL Global Development Group, 2026). 
+[Normal] PayFast – Phase 2 – Used for registration payments and Private coach payments. Payment success must be verified by the backend before the related paid process is completed (PayFast, 2025). 
+[Normal] Web browsers and operating systems – Because PukSquash is web-based, it will operate through modern browsers such as Chrome, Firefox, Safari and Edge on Windows, macOS, Android and iOS devices.
+[Heading 1.2] 3.9	Communications interfaces
+[Normal] PukSquash requires secure network communication between the user's browser, the Laravel REST API and the external services used by the application. Because the system processes personal information such as names, student numbers and email addresses, communication must be handled securely and in accordance with POPIA requirements (Republic of South Africa, 2013).
+[Normal] Secure API communication – The Vue frontend will communicate with the Laravel REST API using HTTPS. This protects information transferred between the browser and backend from being transmitted through unsecured connections (OWASP Foundation, Inc., 2025). 
+[Normal] REST API communication – Data between Vue and Laravel will primarily be transferred using REST API requests and JSON. These requests are used for operations such as retrieving availability, creating bookings, joining Open bookings, cancelling bookings and managing Coach or Admin functionality (Laravel, 2026). 
+[Normal] Authentication communication – Firebase Authentication provides an identity token after login. This token is sent with protected requests and verified by the backend before the requested action is performed (Google, 2026b). 
+[Normal] Email: outbound email is used by Firebase Authentication to verify a student’s NWU address during registration. The later-phase booking confirmations, booking reminders, cancellation notifications will use the same channel through the backend’s mail transport (Google, 2026a).
+[Normal] Database communication – The backend communicates with the PostgreSQL relational database through the Firebase Data Connect / Cloud SQL environment. Database credentials and other sensitive configuration must remain on the server and must not be exposed through the frontend (Google, 2026c; Google, 2026d). 
+[Normal] PayFast communication – Phase 2 – Secure communication with PayFast will be required for registration and Private coach payments. Payment results must be verified by the backend and not accepted only from information displayed in the browser (PayFast, 2025). 
+[Normal] Network connectivity – PukSquash requires an internet connection through Wi-Fi, Ethernet or mobile data to access live availability, authentication and booking functionality. If the connection is lost, the system must not display a booking as successfully confirmed unless a successful response has been received from the backend. 
+[Heading 1.2] 3.10	Design and Implementation Constraints
+[Normal] The design and implementation of PukSquash will be subject to the following constraints to ensure that the system meets its functional and technical goals.
+[Normal] PukSquash will be delivered as a responsive web application that must remain fully functional across desktop, laptop, tablet and mobile browsers. Core features such as the availability grid, booking flows, dashboards and management screens must adapt to different screen sizes without loss of functionality. Wireframes and responsive design principles will guide the interface design. 
+[Normal] Because multiple Users may attempt to reserve the same court and time slot simultaneously, the system must prevent double bookings through backend validation and database-level integrity controls rather than relying on the frontend alone. The availability grid displays the current known state, but the backend must revalidate the selected court, date and time slot when the booking is submitted. 
+[Normal] Phase 1 will use hard-coded booking rules in the backend. These rules include restrictions such as the booking window, maximum active bookings and cancellation conditions. Phase 2 will introduce Admin-configurable booking rules so that these values can be managed without changing the core booking process. 
+[Normal] All personal information processed by PukSquash must be handled in accordance with the Protection of Personal Information Act (POPIA). Protected functionality must use authenticated access and role-based permissions, and sensitive information must be transmitted securely. 
+[Normal] The agreed technology stack consists of Vue 3 for the frontend, Laravel/PHP for the REST API, Firebase Authentication for user identity and authentication, and Firebase Data Connect / Cloud SQL PostgreSQL for relational data storage. 
+[Normal] Phase 1 will establish the core booking system, while Phase 2 will extend the application with PayFast registration and Private coach payments, booking and coaching history, configurable booking rules, Admin booking and time-slot management, and NWU squash team practice functionality. 
+[Normal] The system must be designed so that future functionality can be added without changing the fundamental court, date and fixed one-hour timeslot booking model. 
+[Heading 1.2] 3.11	Performance Requirements
+[Normal] The following performance requirements are intended to ensure that PukSquash remains responsive and reliable across different devices and network conditions.
+[Normal] Court availability must load quickly enough to provide an interactive booking experience. The availability grid must display the current state of all relevant active courts and fixed one-hour time slots for the selected date. 
+[Normal] When a User confirms a booking, the system must perform the required validation and return a result without unnecessary delay. Correctness of the booking takes priority over displaying an immediate optimistic confirmation. 
+[Normal] The system must correctly handle situations where multiple Users attempt to reserve the same court and time slot at approximately the same time. Only one confirmed booking may reserve a specific court, booking date and time-slot combination. Any conflicting request must fail safely and display an appropriate message to the User. 
+[Normal] The same concurrency protection must apply when more than one User attempts to occupy the second-player position of an Open booking. Only one User may successfully become Player 2. 
+[Normal] After a booking, cancellation, court-status change or other state-changing action, the affected availability must be refreshed so that Users do not continue to see outdated court information. 
+[Normal] The system must remain stable during realistic periods of increased usage and must not allow increased traffic to result in duplicate, corrupted or inconsistent booking records. 
+[Normal] Phase 2 team-practice bookings must also be processed reliably when a Coach selects multiple court and time-slot combinations. Team-practice override rules may bypass normal booking limits, but they must still prevent the reservation of inactive courts or already-booked cells.
+[Heading 1.2] 3.12	Security
+[Normal] PukSquash must protect user information, bookings and administrative functions through secure authentication and backend validation.
+[Normal] Protected API requests must verify Firebase Authentication ID tokens. 
+[Normal] User, Coach and Admin permissions must be enforced by the backend. 
+[Normal] Users must only act as the authenticated account identified by the verified token. 
+[Normal] Production communication must use HTTPS. 
+[Normal] Firebase, PayFast and other backend secrets must not be exposed in the Vue frontend or public source control. 
+[Normal] Personal information must be processed according to POPIA requirements. 
+[Normal] Booking and Open booking join operations must be protected against race conditions and double booking. 
+[Normal] Phase 2 payment success must be verified by the backend before the related process is completed. 
+[Heading 1.2] 3.13	Usability
+[Normal] PukSquash must provide a simple and consistent booking experience across desktop and mobile browsers.
+[Normal] The booking process should require as few steps as possible while still confirming the selected court, date, time and booking type. 
+[Normal] Availability states such as Available, Open, Full, Locked, Private coach, Inactive and NWU team practice must be clearly distinguishable. 
+[Normal] Only actions that are valid for the current booking state should be displayed. 
+[Normal] Private coach bookings must show only Coaches available for the selected date and time. 
+[Normal] Error messages must clearly explain booking conflicts, unavailable slots, booking-rule restrictions and Phase 2 payment failures. 
+[Normal] Important functions such as My bookings, Coach availability and cancellation must be easy to find from the relevant dashboard. 
+[Normal] The interface must remain responsive and usable across desktop, laptop, tablet and mobile browser sizes. 
+[Heading 1.2] 3.14	Data Flow
+[Heading 1.1] 4	Appendix
+[Normal]  
+[Heading 1.1] 5	Reference list
+[Normal] Google. 2026a. Firebase Authentication documentation. https://firebase.google.com/docs/auth Date of access: 23 August 2026.
+[Normal] Google. 2026b. Verify ID tokens. https://firebase.google.com/docs/auth/admin/verify-id-tokens Date of access: 21 August 2026.
+[Normal] Google. 2026c. Firebase Data Connect. https://firebase.google.com/docs/data-connect Date of access: 21 August 2026.
+[Normal] Google. 2026d. Cloud SQL for PostgreSQL documentation. https://cloud.google.com/sql/docs/postgres Date of access: 21 August 2026.
+[Normal] Information Regulator South Africa. 2026. Protection of Personal Information Act (POPIA). https://inforegulator.org.za/popia/ Date of access: 23 August 2026.
+[Normal] Laravel. 2026. Laravel documentation. https://laravel.com/docs Date of access: 23 August 2026.
+[Normal] North-West University. 2023. Digital Business Strategy. North-West University.
+[Normal] OWASP Foundation, Inc. 2025. OWASP Developer Guide. https://devguide.owasp.org/ Date of access: 21 August 2026.
+[Normal] PayFast. 2025. Integration guidelines. https://www.payfast.co.za/documentation/integration-guidelines Date of access: 21 August 2026.
+[Normal] PostgreSQL Global Development Group. 2026. PostgreSQL documentation: constraints. https://www.postgresql.org/docs/current/ddl-constraints.html Date of access: 21 August 2026.
+[Normal] PukSquash. 2026. Detailed Requirements Information Document. Final requirements baseline, 22 August 2026.
+[Normal] PukSquash Project Team. 2026. Business Case for PukSquash. North-West University, Potchefstroom Campus.
+[Normal] Republic of South Africa. 2013. Protection of Personal Information Act 4 of 2013. Government Gazette, 581(37067).
+[Normal] Van Niekerk, M. 2026. Business Case and Feasibility Study for PukSquash. North-West University, Potchefstroom Campus.
+[Normal] Vue.js. 2026. Vue 3 documentation. https://vuejs.org/guide/introduction.html Date of access: 23 August 2026.

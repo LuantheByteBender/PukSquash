@@ -1,12 +1,10 @@
-# Data Connect Schema Folder
+# Data Connect Schema Folder (Legacy)
 
-## Purpose and area
+## ⚠️ Status: Legacy
 
-This is the **Firebase Data Connect / PostgreSQL database-schema** folder. It is the **sole source of truth** for the application's data model. Laravel does NOT manage these tables via migrations or Eloquent — it talks to them through the SQL Connect GraphQL connector exclusively.
+This folder was the **original Firebase Data Connect / PostgreSQL database-schema** definition. **Supabase PostgreSQL with Laravel Eloquent** is now the active data layer. This schema is retained for historical reference.
 
-## Phase 1 tables
-
-`schema.gql` currently defines six tables:
+## Original tables defined in `schema.gql`
 
 | Table                | Purpose                                                     |
 | -------------------- | ----------------------------------------------------------- |
@@ -17,20 +15,17 @@ This is the **Firebase Data Connect / PostgreSQL database-schema** folder. It is
 | **BookingPlayer**    | Join table: Player 1 / Player 2 positions per booking.      |
 | **CoachAvailability**| A coach's published availability for a date + slot.         |
 
-## Architecture
+## Current architecture
 
 ```
-Vue frontend → Laravel REST API → Firebase SQL Connect GraphQL → PostgreSQL
+Vue frontend → Laravel REST API → Eloquent Models → Supabase PostgreSQL
 Firebase Auth → ID token → Laravel middleware
 ```
 
-Laravel handles **business logic, validation and authorization only**. All data access goes through `App\Services\SqlConnectClient` → `App\Repositories\*`.
+These same entities now exist as Eloquent models in `app/Models/` and are managed through Laravel migrations in `database/migrations/`.
 
 ## Beginner mistakes to avoid
 
-- Do not create Laravel migrations or Eloquent models for these tables.
-- Do not use free-form status strings without considering allowed values.
-- Relationships, uniqueness rules, required fields, defaults, and indexes affect data integrity.
-- A schema change can break existing operations — update queries, mutations, DTOs and repositories together.
-- Do not add Firebase service-account secrets to schema files.
+- Do not add new schema definitions here — use Laravel migrations instead.
+- For the current data model, refer to `app/Models/` and `database/migrations/`.
 

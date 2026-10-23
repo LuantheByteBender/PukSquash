@@ -430,11 +430,12 @@ onUnmounted(() => {
 <style scoped>
 .ca-page {
     min-height: 100vh;
-    background: #f8f7fb;
+    background: var(--ps-bg);
+    background-image: var(--ps-bg-gradient);
 }
 
 .ca-hero {
-    background: linear-gradient(135deg, #6C3D91 0%, #512d6e 50%, #3d2154 100%);
+    background: var(--ps-brand-gradient);
     padding: 2.5rem 1.5rem 3.5rem;
     position: relative;
     overflow: hidden;
@@ -584,13 +585,20 @@ onUnmounted(() => {
 }
 
 .ca-card {
-    background: #fff;
-    border-radius: 1rem;
-    border: 1px solid #eee;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(108, 61, 145, 0.04);
+    background: var(--ps-surface);
+    border-radius: var(--ps-radius-lg, 16px);
+    border: 1px solid var(--ps-border-soft);
+    box-shadow: var(--ps-shadow-sm);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ca-card:hover {
+    box-shadow: var(--ps-shadow);
+    transform: translateY(-2px);
+    border-color: rgba(108, 62, 148, 0.15);
 }
 
 .ca-card__head {
@@ -653,6 +661,9 @@ onUnmounted(() => {
 .ca-slots-wrap {
     padding: 1.25rem 1.5rem;
     flex: 1;
+    max-height: min(55vh, 460px);
+    overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 .ca-slots-grid {
@@ -681,7 +692,7 @@ onUnmounted(() => {
     font-weight: 600;
     color: #333;
     cursor: pointer;
-    transition: all 180ms ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
 }
 
@@ -784,7 +795,7 @@ onUnmounted(() => {
     font-weight: 700;
     cursor: pointer;
     border: none;
-    transition: all 180ms ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
 }
 
@@ -801,6 +812,10 @@ onUnmounted(() => {
 .ca-btn--primary:hover:not(:disabled) {
     box-shadow: 0 4px 14px rgba(108, 61, 145, 0.35);
     transform: translateY(-1px);
+}
+
+.ca-btn--primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
 }
 
 .ca-btn--primary:disabled {
@@ -845,6 +860,8 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-height: 360px;
+    overflow-y: auto;
 }
 
 .ca-pub-row {
@@ -856,7 +873,7 @@ onUnmounted(() => {
     border-radius: 0.75rem;
     border: 1px solid #f0ecf4;
     background: #fcfaff;
-    transition: all 180ms ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ca-pub-row:hover {

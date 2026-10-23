@@ -17,10 +17,13 @@ final readonly class UserDTO
         public ?string $studentNumber,
         public string  $fullName,
         public string  $email,
-        public string  $role,
-        public string  $status,
-        public string  $createdAt,
-        public string  $updatedAt,
+        public ?string $phoneNumber = null,
+        public string  $role = 'USER',
+        public string  $status = 'ACTIVE',
+        public string  $createdAt = '',
+        public string  $updatedAt = '',
+        public int     $fundsBalanceCents = 0,
+        public int     $privateCoachingFeeCents = 0,
     ) {}
 
     public static function fromGraphQL(array $data): self
@@ -31,10 +34,13 @@ final readonly class UserDTO
             studentNumber: $data['studentNumber'] ?? null,
             fullName:      $data['fullName'],
             email:         $data['email'],
-            role:          $data['role'],
-            status:        $data['status'],
-            createdAt:     $data['createdAt'],
-            updatedAt:     $data['updatedAt'],
+            phoneNumber:   $data['phoneNumber'] ?? null,
+            role:          $data['role'] ?? 'USER',
+            status:        $data['status'] ?? 'ACTIVE',
+            createdAt:     $data['createdAt'] ?? '',
+            updatedAt:     $data['updatedAt'] ?? '',
+            fundsBalanceCents: (int) ($data['fundsBalanceCents'] ?? 0),
+            privateCoachingFeeCents: (int) ($data['privateCoachingFeeCents'] ?? 0),
         );
     }
 
@@ -46,10 +52,13 @@ final readonly class UserDTO
             'student_number' => $this->studentNumber,
             'full_name'      => $this->fullName,
             'email'          => $this->email,
+            'phone_number'   => $this->phoneNumber,
             'role'           => $this->role,
             'status'         => $this->status,
             'created_at'     => $this->createdAt,
             'updated_at'     => $this->updatedAt,
+            'funds_balance_cents' => $this->fundsBalanceCents,
+            'private_coaching_fee_cents' => $this->privateCoachingFeeCents,
         ];
     }
 }

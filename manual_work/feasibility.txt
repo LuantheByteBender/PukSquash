@@ -1,0 +1,236 @@
+[normal] Feasibility Study©
+[normal] For PukSquash
+[normal] Project Manager:
+
+Meiring van Niekerk | 47817909
+[normal] Group Leaders:
+Heindrich Burger | 37818430
+Luan du Plessis | 46251960
+[normal] Group Members:
+Christoph Van Jaarsveld | 50143956
+Karla Pienaar | 48172170
+Basetsana Matsepane | 51001357
+Marco Welman | 46677828
+Stephan Van Rensburg | 49982826
+Josh Van der Walt | 45009422
+[normal] Table of Contents
+[Heading 1] Executive Summary
+[normal] This study investigates whether the current squash booking arrangement at NWU Potchefstroom can be replaced with a system that students can access from their mobile devices, before the start of the 2027 academic year, without expenditure beyond the club's available budget.
+[normal] At present, all bookings are administered on a single computer at the courts. Students who are not physically at the facility cannot view court availability or make a booking. As a result, students frequently arrive prepared to play only to find every court occupied. Slots are reserved and then not honoured, with no mechanism to cancel or reallocate that time to another player. Access to coaching is effectively limited to members of the Puk team. The club also lacks reliable data on facility usage, which weakens its position when motivating for additional court time, budget, or sponsorship.
+[normal] The broader requirements support a low-cost digital solution. NWU's existing commitment to improved digital services and additional income streams means the proposal aligns with, rather than conflicts with, university strategy. A paid international booking platform is not viable on a R0 budget, particularly given the exchange rate. Students are already accustomed to conducting daily activities on their phones, so adoption of online booking is unlikely to be a significant obstacle. Freely available cloud tools make a custom-built solution feasible. Although the power supply has been more stable of late, the system should nonetheless remain resilient to local outages. Any solution must also process student data in compliance with POPIA. A WhatsApp group or shared spreadsheet would cost nothing, but it would not prevent double bookings or provide a reliable record of who booked.
+[normal] The selected solution must allow students to view live availability and to book or cancel from any device, prevent two users from reserving the same slot, return cancelled courts to availability, permit any registered student to book a coaching session, apply the booking rules equitably, provide the club with usage reports, and remain usable on a mobile phone. It must also be operational in time for first-semester registration in 2027.
+[normal] Three options were evaluated against technical fit, cost, likelihood of user adoption, deliverability within the required timeframe, and legal compliance. The maximum possible score was 65. Solution 2 ranked first with 63 points. The custom mobile application (Solution 3) placed second with 49 points; it can meet the requirements and is sufficiently affordable, but the timeline is tight and adoption may suffer if the application proves cumbersome to use. Solution 1 scored 38. Although it could be implemented quickly, its cost and compliance scores render it unsuitable.
+[Heading 1] Problem Statement
+[normal] Squash court bookings at the NWU Potchefstroom squash facility are managed entirely on a single physical computer located at the courts, with no way for students to check availability or make a booking remotely. This forces students to travel to the courts simply to find out whether a court is free, leads to courts standing empty when a booking is made but not honoured, and leaves the club with no reliable data on how the facility is used. Coaching access is similarly restricted: the Head Squash Coach currently works only with players on the Puk squash team, so students outside the team have no published, bookable route into coaching. Together, these issues waste student time, hold court utilisation below what the facility could support, leave a possible coaching income stream unrealised, and limit the club's ability to grow participation in the sport.
+[Heading 2] Business Environment
+[normal] The need for this project is not only a facilities problem but is shaped by wider political, economic, social, technological and legal conditions affecting NWU and South African higher education more broadly. These are considered at a macro (PESTEL) level below, followed by the micro-level competitive environment.
+[normal] Political. NWU's own Digital Business Strategy, approved by Council in June 2023, commits the university to digital transformation and explicitly lists “creating intentional experiences for all stakeholders” and “leveraging emerging technologies to create opportunities for alternate revenue streams” among its institutional goals (North-West University, 2023). This gives institutional backing to replacing a manual, single point of access booking process with a 
+[normal] self-service digital system, and to the coach's potential coaching income stream, since both align directly with existing university strategy rather than requiring a new mandate. 
+[normal] Economic. South African public universities are operating under sustained budget pressure. Government post-school funding has been reduced in real terms, and NSFAS — the main funding channel for students, has faced multibillion-rand shortfalls and reprioritisation in recent years (Chikte & Lencoasa, 2025). In this climate, a club-level project competing for discretionary budget is very unlikely to secure funding for a recurring, foreign-currency software subscription. NWU's own strategy document reinforces this: it identifies the weak rand exchange rate as a specific cost pressure on any technology sourced from outside the country (North-West University, 2023), which is exactly the position a rand-denominated club would be in when subscribing to a US dollar-priced SaaS platform such as those reviewed in Section 4. A solution with no or near-zero recurring cost is therefore far more economically viable than a subscription model.
+[normal] Social. The target users are digitally comfortable. South Africa's internet penetration reached 78.9% of the population by the start of 2025, with the great majority of that access happening on mobile devices (DataReportal, 2025), and students are typically at the leading edge of that adoption curve. This makes the user-acceptance risk of a phone-first, self-service booking system low: students are already used to booking, ordering and managing daily activities from a smartphone, so the barrier is building the system, not getting students to use it.
+[normal] Technological. Two technological conditions matter here. First, mature free-tier or low-cost cloud hosting, database and authentication platforms are now widely available, which is what makes a near-zero-cost custom build realistic rather than aspirational. Second, South Africa's electricity supply, a major operational risk for any always-on booking system as recently as 2023, has stabilised considerably: Eskom recorded over 300 consecutive days without load shedding by March 2026, supported by a sustained improvement in plant availability (Eskom, 2026). This materially lowers the risk that was previously a core design constraint. However, localised “load reduction” in specific feeders and suburbs has continued alongside the broader recovery (EnergyBee, 2026), and Eskom itself cautions that load shedding could resume at higher winter demand if unplanned outages rise sharply. The system should therefore still be designed to degrade gracefully rather than assume permanent grid stability.
+[normal] Legal. The Protection of Personal Information Act 4 of 2013 (POPIA) applies in full (Republic of South Africa, 2013): any system that stores students' names, student numbers, contact details and booking history makes NWU a responsible party under the Act, with obligations around lawful processing, access control, and data retention. NWU's Digital Business Strategy specifically names POPIA compliance as a legal driver behind its own digital transformation programme (North-West University, 2023), so this is not a peripheral risk but a named institutional priority that any new system, including this one, is expected to satisfy from the outset.
+[normal] Micro-level. The primary customer is the NWU Potchefstroom student body, and the secondary customer is the Head Squash Coach. Commercial substitutes exist in the form of established club and facility booking platforms, but these are priced as recurring, foreign-currency subscriptions aimed at commercial clubs rather than student sport codes operating on a zero budget (see Section 4.1 for a detailed cost comparison). Informal substitutes, such as a shared spreadsheet or a WhatsApp group, cost nothing but provide no identity verification, no conflict prevention, and no audit trail, so they do not resolve the accountability problem described in Section 2.2.
+[normal] Taken together, these factors point in the same direction: the university's own strategy already favours a digital, self-service solution; the funding environment rules out a recurring subscription; the student body is technologically ready; the infrastructure risk that would previously have counted against an always on system has eased, though not disappeared; and POPIA sets a firm legal baseline that the solution must be designed to meet from the start.
+[Heading 2] Business Problem
+[normal] Squash court bookings at the NWU Potchefstroom squash facility depend entirely on a single physical computer located at the courts, with no way for a student to check or reserve a court remotely. This creates several related problems:
+[normal] ● Single access point: bookings can only be captured on the one machine at the courts, so a student away from the courts has no way to see what is available or to reserve a slot.
+[normal] ● No forward planning: because a student cannot check availability in advance, it is common to arrive ready to play only to find that every court is already taken, with no reliable way to plan a game ahead of time.
+[normal] ● Weak accountability: the current record-keeping does not verify who is booking, offers no way to cancel a slot, and keeps no record of no-shows, so courts that are reserved but not used are simply wasted rather than being made available to someone else.
+[normal] ● Coaching is closed off: the Head Squash Coach currently works only with players already on the Puk squash team, leaving students outside the team with no visible or bookable way to receive coaching.
+[normal] ● No visibility into usage: because bookings are not captured digitally, the club has no occupancy or participation data to draw on when motivating for facility time, budget or sponsorship.
+[normal] Collectively, these issues waste students' time, hold court utilisation below what the facility could support, leave a possible coaching income stream untapped, and limit the club's ability to grow participation in the sport. To be useful, a solution needs to be in place before the start of the 2027 academic year, so that it is ready for the first-semester intake, when new students are most likely to be looking to take up a sport.
+[normal] Business Opportunity
+[normal] Moving the booking process online creates an opportunity to:
+[normal] ●  let every registered NWU student check court availability and book a slot themselves, from any device, at any time;
+[normal] ●   Improve how effectively courts are used by automatically offering a cancelled slot to students on a waiting list rather than letting it go unused;
+[normal] ●   Extend private coaching beyond the Puk team to the wider student body, giving the Head Squash Coach a new source of coaching income;
+[normal] ●  Produce reliable participation and occupancy data that the club can use to motivate for facility time, funding and sponsorship; and
+[normal] ●  Build a booking platform that NWU can reuse for other sport facilities, such as tennis or padel, beyond squash.
+[normal] As with the problem, this opportunity is time-bound: delivering the system before the 2027 first-semester registration period gives it the best chance of reaching new students right as they are deciding which sports to join.
+[Heading 1] Requirements Statement
+[Heading 2] Business Drivers
+[normal] Student time and facility utilisation: The current booking process wastes student time and can leave booked courts unused when plans change. The system should improve access to availability and help maximise court utilisation. 
+[normal] Coaching access and income: Private coaching is currently limited to Puk team players. Expanding access to other students can increase participation while creating a potential additional income stream for the head coach. 
+[normal] Growth and visibility of squash: Squash has low visibility on campus and struggles to attract new players. An accessible booking and coaching platform can help lower the barrier to participation and promote the sport. 
+[normal] Accessibility and convenience: Students currently need to be at the courts to check availability and make bookings. The system should allow students to access court availability and bookings remotely from any device. 
+[normal] Data-driven management: The current process provides limited information about facility usage. The system should provide data on bookings, occupancy, cancellations, no-shows and coaching uptake to support the growth and management of squash.
+[normal] Academic deadline and compliance: The system must be developed and delivered by the start of the 2027 academic year, while ensuring that student personal information is handled securely in accordance with POPIA and applicable NWU ICT policies.
+[Heading 2] Business Requirements
+[Heading 1] Feasibility Assessment
+[Heading 2] Potential Solutions
+[normal] Three solutions were identified. Each is described below with its benefits, costs and risks, followed by the methods used to assess its feasibility and the resulting scores. Cost figures are converted at USD 1 = ZAR 16.55 (Trading Economics, 2026) and are indicative only; the project team must confirm current pricing and the university’s preferred procurement route.
+[normal] Assumptions common to all options:
+[normal] Students can be uniquely and reliably identified by their NWU student email address.
+[normal] Expected load remains within the free tier of the selected hosting, database and authentication providers.
+[normal] No monetary budget is available; any recurring cost must be separately motivated and approved.
+[Heading 2] Solution 1: Commercial Off-The-Shelf Court Booking SaaS
+[Heading 2] 4.2.1	Description
+[normal] This solution uses an existing commercial court-booking platform such as Skedda (Capterra, 2026; SelectHub, 2026), CourtReserve (Capterra, 2026) or Playtomic Manager (SoftwareSuggest, 2026) instead of developing a new system. An administrator would configure the courts and booking periods, while students would self-register and make bookings through the platform’s web or mobile interface. The vendor would manage hosting, maintenance and technical support, and coaching sessions could also be offered where supported by the platform.
+[Heading 2] 4.2.2	Assessment
+[normal] Published product documentation was reviewed against the requirements in Section 3.2, while published pricing was compared with the available budget of R0. Registration restrictions and data hosting were also reviewed to determine whether the platform could limit access to NWU students and satisfy POPIA requirements. The documentation and pricing results are considered high quality, while the identity and data-residency results are medium quality because vendor confirmation has not yet been obtained.
+[Heading 2] 4.2.3	Results
+[Heading 2] 4.2.4	Risks
+Risk Description | Risk Likelihood | Risk Impact | Actions Required to Mitigate Risk
+Required funding for the recurring subscription may not be approved | High | High | First obtain funding approval before implementation and select the lowest suitable subscription tier from the vendor.
+The platform may not reliably restrict registration to NWU students only.  | High | High | Before subscribing to the platform confirm domain-based registration and access-control capabilities with the vendor
+Students’ personal information may be hosted offshore | Medium | High | Confirm data processing and data residency arrangement with vendor before implementation
+Vendor pricing and product availability may change. | Medium | Medium | Review vendor terms and pricing before committing to a long-term subscription
+The platform may not support all NWU-specific booking rules. | Medium | Medium | Confirm required booking rules and customisation capabilities during the evaluation process
+[Heading 2] 4.2.5	Issues
+Issue Description | Issue Priority | Action Required to Resolve Issue
+No approved budget is available for recurring SaaS subscription | High | Need to obtain budget approval or identify an alternative funding source.
+NWU student-only registration is not yet confirmed  | High | Select platform to be used and confirm access control capabilities with the vendor.
+POPIA data residency requirements may not be satisfied | High | Obtain confirmation of where student data is stored and how it is processed.
+Platform’s customisation may not fully support NWU booking rules  | Medium | Compare required booking rules with the platform’s available configuration options.
+[Heading 2] 4.2.6	Assumptions
+[normal] The chosen SaaS platform is expected to support the required squash court booking functions.
+[normal] The system should allow the NWU squash courts and their available booking times to be configured.
+[normal] Students are expected to have internet access and a suitable device for using the booking platform.
+[normal] It is assumed that the university can approve and cover the recurring subscription cost.
+[normal] The selected vendor should be able to limit registration and access to NWU students.
+[normal] The vendor’s hosting and handling of student information is expected to comply with NWU’s POPIA requirements.
+[normal] The platform is expected to allow private coaching sessions to be offered and booked.
+[Heading 2] Solution 2: Custom-Build Web Application
+[Heading 2] 4.3.1 Description
+[normal] The solution for the second alternative is to create a custom-built web application that allows students from the NWU to view any available squash courts. Students will also be able to be able to make, manage or cancel their bookings when using the website with any type of device. To develop this web application the system will include core components like a student-facing booking interface, along with a coach interface for managing coach sessions. To develop the frontend, Vue 3 will be used, and for the backend we will use Laravel/PHP, MySQL will store the system data, while Firebase will secure login for NWU students. When we are finished constructing this system, the website will be hosted online so that students can access it without needing to install or download an app and finally these components will be assessed to see if the system can meet the project requirements.
+[Heading 2] 4.3.2 Assessment 
+[normal] The required features like including secure login, court availability, booking with conflict prevention, notifications and reporting, can be achieved using the chosen web technologies. Development will have no direct cost because it will be completed by the project team, while free hosting, database and authentication services should be sufficient for the expected usage. Students will be able to access the system through a web browser on any device and will be managed by the coach through the application. Security measures like access control, encrypted connections and data protection will also be included. The technology, cost, operational and compliance assessments are considered high quality, while the development schedule assessment is medium quality because it depends on the team’s capacity and the academic calendar. 
+[Heading 2] 4.3.3 Results
+Solution  | Feasibility Score | Assessment Method
+Custom web application development | 5 | Technical review of the selected frameworks
+Real-time court availability and booking | 5 | Technical review
+Booking cancellations, waiting lists and alerts | 5 | Technical review
+Online private coaching bookings | 5 | Technical review
+NWU student-only access | 5 | Review of authentication and NWU email restrictions
+Affordable system implementation | 5 | Review of free-tier hosting and software costs
+Protection of student data | 5 | Review of security and data protection requirements
+Completion before the 2027 academic year | 4 | Schedule review against the academic calendar
+The Average Feasibility Score: | 4.88 | 
+
+[Heading 2] 4.3.4 Risks
+Risk 
+Description | Risk
+Likelihood | Risk
+Impact | Actions Required 
+to Mitigate Risk
+Development Delays | Medium | High | Use short, fixed development periods and build the main booking features first. 
+Requirements are unclear | High | Medium | Meet with the coach to define what the systems must do. 
+No team available after handover | Medium | High | Properly document the whole system and then hand over the source code and assign it to someone to maintain it. 
+Students do not use the system | Medium | High | The system must be promoted to students during the registration week.
+Data is lost or damaged | Low | High | Automatic backups must be available and have a procedure for restoring the data. 
+No long-term hosting or maintenance plan | High | High | Agree with NWU IT who will host and maintain the system before it goes live. 
+Booking and coaching rules are not decided | High | Medium | The coach must decide on the following: Booking limits, cancellation rules, slot lengths and how coaching payments will work. 
+[Heading 2] 4.3.5 Issues
+Issue Description | Issue
+Priority | Actions Required to Resolve Issue
+The number of squash courts and available booking times must be confirmed.  | High | Determine the number of courts and operating times. 
+Multiple students may attempt to book the same court at the exact time. | High | Make sure a court cannot be booked by two different students at the exact time. 
+The payment method must be determined.  | High | It must be decided whether students will pay online or at the courts. 
+Rules for cancelling bookings need to be satisfied.  | High | Decide on the rules for changing or cancelling bookings. 
+Students' information must be protected.  | High | Secure login must be used and protect students’ personal information. 
+Building the web application  | High | Plan, develop and test the website before launching it. 
+Restricting access to NWU students  | High | This requires users to enter a valid NWU email to get access. 
+[Heading 2] 4.3.6 Assumptions
+[normal] Students will be able to access the Puksquash website from any device with a web browser.
+[normal] This solution will provide accurate court availability and the court’s operating hours.
+[normal] Only students that are registered to the NWU will be able to access the PukSquash website.
+[normal] NWU will provide the necessary support for hosting and maintaining the system. 
+[normal] Students’ personal information will be securely stored and protected.
+[normal] The database will be able to store the user, court and booking information.
+[normal] Students will use the website to make and manage their court bookings.
+[normal] The system will also be accessible through a web browser without needing to install any app. 
+[Heading 2] Solution 3 – Custom-Built Mobile Application
+[Heading 2] 4.4.1 Description
+[normal] The proposed solution is a custom-built mobile information system that digitises the squash court booking process at North-West University's Potchefstroom Campus. The system aims to improve access to squash facilities, increase utilisation, and provide valuable data for management decision-making.
+[normal] Core Components:
+[normal] A responsive, cross-platform app for students and staff to view court availability, book/cancel slots, and access coaching services.
+[normal] A centralised database storing court availability, bookings, coaching schedules, and user data.
+[normal] Secure login and role-based access control for students, staff, and administrators.
+[normal] The solution addresses the requirements by providing real-time court availability and remote booking capabilities, enabling students to access coaching services and promoting squash participation, offering data-driven insights for management decision-making, and ensuring secure handling of student personal information (Academic deadline and compliance).
+[normal] The mobile application allows students to:
+[normal] View court availability and book/cancel slots remotely
+[normal] Access coaching services and book private lessons
+[normal] Receive booking reminders and notifications
+[Heading 2] 4.4.2 Assessment 
+[normal] 1.      Stakeholder Interviews
+[normal] Conduct interviews with key stakeholders, including sports centre administrators, coaches, and students, to gather feedback on the proposed solution and identify potential risks. High-quality feedback can be expected, providing valuable insights into the needs and concerns of stakeholders.
+[normal] 2.      Requirements Analysis
+[normal] Analyse the business requirements and identify potential technical and functional challenges. A thorough analysis can help identify potential feasibility issues and inform the development process.
+[normal] 3.      Prototyping and User Testing
+[normal] Develop a prototype of the mobile application and conduct user testing with a small group of students and administrators. Feedback from user testing can provide valuable insights into the usability and feasibility of the solution.
+[normal] 4.      Technical Feasibility Assessment
+[normal] Assess the technical feasibility of the solution, including the integration with existing systems, security, and scalability. A thorough technical assessment can identify potential technical risks and inform the development process.
+[normal] 5.      Cost-Benefit Analysis
+[normal] Conduct a cost-benefit analysis to determine the financial feasibility of the solution. A thorough analysis can provide a clear understanding of the costs and benefits of the solution, informing the decision-making process.
+[Heading 2] 4.4.3 Results
+[Heading 2] 4.4.4 Risks
+Risk 
+Description | Risk
+Likelihood | Risk
+Impact | Actions Required 
+to Mitigate Risk
+Development delay causing missed academic deadline | Medium | High | Set strict project milestones, allocate buffer time, and monitor progress weekly
+Inadequate mobile usability leading to low student adoption | Medium | Medium | Conduct iterative user testing, incorporate UI/UX best practices for mobile, and provide training/tutorials
+Technical integration issues with existing university systems | Medium | Medium | Perform early architecture review, use APIs for integration, and run integration testing phases
+Insufficient data reporting functionality for management decisions | Low | Medium | Design comprehensive reporting module from start, validate report specs with admins, and test reporting workflows
+Financial overrun due to underestimated development costs | Medium | High | Set budget checkpoints and prioritise essential features
+[Heading 2] 4.4.5 Issues
+Issue Description | Issue
+Priority | Actions Required to Resolve Issue
+Tight academic deadline may limit development time | High | Set clear milestones, allocate overtime or additional resources, and enforce strict schedule monitoring
+Ensuring full mobile responsiveness without loss of functionality | High | Design a responsive UI, conduct multi‑device testing, use mobile‑first development frameworks, and validate with student users
+Limited admin functionality for managing bookings & reports in a mobile‑only setup | Medium | Develop a separate admin dashboard (web) for management tasks or build admin modules within the app with role‑based access
+Potential user resistance to adopting a new booking system | Medium | Run user‑training sessions, provide clear onboarding guides, and incorporate feedback loops for continuous improvement
+Budget constraints for custom development and ongoing maintenance | Medium | Prioritise core features, and explore phased implementation or outsourcing options
+[Heading 2] 4.4.6 Assumptions
+[normal] All students have access to a compatible smartphone for using the app.
+[normal] The university’s Wi‑Fi or cellular network provides reliable connectivity for the app at the squash courts.
+[normal] NWU has suitable server or cloud resources that can be integrated with the mobile app for data storage and processing.
+[normal] The project can be completed within the academic deadline with the allocated resources.
+[normal] Sufficient budget is available for development, testing, and post‑launch maintenance of the mobile application.
+[Heading 1] Feasibility Ranking
+[Heading 2] Ranking Criteria
+[normal] The three proposed solutions were assessed using a weighted feasibility ranking, based on technical, economic, operational, schedule, and legal/compliance considerations. These criteria were chosen to assess how well each solution met the business requirements practically within the budget, resources, and project timeframe.
+[normal] The following criteria were used:
+[normal] Technical Feasibility (Weight: 3): Can the solution deliver the required functionality with the available technology and skill level of the project team?
+[normal] Economic Feasibility (Weight: 3): Does the solution fit the available budget of R0, and are any recurring costs sustainable?
+[normal] Operational Feasibility (Weight: 3): Will students adopt and use it, and can the coach operate it without technical support?
+[normal]  Schedule Feasibility (Weight: 2): Can the solution be delivered before the start of the 2027 academic year?
+[normal] Legal / Compliance Feasibility (Weight: 2): Does it comply with POPIA and NWU ICT policy, including data residency and access control?
+[normal] Each solution is scored 1–5 per criterion. The weighted total is Score × Weight. The maximum possible total is 5 × (3 + 3 + 3 + 2 + 2) = 65. This weighted ranking serves as the overall solution rating for the business case.
+[Heading 2] Ranking Scores
+  | Solution 1: | Solution 1: | Solution 1: | Solution 2: | Solution 2: | Solution 2: | Solution 3: | Solution 3: | Solution 3:
+Criteria | Score | Weight | Total | Score | Weight | Total | Score | Weight | Total
+Technical Feasibility | 4 | 3 | 12 | 5 | 3 | 15 | 4 | 3 | 12
+Economic Feasibility | 1 | 3 | 3 | 5 | 3 | 15 | 4 | 3 | 12
+Operational Feasibility | 3 | 3 | 9 | 5 | 3 | 15 | 3 | 3 | 9
+Schedule Feasibility | 5 | 2 | 10 | 4 | 2 | 8 | 3 | 2 | 6
+Legal/Compliance Feasibility | 2 | 2 | 4 | 5 | 2 | 10 | 5 | 2 | 10
+Total Score |   |   |  38/65 |   |   | 63/65 |   |   | 49/65
+Rankings | 3rd | 3rd | 3rd | 1st | 1st | 1st | 2nd | 2nd | 2nd
+[Heading 1] Feasibility Result
+[normal] Option 2 — the custom-built web application — is recommended, with the highest weighted score of 63 out of 65.
+[normal] Key reasons for this recommendation:
+[normal] No recurring cost. There is no approved budget. Option 2 is the only solution that meets the requirements at effectively zero recurring cost, using free hosting, database and authentication tiers.
+[normal] Lowest adoption barrier. A student can book from a link without installing anything, which matters when a student may book only a handful of times per semester.
+[normal] Control, compliance and ownership. Authentication can be restricted to NWU student email addresses and the coach’s booking rules implemented exactly as specified. Data is hosted under university control with role-based access, encrypted transport and audit logging, and the university owns the source code and the data.
+[normal] Deliverable within the academic year, and extensible. A web application avoids app store submission and review lead times, and the same booking engine can later be extended to tennis, padel and other NWU sport facilities without renegotiating a licence.
+[normal] Option 3 (native mobile) scored 49 out of 65 and remains feasible. Its penalties are schedule lead time, unbudgeted developer account fees and the installation barrier — none of which are technical. It is recommended as a second phase once the web system is live and adoption is proven. Building the web application as a responsive, installable progressive web application preserves that upgrade path at no additional cost.
+[normal] Option 1 (SaaS) scored 38 out of 65, penalised principally on recurring foreign-currency cost against a zero budget, on the inability to guarantee that only registered NWU students can book, and on offshore data residency.
+[Heading 1] Appendix
+[Heading 2] Supporting Documentation
+[normal] Chikte, A. & Lencoasa, M. 2025. Shrinking budget leaves thousands of students with no pathway to higher education. Daily Maverick, 17 February. https://www.dailymaverick.co.za/article/2025-02-17-shrinking-budget-leaves-thousands-of-students-with-no-pathway-to-higher-education/ Date of access: 14 August 2026. 
+[normal] DataReportal. 2025. Digital 2025: South Africa. https://datareportal.com/reports/digital-2025-south-africa Date of access: 14 August 2026. 
+[normal] EnergyBee. 2026. Load reduction schedule South Africa 2026. https://energybee.co.za/news/load-reduction-schedule-south-africa-2026 Date of access: 14 August 2026.
+[normal] North-West University. 2023. Digital Business Strategy. Potchefstroom: North-West University. https://www.nwu.ac.za/sites/www.nwu.ac.za/files/files/i-governance-management/documents/NWU-Digital-Business-Strategy-(Council-Approved-2023-v7c).pdf Date of access: 13 August 2026. 
+[normal] Apple. 2026. Apple Developer Program. https://developer.apple.com/programs/ Date of access: 13 Aug 2026.
+[normal] Capterra. 2026. CourtReserve Pricing, Alternatives & More. https://www.capterra.com/p/152562/CourtReserve/ Date of access: 13 Aug 2026.
+[normal] Capterra. 2026. Skedda Pricing. 
+[normal] https://www.capterra.com/p/132372/Skedda-Bookings/pricing/ Date of access: 13 Aug 2026.
+[normal] Google. 2026. Google Play Console — Registration. https://play.google.com/console/signup Date of access: 13 Aug 2026.
+[normal] Trading Economics. 2026. South African Rand — quote, chart, historical data. https://tradingeconomics.com/south-africa/currency Date of access: 13 August 2026. 
+[normal] Universities South Africa. 2022. POPIA compliance guidelines for public universities. Pretoria: Universities South Africa. https://www.wits.ac.za/media/wits-university/about-wits/documents/USAf%20POPIA%20Guideline.pdf Date of access: 13 August 2026. 
+[normal] SoftwareSuggest. 2026. Playtomic Manager — pricing, features and details. https://www.softwaresuggest.com/playtomic-manager Date of access: 13 August 2026. 
+[normal] North-West University Sport. n.d. Potchefstroom Campus — sporting codes and categorization. https://sport.nwu.ac.za/sport/potchefstroom-campus Date of access: 13 August 2026. 
+[normal] Van Niekerk, M. 2026. PukSquash: Online Squash Court and Coaching Booking System — project presentation. Potchefstroom: North-West University. 

@@ -2,20 +2,21 @@
 
 ## Purpose and area
 
-`app` contains the project's hand-written **Laravel backend** code. This is where requests are processed, authentication is enforced, business rules are implemented, and Laravel models are defined.
+`app` contains the project's hand-written **Laravel backend** code. This is where requests are processed, authentication is enforced, business rules are implemented, and data models are defined.
 
 ## What belongs here
 
 - `Http` contains controllers, middleware, and request validation.
-- `Models` contains Laravel Eloquent models.
-- `Services` contains reusable backend integrations and business operations.
+- `Models` contains Eloquent models (`User`, `Court`, `Booking`, `BookingPlayer`, `TimeSlot`, `CoachAvailability`).
+- `Services` contains reusable backend integrations (`FirebaseAuthService`, `PayfastService`, `SqlConnectClient`).
+- `DataTransferObjects` contains DTOs that structure API response data (`UserDTO`, `BookingDTO`, `CourtDTO`, etc.).
 - `Providers` contains Laravel application bootstrapping and service registration.
 
-Developers normally edit classes inside those folders. Routes in `routes/api.php` or `routes/web.php` direct requests into this code, and application services may communicate with Firebase or a database.
+Routes in `routes/api.php` or `routes/web.php` direct requests into this code. Controllers use services for business logic and Eloquent models for Supabase PostgreSQL access.
 
 ## Example
 
-When adding an authenticated booking API, define its URL in `routes/api.php`, validate its input under `Http/Requests`, process it through an API controller, and place reusable booking rules in an appropriate service.
+When adding a new booking feature, define its URL in `routes/api.php`, validate input under `Http/Requests`, handle the request in an API controller, and return data through a DTO.
 
 ## Beginner mistakes to avoid
 

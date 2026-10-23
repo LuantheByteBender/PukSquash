@@ -39,6 +39,10 @@ export const bookingService = {
         return http.get(`/coaches/available${query({ date, time_slot_id: timeSlotId })}`);
     },
 
+    coachNoticeBoard(date) {
+        return http.get(`/notice-board/coaches${query({ date })}`);
+    },
+
     /** FR-07 / FR-08 / FR-09 — booking_type is OPEN, LOCKED or PRIVATE_COACH. */
     createBooking(payload) {
         return http.post('/bookings', payload);

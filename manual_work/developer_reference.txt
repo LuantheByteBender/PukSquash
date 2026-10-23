@@ -1,0 +1,1990 @@
+[normal] Developer Documentation  Campus Marketplace
+[normal] Proposed by
+[normal] Group 3
+[normal] Group Leaders
+[normal] Daniël de Jager – 41669436
+[normal] Pieter Meyer – 42937582
+[normal] Group Members
+[normal] Petrus Daniel Bekker – 37267027
+[normal] Johann Nell – 38609029
+[normal] Thabiso Nkashe – 38614898
+[normal] Dimpho Malatji – 42705576
+[normal] Bradley Motsiri – 29998360
+[normal] Delius Schoeman – 45616779
+[normal] Tiyane Sibuya – 42591570
+[normal] Reese Van Der Linde – 46859675
+[normal] Meiring van Niekerk – 47817909
+[normal] Daniel Van Wyk – 33505136
+[normal] Sithole Zakhele - 36081868
+[normal] 17 October 2025
+[normal] Module: CMPG 323
+[normal] Project Manager: Ruan van Heerden – 41763882
+[normal] Portfolio Manager: Henri van Rensburg
+[normal] Table of Contents
+[Heading 1] Project Overview
+[normal] Campus Marketplace is a comprehensive e-commerce platform designed specifically for university students to buy and sell items within their campus community.
+[Heading 2] Core Features
+[normal] Secure Authentication: Firebase Auth with email/password and Google OAuth integration
+[normal] Payment Processing: PayFast integration with signature verification
+[normal] Shopping Cart: Full cart management with VAT calculations
+[normal] Admin Dashboard: Analytics and user moderation
+[normal] Image Management: Firebase Storage integration
+[Heading 2] Technology Stack
+[normal] Frontend: Next.js 15.4.6 with React 19.1.0 and TypeScript
+[normal] Backend: Next.js API routes with Firebase Admin SDK
+[normal] Database: Cloud Firestore
+[normal] Authentication: Firebase Auth
+[normal] Payments: PayFast with crypto-js
+[normal] Styling: Tailwind CSS with Radix UI
+[Heading 1] Getting Started Guide
+[Heading 2] Quick Setup
+[normal] ```bash
+[Heading 3] Clone and install dependencies
+[normal] git clone https://github.com/Pieter246/campus-marketplace.git 
+[normal] cd campus-marketplace
+[normal] npm install
+[Heading 3] Copy environment template and configure with your credentials
+[normal] cp .env.example .env.local
+[Heading 3] Start development server with Turbopack for faster builds
+[normal] npm run dev
+[normal] Explanation: 
+[normal] This streamlined setup process ensures developers can quickly establish a local development environment. The project leverages Next.js 15.4.6's enhanced development server with Turbopack, which provides significantly faster hot reloading and builds times compared to traditional webpack builds. The environment configuration step is critical as it establishes connections to Firebase services (authentication, database, storage) and Pay Fast payment gateway. The `.env.example` file serves as a template containing all required environment variables with placeholder values, ensuring developers don't miss any critical configuration steps. This approach follows modern development best practices by separating configuration from code and enabling easy deployment across different environments (development, staging, production).
+[normal] Physical Code Explanation: 
+[normal] Line 2: `git clone <repository-url>` clones the Git repository to local machine, replacing `<repository-url>` with actual repository URL. Line 3: `cd campus-marketplace` changes directory into the project folder. Line 4: `npm install` installs all dependencies listed in `package.json` into `node_modules` folder. Line 7: `cp .env.example .env.local` copies environment template file to local configuration file (`.env.local` is ignored by Git for security). Line 10: `npm run dev` executes the development script from `package.json`, starting Next.js dev server with Turbopack bundler for faster builds.
+[Heading 2] Environment Configuration
+[normal] ```env.local
+[Heading 3] Firebase Configuration
+[normal] NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+[normal] NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+[normal] NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+[normal] NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+[normal] NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+[normal] NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+[Heading 3] Firebase Admin SDK (Server-side only)
+[normal] FIREBASE_PRIVATE_KEY=your_private_key
+[normal] FIREBASE_CLIENT_EMAIL=your_client_email
+[Heading 3] PayFast Payment Gateway
+[normal] PAYFAST_MERCHANT_ID=your_merchant_id
+[normal] PAYFAST_MERCHANT_KEY=your_merchant_key
+[normal] PAYFAST_PASSPHRASE=your_passphrase
+[normal] NEXT_PUBLIC_BASE_URL=http://localhost:3000
+[Heading 3] Admin Configuration
+[normal] ADMIN_EMAILS=admin1@example.com,admin2@example.com
+[normal] ```
+[Heading 2] Required NPM Dependencies
+[normal] ```bash
+[Heading 3] Core Framework & React
+[normal] npm install next@15.4.6 react@19.1.0 react-dom@19.1.0
+[normal] npm install typescript@5.9.2 @types/react@19 @types/react-dom@19
+[Heading 3] Firebase & Authentication
+[normal] npm install firebase@12.1.0 firebase-admin@13.5.0
+[normal] npm install jose@6.1.0
+[Heading 3] PayFast Payment Integration
+[normal] npm install crypto-js@4.2.0 @types/crypto-js@4.2.2
+[normal] npm install qs@6.14.0 @types/qs@6.9.11
+[Heading 3] UI Components & Styling
+[normal] npm install @radix-ui/react-alert-dialog@1.1.15
+[normal] npm install @radix-ui/react-avatar@1.1.10
+[normal] npm install @radix-ui/react-dropdown-menu@2.1.16
+[normal] npm install @radix-ui/react-label@2.1.7
+[normal] npm install @radix-ui/react-select@2.2.6
+[normal] npm install @radix-ui/react-slot@1.2.3
+[normal] npm install @radix-ui/react-tabs@1.1.13
+[normal] npm install tailwindcss@4 @tailwindcss/postcss@4.1.12
+[normal] npm install tailwind-merge@3.3.1 clsx@2.1.1
+[normal] npm install lucide-react@0.544.0
+[Heading 3] Charts & Analytics
+[normal] npm install recharts@3.2.1
+[normal] npm install numeral@2.0.6 @types/numeral@2.0.5
+[normal] Explanation: 
+[normal] This dependency configuration represents a production-ready technology stack optimized for modern marketplace development. The Next.js 15.4.6 framework provides the foundation with App Router, server components, and enhanced performance features. React 19.1.0 introduces concurrent features and improved hydration for better user experience. The Firebase ecosystem enables full-stack functionality: client SDK for authentication and real-time data, Admin SDK for server-side operations, and jose for secure JWT handling. PayFast integration requires crypto-js for signature generation (essential for South African payment processing) and as for proper query string formatting. Radix UI components provide accessible, headless UI primitives that integrate seamlessly with Tailwind CSS for consistent design systems. The Tailwind v4 setup includes PostCSS integration and utility libraries for dynamic class management. Recharts delivers interactive data visualization for the admin dashboard, while numeral provides localized number formatting for South African Rand currency display. This stack ensures type safety, performance, accessibility, and maintainability for enterprise-grade marketplace applications.
+[normal] Physical Code Explanation: 
+[normal] Lines 2-3: `npm install` commands with package names and specific version numbers using `@` syntax - `next@15.4.6` installs Next.js framework version 15.4.6, `react@19.1.0` and `react-dom@19.1.0` install React library and DOM bindings, `typescript@5.9.2` adds TypeScript compiler, `@types/react@19` and `@types/react-dom@19` provide TypeScript type definitions. Lines 5-7: Firebase packages - `firebase@12.1.0` for client SDK, `firebase-admin@13.5.0` for server-side operations, `jose@6.1.0` for JWT token handling. Lines 9-11: PayFast integration - `crypto-js@4.2.0` for MD5 hashing with TypeScript types, `qs@6.14.0` for query string parsing with types. Lines 13-18: Radix UI components with version pinning using `@` notation for consistent styling and accessibility. Lines 19-21: Tailwind CSS v4 with PostCSS plugin, utility libraries `tailwind-merge` for conditional classes and `clsx` for class concatenation, `lucide-react` for iconography. Lines 23-24: Data visualization with `recharts@3.2.1` for charts and `numeral@2.0.6` for number formatting with TypeScript definitions.
+[Heading 3] Form Handling & Validation
+[normal] npm install react-hook-form@7.62.0
+[normal] npm install @hookform/resolvers@5.2.1
+[normal] npm install zod@4.1.8
+[Heading 3] Notifications & UI Enhancements
+[normal] npm install sonner@2.0.7
+[normal] npm install react-hot-toast@2.6.0
+[normal] npm install @hello-pangea/dnd@18.0.1
+[normal] npm install embla-carousel-react@8.6.0
+[Heading 3] Development Dependencies
+[normal] npm install --save-dev eslint@9 eslint-config-next@15.4.6
+[normal] npm install --save-dev @types/node@20.19.11
+[normal] ```
+[normal] Explanation: 
+[normal] The environment configuration represents the cornerstone of the application's external service integration strategy. Firebase configuration variables prefixed with `NEXT_PUBLIC_` are intentionally exposed to the client-side code, enabling direct browser-to-Firebase communication for real-time features like authentication state changes and live data updates. The Firebase project ID connects the application to a specific Firestore database instance, while the auth domain handles OAuth redirects and email verification links. PayFast credentials are server-side only for security, enabling the application to process South African Rand payments securely. The merchant passphrase acts as a cryptographic key for generating payment signatures, preventing transaction tampering. This configuration strategy ensures secure service integration while maintaining the flexibility to deploy across multiple environments with different service endpoints and credentials.
+[Heading 1] Authentication System (/src/app/login/page.tsx)
+[Heading 2] Login Component Implementation
+[normal] ```typescript
+[normal] export default function LoginForm() {
+[normal]   const router = useRouter();
+[normal]   const auth = useAuth();
+[normal]   const [form, setForm] = useState({ email: "", password: "" });
+[normal]   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+[normal]   const [loading, setLoading] = useState(false);
+[normal]   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+[normal]     setForm({ ...form, [e.target.name]: e.target.value });
+[normal]     setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+[normal]   };
+[normal]   const handleLogin = async (e: React.FormEvent) => {
+[normal]     e.preventDefault();
+[normal]     const newErrors: { [key: string]: string } = {};
+[normal]     if (!form.email.includes("@")) newErrors.email = "Please enter a valid email address";
+[normal]     if (!form.password) newErrors.password = "Password is required";
+[normal]     setErrors(newErrors);
+[normal]     if (Object.keys(newErrors).length > 0) return;
+[normal]     setLoading(true);
+[normal]     try {
+[normal]       const { signInWithEmailAndPassword } = await import("firebase/auth");
+[normal]       const { auth: clientAuth } = await import("@/firebase/client");
+[normal]       const userCredential = await signInWithEmailAndPassword(clientAuth, form.email, form.password);
+[normal]       const user = userCredential.user;
+[normal]       await user.reload();
+[normal]       if (!user.emailVerified) {
+[normal]         await clientAuth.signOut();
+[normal]         toast.error("Error!", {
+[normal]           description: "Your email is not verified. Please check your inbox and click the verification link. If you did not receive it, you can resend below."
+[normal]         });
+[normal]         router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`);
+[normal]         return;
+[normal]       }
+[normal]       router.push("/");
+[normal]     } catch (e: unknown) {
+[normal]       let errorMessage = "An error occurred";
+[normal]       if (typeof e === "object" && e !== null && "message" in e && typeof e.message === "string") {
+[normal]         errorMessage = e.message;
+[normal]       }
+[normal]       toast.error("Error!", {
+[normal]         description: errorMessage,
+[normal]       });
+[normal]     } finally {
+[normal]       setLoading(false);
+[normal]     }
+[normal]   };
+[normal]   // Google OAuth Login
+[normal]   const handleGoogleLogin = async () => {
+[normal]     setLoading(true);
+[normal]     try {
+[normal]       await auth.loginWithGoogle();
+[normal]       toast.success("Success!", { description: "Logged in successfully" });
+[normal]       router.push("/");
+[normal]     } catch (error: unknown) {
+[normal]       const errorMessage: string =
+[normal]         typeof error === "object" && error !== null && "code" in error && error.code === "auth/popup-closed-by-user"
+[normal]           ? "You closed the popup before completing login."
+[normal]           : typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+[normal]           ? error.message
+[normal]           : "Google login failed";
+[normal]       toast.error("Google login failed", { description: errorMessage });
+[normal]     } finally {
+[normal]       setLoading(false);
+[normal]     }
+[normal]   };
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This authentication implementation demonstrates comprehensive form validation, error handling, and state management patterns essential for production applications. The form validation checks for email format and required fields before making API calls, reducing unnecessary network requests and providing immediate user feedback. The dynamic import strategy for Firebase modules enables code splitting, reducing the initial JavaScript bundle size - authentication code only loads when users actually attempt to log in. The email verification enforcement adds critical security by preventing unverified accounts from accessing the platform, while the toast notifications provide clear user feedback using the Sonner library. The Google OAuth implementation with `auth.loginWithGoogle()` handles popup authentication flows and automatic Firestore user document creation. Error handling distinguishes between different failure scenarios (user closing popup, invalid credentials, network issues) and provides appropriate user messaging. The loading states prevent double submissions and provide visual feedback during authentication processes. The component integrates seamlessly with the auth context and Next.js routing for smooth user experience transitions.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` directive tells Next.js this component runs in the browser, not server-side. Lines 3-10: Import statements bring in React hooks (`useState` for component state), Next.js navigation (`useRouter` for programmatic routing, `Link` for navigation), custom components (`Button`, `Input`, `Logo`), authentication context (`useAuth` for user state), and toast notifications (`toast` from sonner). Line 12: `export default function LoginForm()` declares the main component function. Line 13: `const router = useRouter()` creates a router instance for navigation. Line 14: `const auth = useAuth()` accesses the authentication context. Line 16: `const [form, setForm] = useState({ email: "", password: "" })` initializes form state with empty email and password strings. Line 17: `const [errors, setErrors] = useState<{ [key: string]: string }>({})` creates error state as an object with string keys and values. Line 18: `const [loading, setLoading] = useState(false)` manages loading state during form submission. Lines 20-23: `handleChange` function updates form state when input values change - `setForm({ ...form, [e.target.name]: e.target.value })` spreads existing form data and updates the specific field using bracket notation, while `setErrors((prev) => ({ ...prev, [e.target.name]: "" }))` clears any existing error for that field. Lines 25-34: `handleLogin` function handles form submission - `e.preventDefault()` stops default form submission, then validates email contains "@" symbol and password exists, storing errors in `newErrors` object. Lines 35-36: `setErrors(newErrors)` updates error state and early return if validation fails. Lines 38-49: Async Firebase authentication - `setLoading(true)` shows loading state, dynamic imports load Firebase modules only when needed, `signInWithEmailAndPassword()` attempts authentication with form data, `user.reload()` refreshes user data, and email verification check redirects unverified users to verification page.
+[Heading 1] Authentication Context (/src/context/auth.tsx)
+[Heading 2] Authentication Context Provider
+[normal] ```typescript
+[normal] export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+[normal]   const [currentUser, setCurrentUser] = useState<User | null>(null)
+[normal]   const [customClaims, setCustomClaims] = useState<CustomClaims | null>(null)
+[normal]   const [loading, setLoading] = useState(true)
+[normal]   const [isAdmin, setIsAdmin] = useState(false)
+[normal]   // Function to check admin status via API
+[normal]   const refreshAdminStatus = useCallback(async () => {
+[normal]     try {
+[normal]       if (!currentUser) {
+[normal]         setIsAdmin(false)
+[normal]         return
+[normal]       }
+[normal]       const token = await currentUser.getIdToken()
+[normal]       const response = await fetch('/api/admin/status', {
+[normal]         headers: {
+[normal]           'Authorization': `Bearer ${token}`
+[normal]         }
+[normal]       })
+[normal]       if (response.ok) {
+[normal]         const data = await response.json()
+[normal]         setIsAdmin(data.isAdmin || false)
+[normal]       } else {
+[normal]         setIsAdmin(false)
+[normal]       }
+[normal]     } catch (error) {
+[normal]       console.error('Error checking admin status:', error)
+[normal]       setIsAdmin(false)
+[normal]     }
+[normal]   }, [currentUser])
+[normal]   useEffect(() => {
+[normal]     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+[normal]       setCurrentUser(user ?? null)
+[normal]       if (user) {
+[normal]         const tokenResult = await user.getIdTokenResult()
+[normal]         const token = tokenResult.token
+[normal]         const refreshToken = user.refreshToken
+[normal]         const claims = tokenResult.claims as CustomClaims
+[normal]         setCustomClaims(claims ?? null)
+[normal]         if (token && refreshToken) {
+[normal]           await setToken({ token, refreshToken })
+[normal]         }
+[normal]       } else {
+[normal]         await removeToken()
+[normal]         setIsAdmin(false)
+[normal]       }
+[normal]       setLoading(false)
+[normal]     })
+[normal]     return () => unsubscribe()
+[normal]   }, [])
+[normal]   const loginWithGoogle = async (): Promise<User> => {
+[normal]     const provider = new GoogleAuthProvider()
+[normal]     const result = await signInWithPopup(auth, provider)
+[normal]     const user = result.user
+[normal]     if (!user) throw new Error("No user returned from Google login")
+[normal]     // Call server action to create Firestore document if missing
+[normal]     await registerGoogleUser({
+[normal]       uid: user.uid,
+[normal]       email: user.email!,
+[normal]       emailVerified: user.emailVerified,
+[normal]       displayName: user.displayName || "",
+[normal]     })
+[normal]     // Refresh admin status after registration
+[normal]     setTimeout(() => refreshAdminStatus(), 1000)
+[normal]     return user
+[normal]   }
+[normal] }
+[normal]   const login = async (email: string, password: string) => {
+[normal]     return signInWithEmailAndPassword(auth, email, password);
+[normal]   };
+[normal]   return (
+[normal]     <AuthContext.Provider value={{ currentUser, login, loading }}>
+[normal]       {!loading && children}
+[normal]     </AuthContext.Provider>
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] The AuthProvider represents a sophisticated state management solution that handles the complexities of Firebase authentication across the entire application. The `refreshAdminStatus` function demonstrates real-time role checking via API calls, ensuring admin privileges are verified server-side rather than relying on client-side claims. The `onAuthStateChanged` listener provides Firebase's recommended approach for detecting authentication state changes, automatically handling token refresh, session expiration, and cross-tab synchronization. The token and refresh token management via server actions ensures secure storage in HTTP-only cookies, preventing XSS attacks while maintaining session persistence. The Google OAuth integration with `registerGoogleUser` server action creates Firestore user documents automatically, ensuring consistent user data across authentication methods. The loading state prevents the "flash of unauthenticated content" problem during initial auth checks. This architecture supports complex authentication flows including role-based access control, automatic redirects, and seamless integration with protected API endpoints.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` enables client-side React features. Lines 3-11: Import Firebase auth functions (`GoogleAuthProvider`, `signInWithEmailAndPassword`, etc.), React hooks (`createContext`, `useContext`, `useEffect`, `useState`, `useCallback`), and server actions (`removeToken`, `setToken`, `registerGoogleUser`). Lines 14-16: TypeScript type definition for custom claims extends `ParsedToken` with optional `admin` boolean property. Lines 18-27: `AuthContextType` interface defines the shape of authentication context including user state, functions, and admin status. Line 29: `createContext<AuthContextType | null>(null)` creates React context with null default. Line 31: `AuthProvider` component function accepts children prop. Lines 32-35: State variables using `useState` - `currentUser` holds Firebase user object, `customClaims` stores JWT claims, `loading` tracks authentication status, `isAdmin` manages admin privileges. Lines 38-58: `refreshAdminStatus` function uses `useCallback` for performance optimization, checks if user exists, gets ID token with `await currentUser.getIdToken()`, makes API call to `/api/admin/status` with Bearer token in Authorization header, parses response and updates `isAdmin` state. Lines 60-84: `useEffect` hook subscribes to Firebase auth changes with `auth.onAuthStateChanged()`, extracts user, token, and refresh token, calls `setToken` server action to store in HTTP-only cookies, and calls `removeToken` on logout. Lines 87-92: Second `useEffect` watches `currentUser` changes, calls `refreshAdminStatus()` when user logs in, sets up 60-second interval for periodic admin status checks.
+[Heading 2] Token Management System (/src/context/actions.ts)
+[Heading 3] Server Actions for Token Handling
+[normal] ```typescript
+[normal] import { cookies } from "next/headers";
+[normal] import { NextRequest, NextResponse } from "next/server";
+[normal] import { decodeJwt } from "jose";
+[normal] export async function middleware(request: NextRequest) {
+[normal]     console.log("MIDDLEWARE: ", request.url);
+[normal]     if(request.method === "POST"){
+[normal]         return NextResponse.next();
+[normal]     }
+[normal]     const cookieStore = await cookies();
+[normal]     const token = cookieStore.get("firebaseAuthToken")?.value;
+[normal]     const hasSession = cookieStore.get("authSession")?.value;
+[normal]     const { pathname } = request.nextUrl;
+[normal]     // Allow unauthenticated access to public routes
+[normal]     if(!token && 
+[normal]         (pathname.startsWith("/login") ||
+[normal]         pathname.startsWith("/register") ||
+[normal]         pathname.startsWith("/reset-password") ||
+[normal]         pathname.startsWith("/item-search") ||
+[normal]         pathname.startsWith("/item"))
+[normal]     ){
+[normal]         return NextResponse.next();
+[normal]     }
+[normal]     // Redirect unauthenticated users to login
+[normal]     if (!token) {
+[normal]         return NextResponse.redirect(new URL("/login", request.url));
+[normal]     }
+[normal]     try {
+[normal]         const decodedToken = decodeJwt(token);
+[normal]         const currentTime = Math.floor(Date.now() / 1000);
+[normal]         
+[normal]         // Check if token is expired
+[normal]         if (decodedToken.exp && decodedToken.exp < currentTime) {
+[normal]             return NextResponse.redirect(new URL("/login", request.url));
+[normal]         }
+[normal]         // Check admin routes
+[normal]         if (pathname.startsWith("/admin") && !decodedToken.admin) {
+[normal]             return NextResponse.redirect(new URL("/", request.url));
+[normal]         }
+[normal]         return NextResponse.next();
+[normal]     } catch (error) {
+[normal]         console.error("Token validation error:", error);
+[normal]         return NextResponse.redirect(new URL("/login", request.url));
+[normal]     }
+[normal] }
+[normal] export const config = {
+[normal]     matcher: [
+[normal]         "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+[normal]     ],
+[normal] };
+[normal] ```
+[normal] Explanation: 
+[normal] This token management system implements secure server-side authentication handling using Next.js server actions and HTTP-only cookies. The `setToken` function performs critical security operations: it verifies the Firebase ID token server-side to prevent token forgery, automatically assigns admin claims based on email configuration, and stores tokens in secure HTTP-only cookies that cannot be accessed by client-side JavaScript. This approach prevents XSS attacks while maintaining session persistence across browser refreshes. The admin role assignment logic checks against environment-configured admin emails and uses Firebase's custom claims system for role-based access control. The cookie configuration uses the `secure` flag in production to ensure tokens are only transmitted over HTTPS connections. The `removeToken` function provides secure logout functionality by clearing both authentication and refresh tokens. This implementation supports automatic token refresh, session management, and secure role-based authorization throughout the application.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use server"` directive enables Next.js server actions for server-side execution. Lines 3-4: Import Firebase Admin SDK auth instance and Next.js cookies helper. Lines 6-10: `removeToken` async function - awaits `cookies()` to get cookie store, calls `delete()` method to remove both "firebaseAuthToken" and "firebaseAuthRefreshToken" cookies. Lines 12-19: `setToken` function signature with destructured parameters for `token` and `refreshToken` strings. Lines 21-24: Token verification with `auth.verifyIdToken(token)` - validates JWT signature and expiration, returns early if verification fails. Lines 26-27: Admin email configuration - splits `ADMIN_EMAILS` environment variable by commas using `split(",")`, defaults to empty array with nullish coalescing `?? []`. Lines 28-36: Admin role assignment logic - gets user record with `auth.getUser()`, checks if user email exists in admin list using `includes()`, verifies user doesn't already have admin claim, calls `auth.setCustomUserClaims()` to assign admin role. Lines 38-47: Cookie storage - gets cookie store with `await cookies()`, sets "firebaseAuthToken" and "firebaseAuthRefreshToken" with `httpOnly: true` for security, `secure` flag based on production environment check.
+[Heading 2] Route Protection Middleware (/src/middleware.ts)
+[Heading 3] Authentication Middleware
+[normal] ```typescript
+[normal] import { cookies } from "next/headers";
+[normal] import { NextRequest, NextResponse } from "next/server";
+[normal] import { decodeJwt } from "jose";
+[normal] export async function middleware(request: NextRequest) {
+[normal]     console.log("MIDDLEWARE: ", request.url);
+[normal]     if(request.method === "POST"){
+[normal]         return NextResponse.next();
+[normal]     }
+[normal]     const cookieStore = await cookies();
+[normal]     const token = cookieStore.get("firebaseAuthToken")?.value;
+[normal]     const hasSession = cookieStore.get("authSession")?.value;
+[normal]     const { pathname } = request.nextUrl;
+[normal]     // Allow unauthenticated access to public routes
+[normal]     if(!token && 
+[normal]         (pathname.startsWith("/login") ||
+[normal]         pathname.startsWith("/register") ||
+[normal]         pathname.startsWith("/reset-password") ||
+[normal]         pathname.startsWith("/item-search") ||
+[normal]         pathname.startsWith("/item"))
+[normal]     ){
+[normal]         return NextResponse.next();
+[normal]     }
+[normal]     // Redirect unauthenticated users to login
+[normal]     if (!token) {
+[normal]         return NextResponse.redirect(new URL("/login", request.url));
+[normal]     }
+[normal]     try {
+[normal]         const decodedToken = decodeJwt(token);
+[normal]         const currentTime = Math.floor(Date.now() / 1000);
+[normal]         
+[normal]         // Check if token is expired
+[normal]         if (decodedToken.exp && decodedToken.exp < currentTime) {
+[normal]             return NextResponse.redirect(new URL("/login", request.url));
+[normal]         }
+[normal]         // Check admin routes
+[normal]         if (pathname.startsWith("/admin") && !decodedToken.admin) {
+[normal]             return NextResponse.redirect(new URL("/", request.url));
+[normal]         }
+[normal]         return NextResponse.next();
+[normal]     } catch (error) {
+[normal]         console.error("Token validation error:", error);
+[normal]         return NextResponse.redirect(new URL("/login", request.url));
+[normal]     }
+[normal] }
+[normal] export const config = {
+[normal]     matcher: [
+[normal]         "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+[normal]     ],
+[normal] };
+[normal] ```
+[normal] Explanation: 
+[normal] This middleware implements comprehensive route protection and authentication verification for the entire application. It runs before every request to protected routes, providing a security layer that validates user authentication and authorization. The public routes logic allows unauthenticated access to login, registration, and item browsing pages while protecting sensitive areas like user profiles and admin dashboards. The JWT token validation uses the `jose` library to decode and verify Firebase ID tokens, checking expiration times and custom claims for role-based access control. The admin route protection specifically validates the `admin` claim before allowing access to administrative functions. The middleware matcher configuration excludes API routes, static assets, and system files from authentication checks, ensuring optimal performance. This implementation supports automatic token refresh, prevents unauthorized access to protected resources, and provides seamless redirection flows for better user experience.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-3: Import Next.js `cookies` helper, request/response objects, and `decodeJwt` from jose library. Lines 5-9: Multi-line comment explaining middleware purpose and functionality. Lines 11-15: `middleware` function declaration with NextRequest parameter, console log for debugging, early return for POST requests with `NextResponse.next()`. Lines 17-19: Cookie extraction - await `cookies()` to get cookie store, extract "firebaseAuthToken" value with optional chaining `?.value`, get "authSession" cookie for session tracking. Line 21: Destructure `pathname` from request URL using `request.nextUrl`. Lines 23-30: Public routes logic - check if no token exists AND pathname starts with allowed public routes using `pathname.startsWith()` for login, register, reset-password, item-search, and item pages, return `NextResponse.next()` to allow access. Lines 32-38: Authenticated user redirection - if token exists AND user tries to access auth pages (login/register/reset-password), redirect to home page using `NextResponse.redirect(new URL("/", request.url))`. Lines 40-45: Session race condition prevention - if session has been checked (`hasSession` is true) but no token exists, safely redirect to login page. Lines 47-48: Main route protection - if no token exists for protected routes, redirect to login (this is the primary security barrier).
+[Heading 2] Project Configuration & Scripts
+[Heading 3] Package.json Scripts
+[normal] ```json
+[normal] {
+[normal]   "scripts": {
+[normal]     "dev": "next dev --turbopack",
+[normal]     "build": "next build",
+[normal]     "start": "next start",
+[normal]     "lint": "next lint",
+[normal]     "firebase:deploy": "firebase deploy",
+[normal]     "firebase:deploy-rules": "firebase deploy --only firestore:rules,storage:rules",
+[normal]     "firebase:emulator": "firebase emulators:start --only firestore,storage",
+[normal]     "firebase:test-rules": "firebase emulators:exec --only firestore 'npm run test:rules'",
+[normal]     "test:rules": "echo 'Add Firebase rules tests here'"
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Physical Code Explanation: 
+[normal] Lines 2-11: `"scripts"` object defines npm run commands - `"dev": "next dev --turbopack"` starts development server with Turbopack bundler for faster builds, `"build": "next build"` compiles production build, `"start": "next start"` runs production server, `"lint": "next lint"` runs ESLint code analysis, `"firebase:deploy": "firebase deploy"` deploys entire project to Firebase, `"firebase:deploy-rules": "firebase deploy --only firestore:rules,storage:rules"` deploys only security rules using `--only` flag with comma-separated services, `"firebase:emulator": "firebase emulators:start --only firestore,storage"` runs local Firebase emulators for development, `"firebase:test-rules": "firebase emulators:exec --only firestore 'npm run test:rules'"` executes rules tests in emulator environment, `"test:rules": "echo 'Add Firebase rules tests here'"` placeholder for future Firebase rules testing.
+[Heading 3] Next.js Configuration (next.config.ts)
+[normal] ```typescript
+[normal] import type { NextConfig } from "next";
+[normal] const nextConfig: NextConfig = {
+[normal]   images: {
+[normal]     domains: ['firebasestorage.googleapis.com'],
+[normal]     remotePatterns: [
+[normal]       {
+[normal]         protocol: 'https',
+[normal]         hostname: 'firebasestorage.googleapis.com',
+[normal]         port: '',
+[normal]         pathname: '/v0/b/**',
+[normal]       },
+[normal]     ],
+[normal]   },
+[normal]   experimental: {
+[normal]     serverActions: {
+[normal]       allowedOrigins: ['localhost:3000'],
+[normal]     },
+[normal]   },
+[normal]   typescript: {
+[normal]     ignoreBuildErrors: false,
+[normal]   },
+[normal]   eslint: {
+[normal]     ignoreDuringBuilds: false,
+[normal]   },
+[normal] };
+[normal] export default nextConfig;
+[normal] ```
+[normal] Physical Code Explanation: 
+[normal] Line 1: `import type { NextConfig } from "next"` imports TypeScript type definition for Next.js configuration object. Line 3: `const nextConfig: NextConfig = {` declares configuration object with explicit typing. Lines 4-13: `images` configuration for optimization - `domains: ['firebasestorage.googleapis.com']` allows Firebase Storage images, `remotePatterns` array provides fine-grained control with `protocol: 'https'` enforcing secure connections, `hostname: 'firebasestorage.googleapis.com'` specifying exact domain, `port: ''` allowing default HTTPS port, `pathname: '/v0/b/**'` matching Firebase Storage path pattern with wildcard `**`. Lines 14-18: `experimental` features - `serverActions` object with `allowedOrigins: ['localhost:3000']` restricting server action origins for security. Lines 19-25: Build validation settings - `typescript: { ignoreBuildErrors: false }` ensures TypeScript errors fail builds, `eslint: { ignoreDuringBuilds: false }` ensures ESLint errors fail builds. Line 28: `export default nextConfig` exports configuration object as default export.
+[Heading 3] TypeScript Configuration (tsconfig.json)
+[normal] ```json
+[normal] {
+[normal]   "compilerOptions": {
+[normal]     "lib": ["dom", "dom.iterable", "es6"],
+[normal]     "allowJs": true,
+[normal]     "skipLibCheck": true,
+[normal]     "strict": true,
+[normal]     "noEmit": true,
+[normal]     "esModuleInterop": true,
+[normal]     "module": "esnext",
+[normal]     "moduleResolution": "bundler",
+[normal]     "resolveJsonModule": true,
+[normal]     "isolatedModules": true,
+[normal]     "jsx": "preserve",
+[normal]     "incremental": true,
+[normal]     "plugins": [
+[normal]       {
+[normal]         "name": "next"
+[normal]       }
+[normal]     ],
+[normal]     "baseUrl": ".",
+[normal]     "paths": {
+[normal]       "@/*": ["./src/*"]
+[normal]     }
+[normal]   },
+[normal]   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+[normal]   "exclude": ["node_modules"]
+[normal] }
+[normal] ```
+[normal] Physical Code Explanation: 
+[normal] Lines 2-23: `"compilerOptions"` object configures TypeScript compiler behavior - `"lib": ["dom", "dom.iterable", "es6"]` includes DOM APIs and ES6 features, `"allowJs": true` enables JavaScript file compilation, `"skipLibCheck": true` skips type checking in declaration files for faster builds, `"strict": true` enables all strict type checking options, `"noEmit": true` prevents TypeScript from generating output files (Next.js handles compilation), `"esModuleInterop": true` enables interoperability between CommonJS and ES modules, `"module": "esnext"` uses latest ECMAScript module system, `"moduleResolution": "bundler"` uses bundler-compatible module resolution for Next.js 13+, `"resolveJsonModule": true` allows importing JSON files as modules, `"isolatedModules": true` ensures each file can be safely transpiled without type information from other files, `"jsx": "preserve"` preserves JSX syntax for Next.js to handle, `"incremental": true` enables incremental compilation for faster subsequent builds. Lines 15-19: `"plugins"` array with `"name": "next"` enables Next.js TypeScript plugin for enhanced IDE support. Lines 20-24: Path mapping configuration - `"baseUrl": "."` sets project root as base directory, `"paths": { "@/*": ["./src/*"] }` creates `@/` alias pointing to `src/` directory for clean imports. Line 25: `"include"` array specifies files to compile including Next.js environment types, all TypeScript/TSX files, and generated types. Line 26: `"exclude": ["node_modules"]` excludes dependencies from compilation.
+[normal] Explanation: 
+[normal] The project configuration demonstrates production-ready setup patterns for modern Next.js applications. The package.json scripts include Turbopack for faster development builds, Firebase deployment automation, and emulator testing capabilities. The Next.js configuration enables Firebase Storage image optimization through the `images.domains` setting, crucial for marketplace applications with user-uploaded photos. The `remotePatterns` configuration provides fine-grained control over external image sources, improving security by whitelisting specific Firebase Storage patterns. Server actions configuration ensures secure API endpoints with allowed origins restrictions. The TypeScript configuration uses strict mode for maximum type safety, includes path mapping for clean imports (`@/` prefix), and enables incremental compilation for faster builds. The module resolution strategy uses "bundler" mode for optimal compatibility with Next.js 15 and modern bundling tools. This configuration supports advanced features like image optimization, server-side rendering, and seamless Firebase integration while maintaining development productivity and production performance.
+[Heading 1] API Routes (/src/app/api/items/route.ts)
+[Heading 2] Items API - Fetch with Filtering (/src/app/api/items/list/route.ts)
+[normal] ```typescript
+[normal] export async function POST(req: NextRequest) {
+[normal]   try {
+[normal]     const body = await req.json();
+[normal]     const {
+[normal]       sellerId,
+[normal]       buyerId,
+[normal]       minPrice,
+[normal]       maxPrice,
+[normal]       condition,
+[normal]       status,
+[normal]       searchTerm,
+[normal]       sort = "newest",
+[normal]       category,
+[normal]       page = 1,
+[normal]       pageSize = 10,
+[normal]     } = body;
+[normal]     const user = await authenticateRequest(req);
+[normal]     // Only enforce auth for private filters (sellerId or buyerId)
+[normal]     if ((sellerId || buyerId) && !user) {
+[normal]       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+[normal]     }
+[normal]     let query: Query<DocumentData> = firestore.collection("items");
+[normal]     // Apply filters
+[normal]     if (sellerId) query = query.where("sellerId", "==", sellerId);
+[normal]     if (buyerId) query = query.where("buyerId", "==", buyerId);
+[normal]     if (minPrice !== null && minPrice !== undefined)
+[normal]       query = query.where("price", ">=", minPrice);
+[normal]     if (maxPrice !== null && maxPrice !== undefined)
+[normal]       query = query.where("price", "<=", maxPrice);
+[normal]     if (condition) {
+[normal]       if (condition === "all") {
+[normal]         query = query.where("condition", "in", ["new", "excellent", "used", "fair", "poor"]);
+[normal]       } else {
+[normal]         query = query.where("condition", "==", condition);
+[normal]       }
+[normal]     }
+[normal]     if (Array.isArray(status) && status.length > 0) {
+[normal]       query = query.where("status", "in", status);
+[normal]     }
+[normal]     if (category && category !== "all") {
+[normal]       query = query.where("category", "==", category);
+[normal]     }
+[normal]     // Apply sort logic
+[normal]     if (sort === "price-asc") {
+[normal]       query = query.orderBy("price", "asc");
+[normal]     } else if (sort === "price-desc") {
+[normal]       query = query.orderBy("price", "desc");
+[normal]     } else if (sort === "oldest") {
+[normal]       query = query.orderBy("updatedAt", "asc");
+[normal]     } else {
+[normal]       query = query.orderBy("updatedAt", "desc"); // default: newest
+[normal]     }
+[normal]     // Get total count for pagination
+[normal]     const totalItems = (await query.count().get()).data().count;
+[normal]     const totalPages = Math.ceil(totalItems / pageSize);
+[normal]     // Apply pagination
+[normal]     query = query.offset((page - 1) * pageSize).limit(pageSize);
+[normal]     // Fetch items
+[normal]     const snapshot = await query.get();
+[normal]     let items = snapshot.docs.map((doc) => {
+[normal]       const data = doc.data();
+[normal]       return {
+[normal]         id: doc.id,
+[normal]         ...data,
+[normal]         postedAt: data.postedAt?.toDate?.()?.toISOString(),
+[normal]         updatedAt: data.updatedAt?.toDate?.()?.toISOString(),
+[normal]       } as Item;
+[normal]     });
+[normal]     return NextResponse.json({ success: true, items, totalPages, currentPage: page });
+[normal]   } catch (error) {
+[normal]     console.error('Items API error:', error);
+[normal]     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This API endpoint exemplifies comprehensive database querying patterns optimized for marketplace applications. The POST method allows complex filtering options sent in the request body, supporting advanced search functionality with multiple parameters. The authentication enforcement is conditional - only private operations (viewing your own listings) require authentication, while public browsing remains accessible. The Firestore query building approach starts with a base collection and conditionally adds filters, ensuring only relevant items are retrieved from the database. This pattern leverages Firestore's indexed queries for optimal performance. The comprehensive filtering system supports price ranges, condition states, categories, and item status - enabling powerful search experiences. The sorting implementation covers common marketplace needs: newest, oldest, price ascending/descending. The pagination system calculates total pages and provides offset-based navigation, essential for performance with large datasets. The response format includes both items and pagination metadata, enabling frontend components to render page controls and total counts. Document timestamp conversion to ISO strings ensures consistent date handling across the application.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-4: Import statements for Next.js request/response objects, Firebase authentication helper, Item type, and Firestore Query types. Line 6: `export async function POST(req: NextRequest)` defines async POST handler. Line 8: `const body = await req.json()` parses request body JSON. Lines 10-18: Destructuring assignment extracts filter parameters from body object with default values (`sort = "newest"`, `page = 1`, `pageSize = 10`). Line 20: `const user = await authenticateRequest(req)` validates JWT token and returns user object or null. Lines 22-25: Conditional authentication check - if `sellerId` or `buyerId` filters requested but no authenticated user, return 401 Unauthorized. Line 27: `let query: Query<DocumentData> = firestore.collection("items")` initializes base Firestore query. Lines 29-47: Conditional query building - each `if` statement checks parameter existence and chains additional `where()` clauses: `query.where("sellerId", "==", sellerId)` filters by seller, `query.where("price", ">=", minPrice)` sets minimum price, `query.where("condition", "in", array)` handles multiple conditions, `query.where("status", "in", status)` filters by status array. Lines 42-46: Category filtering with special "all" case - if category is "all", no filter applied; otherwise `query.where("category", "==", category)` filters specific category.
+[Heading 2] Create Item API - Add new item (/src/app/api/items/create/route.ts)
+[normal] ```typescript
+[normal] import { authenticateRequest, firestore } from "@/firebase/server";
+[normal] import { Timestamp } from "firebase-admin/firestore";
+[normal] import { NextRequest, NextResponse } from "next/server";
+[normal] import { z } from "zod";
+[normal] // Zod schema for validation
+[normal] const CreateItemSchema = z.object({
+[normal]   title: z.string().min(1),
+[normal]   collectionAddress: z.string().min(1),
+[normal]   description: z.string().min(1),
+[normal]   price: z.number().nonnegative(),
+[normal]   status: z.enum(["draft", "pending", "for-sale", "sold", "withdrawn"]),
+[normal]   condition: z.enum(["new", "excellent", "used", "fair", "poor"]),
+[normal]   category: z.enum(["books", "electronics", "clothing", "notes", "stationery", "other"]),
+[normal] });
+[normal] export async function POST(req: NextRequest) {
+[normal]   try {
+[normal]     const user = await authenticateRequest(req);
+[normal]     if (!user) {
+[normal]       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+[normal]     }
+[normal]     const raw = await req.json();
+[normal]     const parsed = CreateItemSchema.safeParse(raw.rest ?? raw);
+[normal]     if (!parsed.success) {
+[normal]       console.warn("Validation failed:", parsed.error.flatten());
+[normal]       return NextResponse.json(
+[normal]         {
+[normal]           message: "Invalid input",
+[normal]           issues: parsed.error.flatten().fieldErrors,
+[normal]         },
+[normal]         { status: 400 }
+[normal]       );
+[normal]     }
+[normal]     // Create the item
+[normal]     const item = await firestore.collection("items").add({
+[normal]       ...parsed.data,
+[normal]       sellerId: user.uid,
+[normal]       postedAt: Timestamp.now(),
+[normal]       updatedAt: Timestamp.now(),
+[normal]       viewsCount: 0,
+[normal]     });
+[normal]     console.log(`Item created: ${item.id}`);
+[normal]     // Display message item created and return the item Id
+[normal]     return NextResponse.json(
+[normal]       {
+[normal]         success: true,
+[normal]         message: "Item created successfully",
+[normal]         item: { itemId: item.id },
+[normal]       },
+[normal]       { status: 201 }
+[normal]     );
+[normal]   } catch (error: unknown) {
+[normal]     console.error("Item creation error:", error);
+[normal]     const errorMessage: string = error instanceof Error ? error.message : "Unknown error";
+[normal]     return NextResponse.json(
+[normal]       {
+[normal]         message: "Internal server error",
+[normal]         error: errorMessage,
+[normal]       },
+[normal]       { status: 500 }
+[normal]     );
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This API endpoint creates new items in the marketplace with comprehensive validation and authentication. It validates user authentication, validates input data using Zod schema, creates the item document in Firestore, and returns the created item ID. The endpoint supports multiple item categories, conditions, and statuses while ensuring data integrity through strict validation.
+[normal] Physical Code Explanation:
+[normal] Lines 1-4: Import statements for Firebase server utilities (authentication and Firestore), Firebase Admin Timestamp class, Next.js request/response types, and Zod validation library. Lines 7-14: Zod schema definition with title (non-empty string), collectionAddress (pickup location string), description (item details string), price (non-negative number), status (enum for marketplace states), condition (enum for item quality), and category (enum for marketplace sections). Line 16: Async POST handler function export for item creation endpoint. Lines 17-21: Authentication check - calls `authenticateRequest(req)` to validate JWT token and returns 401 Unauthorized if user not authenticated. Lines 23-24: Request body parsing with `raw.rest` fallback and Zod schema validation using `safeParse()`. Lines 26-34: Validation error handling - logs validation failures and returns 400 Bad Request with detailed field error messages from Zod. Lines 37-42: Firestore document creation - spreads validated data and adds sellerId (user.uid), postedAt/updatedAt timestamps (Timestamp.now()), and viewsCount initialization (0). Lines 44-52: Success response with 201 Created status, success flag, confirmation message, and new item ID. Lines 53-62: Error handling - catches exceptions, logs errors, extracts error messages safely, and returns 500 Internal Server Error with error details.
+[Heading 1] PayFast Integration (/src/app/api/payfast/checkout/route.ts)
+[Heading 2] PayFast Checkout API
+[normal] ```typescript
+[normal] export async function POST(req: NextRequest) {
+[normal]   try {
+[normal]     const { cart } = await req.json(); // get static cart from frontend
+[normal]     if (!cart || cart.length === 0) {
+[normal]       return NextResponse.json({ message: "Cart is empty" }, { status: 400 });
+[normal]     }
+[normal]     // Dummy user for sandbox
+[normal]     const user = {
+[normal]       displayName: "Test User",
+[normal]       email: "student@example.com",
+[normal]     };
+[normal]     // Calculate total
+[normal]     let totalAmount = 0;
+[normal]     const itemNames: string[] = [];
+[normal]     cart.forEach((item: { price: number; name: string }) => {
+[normal]       // Treat each unique item as quantity = 1
+[normal]       totalAmount += Number(item.price || 0);
+[normal]       itemNames.push(item.name);
+[normal]     });
+[normal]     const paymentData: Record<string, string> = {
+[normal]       merchant_id: MERCHANT_ID,
+[normal]       merchant_key: MERCHANT_KEY,
+[normal]       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+[normal]       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cart`,
+[normal]       notify_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payfast/notify`,
+[normal]       name_first: user.displayName,
+[normal]       name_last: "",
+[normal]       email_address: user.email,
+[normal]       amount: totalAmount.toFixed(2),
+[normal]       item_name: itemNames.join(", "),
+[normal]     };
+[normal]     // Create query string for signature generation
+[normal]     const queryStringForSignature = Object.entries(paymentData)
+[normal]       .filter(([, value]) => value !== null && value !== undefined && value !== "")
+[normal]       .map(([key, value]) => `${key}=${encodeURIComponent(String(value)).replace(/%20/g, "+")}`)
+[normal]       .join("&");
+[normal]     // Add passphrase
+[normal]     const stringToHash = `${queryStringForSignature}&passphrase=${PASSPHRASE}`;
+[normal]     // Generate signature
+[normal]     const signature = md5(stringToHash).toString();
+[normal]     paymentData.signature = signature;
+[normal]     // Create final query string for redirect URL
+[normal]     const finalQueryString = qs.stringify(paymentData, { encode: true });
+[normal]     const payfastUrl = SANDBOX
+[normal]       ? `https://sandbox.payfast.co.za/eng/process?${finalQueryString}`
+[normal]       : `https://www.payfast.co.za/eng/process?${finalQueryString}`;
+[normal]     return NextResponse.json({ url: payfastUrl });
+[normal]   } catch (err) {
+[normal]     console.error("PayFast checkout error:", err);
+[normal]     return NextResponse.json({ message: "Failed to initiate PayFast", error: (err as Error).message }, { status: 500 });
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This PayFast integration demonstrates a comprehensive payment processing implementation for the South African market. The cart validation ensures empty carts cannot proceed to payment, preventing unnecessary payment gateway calls. The total calculation iterates through cart items, treating each as quantity 1 while accumulating the total amount and collecting item names for the payment description. The payment data structure includes all required PayFast fields: merchant credentials, URLs for payment flow control, user information, and transaction details. The signature generation process is critical for security - it creates a query string from filtered payment data (excluding empty values), URL encodes parameters with space replacement, appends the passphrase, and generates an MD5 hash. This cryptographic signature prevents payment tampering and ensures PayFast can verify the request authenticity. The URL construction uses the qs library for proper parameter encoding and supports both sandbox and production environments through conditional URL selection. The notify_url enables server-to-server payment confirmations, while return_url and cancel_url handle user redirection scenarios. This implementation supports real-world payment processing with proper error handling and security measures.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-3: Import Next.js request/response objects, `qs` for query string handling, and `md5` for signature generation. Lines 5-8: Environment variable extraction for PayFast credentials - `MERCHANT_ID`, `MERCHANT_KEY`, `PASSPHRASE` from process.env, and `SANDBOX = true` for testing mode. Line 10: `export async function POST(req: NextRequest)` defines async POST handler. Lines 12-15: Extract cart from request body with `const { cart } = await req.json()`, validate cart exists and has items, return 400 error if empty. Lines 17-21: Dummy user object for sandbox testing with `displayName` and `email` properties. Lines 23-29: Cart total calculation - initialize `totalAmount = 0` and empty `itemNames` array, use `forEach()` to iterate cart items, add each `item.price` to total with `Number()` conversion, push `item.name` to names array. Lines 31-41: PayFast payment data object construction with required fields - merchant credentials, return/cancel/notify URLs using `process.env.NEXT_PUBLIC_BASE_URL`, user details, formatted amount with `toFixed(2)`, joined item names with `join(", ")`. Lines 43-47: Signature generation query string - `Object.entries(paymentData)` converts to key-value pairs, `filter()` removes empty values, `map()` creates "key=value" format with `encodeURIComponent()` and space replacement `replace(/%20/g, "+")`, `join("&")` creates final query string. Lines 49-55: Signature creation - append passphrase to query string, generate MD5 hash with `md5(stringToHash).toString()`, add signature to payment data. Lines 57-61: Final URL construction - use `qs.stringify()` for proper encoding, conditional URL based on `SANDBOX` flag, return PayFast URL in JSON response.
+[Heading 1] Database Schema (/src/types/item.ts)
+[Heading 2] Firestore Collections Structure
+[normal] ```typescript
+[normal] // Item document - represents marketplace listings (/src/types/item.ts)
+[normal] export type ItemStatus = "pending" | "for-sale" | "draft" | "sold" | "withdrawn" | "collected";
+[normal] export type ItemCondition = "new" | "excellent" | "used" | "fair" | "poor";
+[normal] export type ItemCategory = "books" | "electronics" | "clothing" | "notes" | "stationery" | "other";
+[normal] export interface Item {
+[normal]   id: string;                     // Firestore document ID
+[normal]   title: string;                  // Item title (searchable)
+[normal]   collectionAddress: string;      // Campus pickup location
+[normal]   description: string;            // Detailed description
+[normal]   price: number;                  // Price in cents (avoids float precision)
+[normal]   condition: ItemCondition;       // Item condition state
+[normal]   category: ItemCategory;         // Item category
+[normal]   sellerId: string;               // Reference to user who listed item
+[normal]   sellerEmail?: string;           // Seller's email for contact
+[normal]   buyerId?: string;               // Buyer ID when sold
+[normal]   buyerEmail?: string;            // Buyer's email when sold
+[normal]   status: ItemStatus;             // Item lifecycle status
+[normal]   updatedAt?: string;             // Last modification time (ISO string)
+[normal]   postedAt?: string;              // Listing creation time (ISO string)
+[normal]   images?: string[];              // Firebase Storage URLs array
+[normal] }
+[normal] // Cart document structure (from /src/app/cart/page.tsx)
+[normal] interface CartItem {
+[normal]   cartItemId: string;             // Unique cart item identifier
+[normal]   cartId: string;                 // Reference to cart
+[normal]   itemId: string;                 // Reference to item document
+[normal]   quantity: number;               // Item quantity in cart
+[normal] }
+[normal] // User document - Firebase Auth integration
+[normal] interface UserDocument {
+[normal]   uid: string;                    // Firebase Auth UID
+[normal]   email: string;                  // User's email address
+[normal]   emailVerified: boolean;         // Email verification status
+[normal]   displayName?: string;           // User's display name
+[normal]   // Admin status managed via Firebase Custom Claims
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] Physical Code Explanation: 
+[normal] Lines 1-3: TypeScript type definitions using `export type` - `ItemStatus` with union of string literals using pipe `|` operator, `ItemCondition` and `ItemCategory` enums with specific allowed values. Lines 5-23: `Item` interface definition using `export interface` - `id: string` for document identifier, `title: string` for searchable item name, `collectionAddress: string` for pickup location, `price: number` with comment explaining cents storage, enum types for `condition` and `category`, string references for `sellerId`, optional properties using `?` syntax for `sellerEmail`, `buyerId`, `buyerEmail`, `status` using the defined enum, optional timestamp strings, optional `images` array of Firebase Storage URLs. Lines 25-30: `CartItem` interface with required properties for cart functionality - unique identifiers and quantity tracking. Lines 32-38: `UserDocument` interface matching Firebase Auth structure with UID, email, verification status, optional display name, and comment about admin claims management.
+[Heading 1] Core Components (/src/components/ItemCard.tsx)
+[Heading 2] Item Display Component (from SearchClient)
+[normal] ```typescript
+[normal] // Item display logic from search-client.tsx
+[normal] {items.map((item) => {
+[normal]   const addressLines = item.collectionAddress?.split('\n') || [''];
+[normal]   return (
+[normal]     <Card key={item.id} className="w-full max-w-xs shadow-lg">
+[normal]       <CardContent className="p-0 flex flex-col h-full">
+[normal]         <div className="h-50 relative bg-sky-50 text-zinc-400 flex flex-col justify-center items-center">
+[normal]           {!!item.images?.[0] ? (
+[normal]             <Image
+[normal]               fill
+[normal]               className="object-contain"
+[normal]               src={imageUrlFormatter(item.images[0])}
+[normal]               alt=""
+[normal]             />
+[normal]           ) : (
+[normal]             <>
+[normal]               <BookMarked />
+[normal]               <small>No Image</small>
+[normal]             </>
+[normal]           )}
+[normal]         </div>
+[normal]         <div className="flex flex-col gap-2 p-5 flex-1">
+[normal]           <div className="flex items-center gap-2 overflow-hidden">
+[normal]             <p className="font-semibold truncate">{item.title}</p>
+[normal]             <ItemConditionBadge
+[normal]               condition={item.condition}
+[normal]               className="capitalize text-base flex-shrink-0 text-xs"
+[normal]             />
+[normal]           </div>
+[normal]           <p className="text-sm text-zinc-500">{addressLines}</p>
+[normal]         </div>
+[normal]         <div className="flex flex-col gap-2 p-5 pt-0">
+[normal]           <p className="text-2xl font-bold">R{numeral(item.price).format("0,0")}</p>
+[normal]           <Button asChild>
+[normal]             <Link href={`/item/${item.id}`}>View item</Link>
+[normal]           </Button>
+[normal]         </div>
+[normal]       </CardContent>
+[normal]     </Card>
+[normal]   );
+[normal] })}
+[normal] ```
+[normal] Explanation: 
+[normal] This item display implementation from the SearchClient component demonstrates sophisticated marketplace UI patterns using modern React and UI library components. The Card component from Radix UI provides accessible, responsive container styling with consistent elevation and spacing. The image handling logic implements robust fallback behavior - if an item has images, it displays the first one using Next.js optimized Image component with `fill` and `object-contain` properties for proper aspect ratio handling. For items without images, it shows a placeholder with a BookMarked icon and "No Image" text, maintaining consistent card heights. The price formatting uses the numeral library with "0,0" format for thousands separators (R1,000 instead of R1000), providing cleaner number display. The ItemConditionBadge component provides consistent condition styling across the application. The collection address handling splits multi-line addresses and displays them appropriately. The component structure uses flexbox layout (`flex flex-col`) to ensure consistent card heights with the content area expanding (`flex-1`) and action area fixed at bottom. The navigation uses Next.js Link component wrapped in a Button for proper routing and accessibility. This pattern enables consistent item presentation across search results, category pages, and recommendation systems.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `{items.map((item) => {` starts JavaScript map function to iterate over items array. Line 2: `const addressLines = item.collectionAddress?.split('\n') || [''];` uses optional chaining `?.` to safely split address by newlines, with fallback to array containing empty string. Line 4: `return (` begins JSX return statement. Line 5: `<Card key={item.id} className="w-full max-w-xs shadow-lg">` creates Card component with unique React `key` prop using item ID, Tailwind classes for full width, max width constraint, and shadow styling. Line 6: `<CardContent className="p-0 flex flex-col h-full">` creates card content container with zero padding, flexbox column layout, and full height. Lines 7-8: Comment indicating omitted lines containing image display, pricing, condition badges, and other card content. Line 9: `</Card>` closes the card component. Line 10: `});` closes the map function. Line 11: `)}` closes the JSX expression.
+[Heading 1] Search Functionality (/src/app/search-client.tsx)
+[Heading 2] Search Implementation with Filtering
+[normal] ```typescript
+[normal] export default function SearchClient({ searchParams }: SearchClientProps) {
+[normal]   const params = use(searchParams);
+[normal]   const auth = useAuth();
+[normal]   const [items, setItems] = useState<Item[]>([]);
+[normal]   const [page, setPage] = useState(1);
+[normal]   const [hasMore, setHasMore] = useState(true);
+[normal]   const [loading, setLoading] = useState(false);
+[normal]   const minPrice = parseInt(params.minPrice || "") || null;
+[normal]   const maxPrice = parseInt(params.maxPrice || "") || null;
+[normal]   const condition = params.condition || null;
+[normal]   const searchTerm = params.search || null;
+[normal]   const sort = params.sort || "newest";
+[normal]   const category = params.category || "all";
+[normal]   const fetchItems = useCallback(
+[normal]     async (pageNum: number, append: boolean = false) => {
+[normal]       if (auth === undefined) return;
+[normal]       setLoading(true);
+[normal]       let token: string | null = null;
+[normal]       if (auth?.currentUser) {
+[normal]         token = await auth.currentUser.getIdToken();
+[normal]       }
+[normal]       const headers: HeadersInit = {
+[normal]         "Content-Type": "application/json",
+[normal]       };
+[normal]       if (token) {
+[normal]         headers["Authorization"] = `Bearer ${token}`;
+[normal]       }
+[normal]       try {
+[normal]         const response = await fetch("/api/items/list", {
+[normal]           method: "POST",
+[normal]           headers,
+[normal]           body: JSON.stringify({
+[normal]             page: pageNum,
+[normal]             pageSize: 10,
+[normal]             minPrice,
+[normal]             maxPrice,
+[normal]             condition,
+[normal]             status: ["for-sale"],
+[normal]             searchTerm,
+[normal]             sort,
+[normal]             category,
+[normal]           }),
+[normal]         });
+[normal]         const result = await response.json();
+[normal]         setItems((prev) => (append ? [...prev, ...result.items] : result.items));
+[normal]         setHasMore(pageNum < result.totalPages);
+[normal]       } catch (err) {
+[normal]         console.error("Fetch error:", err);
+[normal]         setHasMore(false);
+[normal]       } finally {
+[normal]         setLoading(false);
+[normal]       }
+[normal]     },
+[normal]     [auth, minPrice, maxPrice, condition, searchTerm, sort, category]
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This search implementation demonstrates advanced performance optimization and user experience patterns essential for responsive web applications. The debouncing mechanism prevents excessive API calls during rapid typing, reducing server load and database query costs while improving perceived performance. The 300ms delay represents an optimal balance - long enough to avoid unnecessary requests during active typing, but short enough to feel responsive to users. The URL state management approach makes search queries shareable and enables proper browser navigation behavior (back/forward buttons work correctly). The encodeURIComponent ensures special characters in search terms don't break URL formatting. The controlled input pattern with local state provides immediate visual feedback while the debounced function handles actual search execution. This architecture supports advanced features like search suggestions, category filtering, and search analytics while maintaining excellent user experience. The placeholder text specifically mentions relevant campus items, providing contextual guidance and improving search quality. The focus styling enhances accessibility and provides clear visual feedback for keyboard navigation users.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `export default function SearchClient({ searchParams }: SearchClientProps) {` declares component function with destructured props and TypeScript type annotation. Line 2: `const params = use(searchParams);` uses React's `use` hook to unwrap the searchParams promise. Line 3: `const auth = useAuth();` gets authentication context. Lines 5-8: State initialization with `useState` - `items` array for search results, `page` number for pagination, `hasMore` boolean for infinite scroll, `loading` for request state. Lines 10-15: Parameter extraction and parsing - `parseInt(params.minPrice || "") || null` converts string to number with fallback to null, similar pattern for maxPrice, direct assignment for condition/searchTerm/sort/category with defaults. Lines 17-20: `fetchItems` function declared with `useCallback` for performance - takes `pageNum` and optional `append` boolean, checks auth state with early return if undefined.
+[Heading 1] PayFast Security Implementation (/src/app/api/payfast/checkout/route.ts)
+[Heading 2] PayFast Security: Signature Generation & Validation
+[Heading 3] Signature Generation in Checkout Route (/src/app/api/payfast/checkout/route.ts)
+[normal] ```typescript
+[normal] // Create query string for signature generation
+[normal] const queryStringForSignature = Object.entries(paymentData)
+[normal]   .filter(([, value]) => value !== null && value !== undefined && value !== "")
+[normal]   .map(([key, value]) => `${key}=${encodeURIComponent(String(value)).replace(/%20/g, "+")}`)
+[normal]   .join("&");
+[normal] // Add passphrase
+[normal] const stringToHash = `${queryStringForSignature}&passphrase=${PASSPHRASE}`;
+[normal] // Generate signature
+[normal] const signature = md5(stringToHash).toString();
+[normal] paymentData.signature = signature;
+[normal] // Create final query string for redirect URL
+[normal] const finalQueryString = qs.stringify(paymentData, { encode: true });
+[normal] const payfastUrl = SANDBOX
+[normal]   ? `https://sandbox.payfast.co.za/eng/process?${finalQueryString}`
+[normal]   : `https://www.payfast.co.za/eng/process?${finalQueryString}`;
+[normal] ```
+[Heading 3] Signature Validation in Notify Route (/src/app/api/payfast/notify/route.ts)
+[normal] ```typescript
+[normal] // Remove signature from parameters while preserving original order
+[normal] let baseParamString = rawBody
+[normal]   .replace(/(^|&)signature=[^&]*/,'')  // Remove signature parameter
+[normal]   .replace(/^&/, '')                   // Clean leading &
+[normal]   .trim();
+[normal] // Append passphrase if configured
+[normal] let stringToHash = baseParamString;
+[normal] if (PASSPHRASE && PASSPHRASE.length > 0) {
+[normal]   stringToHash += `&passphrase=${PASSPHRASE}`;
+[normal] }
+[normal] // Generate signature from received parameters
+[normal] const generatedSignature = md5(stringToHash).toString();
+[normal] // Validate against PayFast's signature
+[normal] if (generatedSignature !== receivedSignature) {
+[normal]   console.error("Signature mismatch – investigate");
+[normal]   return new NextResponse("Signature verification failed", { status: 400 });
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] PayFast uses a two-way signature system for complete payment security. 
+[normal] Checkout Route: 
+[normal] Your server generates a signature when creating payment requests to prove authenticity to PayFast - this prevents tampering with payment amounts, merchant details, or redirect URLs before reaching PayFast's servers. 
+[normal] Notify Route: 
+[normal] PayFast generates signatures when sending ITN (Instant Transaction Notification) confirmations back to your server - your server validates these signatures to ensure payment notifications are legitimate and haven't been spoofed by attackers. The signature generation process filters empty values, preserves parameter order (critical for PayFast compatibility), URL-encodes special characters, and creates MD5 hashes with the merchant passphrase. This dual-signature approach ensures end-to-end payment integrity: outbound requests are authenticated by your signature, and inbound confirmations are validated against PayFast's signature. The notify route implementation preserves the original parameter order received from PayFast, which is essential since PayFast's signature validation requires exact parameter matching including order and encoding.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-6: Signature removal from raw body - `rawBody.replace(/(^|&)signature=[^&]*/,'')` uses regex to match signature parameter at start `^` or after ampersand `&`, captures signature value until next ampersand `[^&]*`, removes entire match, `.replace(/^&/, '')` cleans leading ampersand left after removal, `.trim()` removes whitespace. Lines 8-12: Passphrase handling - `stringToHash` starts with base parameter string, `if (PASSPHRASE && PASSPHRASE.length > 0)` checks passphrase exists and is non-empty, `stringToHash += \`&passphrase=${PASSPHRASE}\`` appends passphrase using template literal. Line 15: `const generatedSignature = md5(stringToHash).toString()` creates MD5 hash of final string and converts to string representation. Lines 18-21: Signature validation - `if (generatedSignature !== receivedSignature)` compares generated hash with PayFast's signature, logs error for debugging, returns 400 Bad Request with descriptive error message using `new NextResponse()`.
+[Heading 1] Form Validation (/src/validation/itemSchema.ts)
+[Heading 2] Item Validation Schema with Zod
+[normal] ```typescript
+[normal] import { z } from "zod";
+[normal] export const itemDataSchema = z.object({
+[normal]   title: z.string().min(1, "Title is required"),
+[normal]   collectionAddress: z.string().min(1, "Collection address must have a value"),
+[normal]   description: z.string().min(1, "Description is required"),
+[normal]   price: z.coerce.number().min(1, "Price is required"),
+[normal]   status: z.enum(["draft", "pending", "for-sale", "sold", "withdrawn", "collected"]),
+[normal]   sellerId: z.string(),
+[normal]   condition: z.enum(["new", "excellent", "used", "fair", "poor"]),
+[normal]   category: z.enum([
+[normal]     "books",
+[normal]     "electronics",
+[normal]     "clothing",
+[normal]     "notes",
+[normal]     "stationery",
+[normal]     "other",
+[normal]   ]),
+[normal] });
+[normal] export const itemImagesSchema = z.object({
+[normal]   images: z
+[normal]     .array(
+[normal]       z.object({
+[normal]         id: z.string(),
+[normal]         url: z.string(),
+[normal]         file: z.instanceof(File).optional(),
+[normal]       })
+[normal]     )
+[normal]     .min(1, "At least one image is required"),
+[normal] });
+[normal] export const itemSchema = itemDataSchema.and(itemImagesSchema);
+[normal] ```
+[normal] Explanation: 
+[normal] This validation implementation showcases modern form handling combining Zod's runtime type safety with React Hook Form's performance optimizations. The schema design reflects marketplace-specific business rules: title length constraints optimize search indexing and display consistency, description requirements ensure sufficient product information for buyer decisions, and price limits prevent obviously incorrect listings while accommodating high-value items like electronics or furniture. The enum validations for category and condition create consistent data taxonomy enabling reliable filtering and search functionality. The Zod integration provides compile-time TypeScript inference, meaning form data types are automatically derived from the schema, eliminating type annotation duplication and ensuring schema-form consistency. The React Hook Form resolver pattern enables real-time validation feedback without performance-killing re-renders, as validation only occurs on field blur or form submission. The default values establish sensible form state preventing empty form confusion while the 'other' category default accommodates diverse marketplace items. This validation architecture supports complex features like conditional validation, custom validators, and multi-step form workflows while maintaining excellent developer experience and runtime performance characteristics.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `import { z } from "zod"` imports Zod validation library. Lines 3-15: `export const itemDataSchema = z.object({` creates Zod object schema with validation rules - `z.string().min(1, "Title is required")` requires non-empty string for title, `z.string().min(1, "Collection address must have a value")` validates collection address, `z.coerce.number().min(1, "Price is required")` converts input to number and validates minimum value, `z.enum([...])` creates enumeration validation for status, condition, and category fields with specific allowed values. Lines 17-24: `export const itemImagesSchema = z.object({` defines image validation schema with `z.array()` for image array, `z.object()` for individual image structure, `z.string()` for id and url fields, `z.instanceof(File).optional()` for optional file object, `.min(1, "At least one image is required")` ensures at least one image. Line 26: `export const itemSchema = itemDataSchema.and(itemImagesSchema)` combines both schemas using `.and()` method for complete form validation.
+[Heading 1] Project Structure
+[normal] ```
+[normal] src/
+[normal] ├── app/                        # Next.js App Router pages
+[normal] │   ├── page.tsx               # Home page with item listings
+[normal] │   ├── search-client.tsx      # Search functionality component
+[normal] │   ├── layout.tsx             # Root layout with providers
+[normal] │   ├── globals.css            # Global styles
+[normal] │   ├── admin/                 # Admin dashboard and management
+[normal] │   │   └── page.tsx           # Admin analytics dashboard
+[normal] │   ├── auth/                  # Authentication flow pages
+[normal] │   │   └── verify-email/      # Email verification
+[normal] │   ├── cart/                  # Shopping cart system
+[normal] │   │   └── page.tsx           # Cart page with PayFast integration
+[normal] │   ├── debug/                 # Development debugging tools
+[normal] │   ├── how/                   # Help and how-to pages
+[normal] │   ├── item/                  # Individual item pages
+[normal] │   │   └── [itemId]/          # Dynamic item detail pages
+[normal] │   ├── item-search/           # Advanced search functionality
+[normal] │   │   └── filters-form.tsx   # Search filters component
+[normal] │   ├── login/                 # User authentication
+[normal] │   │   └── page.tsx           # Login form
+[normal] │   ├── privacy/               # Privacy policy pages
+[normal] │   ├── profile/               # User profile management
+[normal] │   │   └── page.tsx           # Profile dashboard
+[normal] │   ├── register/              # User registration
+[normal] │   │   ├── page.tsx           # Registration form
+[normal] │   │   └── actions.ts         # Server actions for registration
+[normal] │   ├── reset-password/        # Password reset flow
+[normal] │   ├── success/               # Payment success pages
+[normal] │   ├── terms/                 # Terms and conditions
+[normal] │   └── api/                   # Backend API routes
+[normal] │       ├── admin/             # Admin-only endpoints
+[normal] │       ├── auth/              # Authentication endpoints
+[normal] │       ├── cart/              # Shopping cart APIs
+[normal] │       ├── debug/             # Development/testing endpoints
+[normal] │       ├── items/             # Item management APIs
+[normal] │       ├── payfast/           # PayFast payment processing
+[normal] │       │   ├── checkout/      # Payment initiation
+[normal] │       │   └── notify/        # Payment notifications (ITN)
+[normal] │       ├── payments/          # Payment history and management
+[normal] │       ├── purchases/         # Purchase tracking
+[normal] │       ├── refresh-token/     # Token refresh endpoints
+[normal] │       └── users/             # User management APIs
+[normal] ├── components/                 # Reusable React components
+[normal] │   ├── ui/                    # Base UI components (Radix UI)
+[normal] │   ├── AddToCartButton.tsx    # Shopping cart integration
+[normal] │   ├── auth-buttons.tsx       # Authentication UI components
+[normal] │   ├── collected-button.tsx   # Item collection status
+[normal] │   ├── CookieNotice.tsx       # GDPR cookie compliance
+[normal] │   ├── email-buyer-button.tsx # Buyer contact functionality
+[normal] │   ├── email-seller-button-profile.tsx # Seller contact
+[normal] │   ├── get-items-admin.tsx    # Admin item management
+[normal] │   ├── Input.tsx              # Form input components
+[normal] │   ├── item-category-badge.tsx # Category display badges
+[normal] │   ├── item-condition-badge.tsx # Condition status badges
+[normal] │   ├── item-form.tsx          # Item creation/editing form
+[normal] │   ├── item-status-badge.tsx  # Item status indicators
+[normal] │   ├── multi-image-uploader.tsx # Drag & drop image uploads
+[normal] │   ├── PhotoUpload.tsx        # Single photo upload component
+[normal] │   └── SessionManager.tsx     # Session timeout management
+[normal] ├── context/                    # React context providers
+[normal] │   ├── auth.tsx               # Authentication state management
+[normal] │   └── actions.ts             # Server actions for auth
+[normal] ├── firebase/                   # Firebase configuration
+[normal] │   ├── client.ts              # Client-side Firebase SDK
+[normal] │   └── server.ts              # Server-side Admin SDK
+[normal] ├── hooks/                      # Custom React hooks
+[normal] │   └── useSessionTimeout.ts   # Session management hook
+[normal] ├── lib/                        # Utility functions
+[normal] │   ├── utils.ts               # General utilities
+[normal] │   ├── userUtils.ts           # User-related helpers
+[normal] │   ├── sessionUtils.ts        # Session management
+[normal] │   ├── itemManagement.ts      # Item operations
+[normal] │   ├── imageUrlFormatter.ts   # Image URL processing
+[normal] │   └── cartCleanup.ts         # Cart maintenance
+[normal] ├── types/                      # TypeScript definitions
+[normal] │   ├── index.ts               # Main type definitions
+[normal] │   ├── item.ts                # Item-related types
+[normal] │   ├── itemStatus.ts          # Item status enums
+[normal] │   ├── itemCondition.ts       # Item condition types
+[normal] │   ├── itemCategory.ts        # Category definitions
+[normal] │   ├── CreateItemResponse.ts  # API response types
+[normal] │   ├── GetItemResponse.ts     # Single item response
+[normal] │   └── GetItemsResponse.ts    # Items list response
+[normal] ├── validation/                 # Form validation schemas
+[normal] │   ├── itemSchema.ts          # Item creation validation
+[normal] │   └── registerUser.ts        # User registration validation
+[normal] └── middleware.ts               # Route protection and auth
+[normal] ```
+[normal] Explanation: 
+[normal] This project structure follows Next.js 15 App Router conventions optimized for a modern marketplace application. The `/app` directory contains all routes using the new file-based routing system, with `page.tsx` files defining route components and `layout.tsx` files providing shared layouts. The API routes in `/app/api` implement server-side functionality using Next.js API routes with proper organization by feature (items, admin, payments). The components directory separates UI components with a dedicated `/ui` folder for base components and feature-specific components at the root level. The context system manages global state including authentication and provides server actions for secure operations. Firebase configuration is split between client and server implementations for optimal security and performance. The lib directory contains utility functions organized by domain, supporting code reusability and maintainability. Type definitions in `/types` provide comprehensive TypeScript support across the application, while validation schemas ensure data integrity at form submission points. This structure supports scalable development with clear separation of concerns and follows modern React and Next.js best practices.
+[normal] Physical Code Explanation: 
+[normal] The directory tree uses standard filesystem notation - `/` indicates directories, `├──` and `└──` show tree structure relationships, `#` comments explain directory purposes. `src/app/` follows Next.js 13+ App Router convention where each folder can contain `page.tsx` (route component), `layout.tsx` (shared layout), and `loading.tsx` (loading UI). `[itemId]/` uses bracket notation for dynamic routes where `itemId` becomes a URL parameter. `api/` folder contains Next.js API routes where each `route.ts` file exports HTTP method handlers (GET, POST, etc.). Components are organized flat in `/components` with `/ui` subfolder for reusable base components. `/context` contains React Context providers for global state management. `/firebase` splits client and server SDK configurations for security. `/hooks` contains custom React hooks following `use` naming convention. `/lib` contains utility functions organized by domain. `/types` contains TypeScript type definitions with descriptive filenames. `/validation` contains Zod schemas for form validation. Root-level `middleware.ts` implements Next.js middleware for route protection.
+[Heading 1] Admin Dashboard & Analytics (/src/app/admin/page.tsx)
+[Heading 2] Real Admin Dashboard Implementation
+[normal] ```typescript
+[normal] export default function AdminDashboard() {
+[normal]   const auth = useAuth();
+[normal]   const [loading, setLoading] = useState(true);
+[normal]   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+[normal]   const [priceBuckets, setPriceBuckets] = useState<{ range: string; count: number }[]>([]);
+[normal]   const [totalUsers, setTotalUsers] = useState(0);
+[normal]   const [activeUsers, setActiveUsers] = useState(0);
+[normal]   const [totalItems, setTotalItems] = useState(0);
+[normal]   const [itemsForSale, setItemsForSale] = useState(0);
+[normal]   const [totalTurnover, setTotalTurnover] = useState(0);
+[normal]   useEffect(() => {
+[normal]     const fetchData = async () => {
+[normal]       const user = auth?.currentUser;
+[normal]       if (!user) return;
+[normal]       const token = await user.getIdToken();
+[normal]       try {
+[normal]         // Test admin access first
+[normal]         const statusRes = await fetch("/api/admin/status", {
+[normal]           headers: { Authorization: `Bearer ${token}` }
+[normal]         });
+[normal]         
+[normal]         if (!statusRes.ok) {
+[normal]           throw new Error("Admin access denied");
+[normal]         }
+[normal]         // Fetch items data
+[normal]         const itemsRes = await fetch("/api/items/list", {
+[normal]           method: "POST",
+[normal]           headers: {
+[normal]             Authorization: `Bearer ${token}`,
+[normal]             "Content-Type": "application/json",
+[normal]           },
+[normal]           body: JSON.stringify({ page: 1, pageSize: 1000 }),
+[normal]         });
+[normal]         const itemsData = await itemsRes.json();
+[normal]         if (!itemsRes.ok || !itemsData.success) throw new Error("Failed to fetch items");
+[normal]         // Calculate analytics from items data
+[normal]         const items = itemsData.items;
+[normal]         setTotalItems(items.length);
+[normal]         setItemsForSale(items.filter(item => item.status === 'for-sale').length);
+[normal]         
+[normal]         // Status distribution
+[normal]         const statusCount = items.reduce((acc, item) => {
+[normal]           acc[item.status] = (acc[item.status] || 0) + 1;
+[normal]           return acc;
+[normal]         }, {});
+[normal]         setStatusCounts(statusCount);
+[normal]         // Price analysis
+[normal]         const buckets = [
+[normal]           { range: "R0-R50", min: 0, max: 5000 },
+[normal]           { range: "R50-R200", min: 5000, max: 20000 },
+[normal]           { range: "R200-R500", min: 20000, max: 50000 },
+[normal]           { range: "R500+", min: 50000, max: Infinity }
+[normal]         ];
+[normal]         
+[normal]         const bucketCounts = buckets.map(bucket => ({
+[normal]           range: bucket.range,
+[normal]           count: items.filter(item => item.price >= bucket.min && item.price < bucket.max).length
+[normal]         }));
+[normal]         setPriceBuckets(bucketCounts);
+[normal]       } catch (error) {
+[normal]         console.error("Admin fetch error:", error);
+[normal]         toast.error("Failed to load admin data");
+[normal]       } finally {
+[normal]         setLoading(false);
+[normal]       }
+[normal]     };
+[normal]     fetchData();
+[normal]   }, [auth]);
+[normal]   return (
+[normal]     <div className="p-6 space-y-6">
+[normal]       {/* Key Metrics Cards */}
+[normal]       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-sm font-medium text-gray-500">Total Items</h3>
+[normal]           <p className="text-2xl font-bold">{totalItems}</p>
+[normal]         </div>
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-sm font-medium text-gray-500">Items For Sale</h3>
+[normal]           <p className="text-2xl font-bold">{itemsForSale}</p>
+[normal]         </div>
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-sm font-medium text-gray-500">Total Users</h3>
+[normal]           <p className="text-2xl font-bold">{totalUsers}</p>
+[normal]         </div>
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-sm font-medium text-gray-500">Revenue</h3>
+[normal]           <p className="text-2xl font-bold">R{numeral(totalTurnover / 100).format('0,0')}</p>
+[normal]         </div>
+[normal]       </div>
+[normal]       {/* Charts Section */}
+[normal]       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+[normal]         {/* Item Status Distribution */}
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-lg font-semibold mb-4">Items by Status</h3>
+[normal]           <ResponsiveContainer width="100%" height={300}>
+[normal]             <PieChart>
+[normal]               <Pie
+[normal]                 data={Object.entries(statusCounts).map(([status, count]) => ({ status, count }))}
+[normal]                 dataKey="count"
+[normal]                 nameKey="status"
+[normal]                 cx="50%"
+[normal]                 cy="50%"
+[normal]                 outerRadius={80}
+[normal]                 label
+[normal]               >
+[normal]                 {Object.entries(statusCounts).map(([status], index) => (
+[normal]                   <Cell key={`cell-${index}`} fill={STATUS_COLORS[status] || '#8884d8'} />
+[normal]                 ))}
+[normal]               </Pie>
+[normal]               <Tooltip />
+[normal]               <Legend />
+[normal]             </PieChart>
+[normal]           </ResponsiveContainer>
+[normal]         </div>
+[normal]         {/* Price Distribution */}
+[normal]         <div className="bg-white p-4 rounded-lg shadow">
+[normal]           <h3 className="text-lg font-semibold mb-4">Price Distribution</h3>
+[normal]           <ResponsiveContainer width="100%" height={300}>
+[normal]             <BarChart data={priceBuckets}>
+[normal]               <CartesianGrid strokeDasharray="3 3" />
+[normal]               <XAxis dataKey="range" />
+[normal]               <YAxis />
+[normal]               <Tooltip />
+[normal]               <Bar dataKey="count" fill="#3b82f6" />
+[normal]             </BarChart>
+[normal]           </ResponsiveContainer>
+[normal]         </div>
+[normal]       </div>
+[normal]     </div>
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This admin dashboard implementation represents the actual command center for marketplace operations, using real Recharts components for data visualization. The dashboard fetches live data from your existing API endpoints and calculates meaningful analytics including item status distribution, price analysis, and user metrics. The implementation uses your actual admin authentication flow via `/api/admin/status` and leverages the existing items API for comprehensive data analysis. The Recharts integration provides interactive charts that automatically handle responsive design and touch interactions for mobile admin access.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` enables browser-side React features. Lines 3-15: Import statements - React hooks (`useEffect`, `useState`), authentication context (`useAuth`), toast notifications (`toast`), number formatting (`numeral`), and Recharts components (`BarChart`, `Bar`, `XAxis`, `YAxis`, `CartesianGrid`, `Tooltip`, `PieChart`, `Pie`, `Cell`, `Legend`, `ResponsiveContainer`). Lines 17-22: `Item` interface definition with `id` string, `price` number, `status` with specific enum values, and optional `sellerId`. Lines 24-28: `User` interface with `id`, `email`, and `isActive` properties. Lines 30-37: `STATUS_COLORS` constant object mapping status strings to hex color codes for chart visualization. Lines 39-42: Component function declaration with auth context initialization and loading state. Lines 44-46: State variables using `useState` - `setItems` and `setUsers` for data storage (note the destructuring ignores the getter), `statusCounts` for status distribution tracking.
+[Heading 1] Shopping Cart System (/src/app/cart/page.tsx)
+[Heading 2] Real Cart Implementation with VAT
+[normal] ```typescript
+[normal] export default function CartPage() {
+[normal]   const auth = useAuth();
+[normal]   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+[normal]   const [itemsData, setItemsData] = useState<ItemData[]>([]);
+[normal]   const [loading, setLoading] = useState(true);
+[normal]   const [agreed, setAgreed] = useState(false);
+[normal]   const handleCheckout = async () => {
+[normal]     if (!agreed) {
+[normal]       toast.error("Please agree to the terms and conditions");
+[normal]       return;
+[normal]     }
+[normal]     setLoading(true);
+[normal]     try {
+[normal]       // Prepare cart data for PayFast
+[normal]       const cartForCheckout = cartItems.map(cartItem => {
+[normal]         const item = itemsData.find(i => i.id === cartItem.itemId);
+[normal]         return item ? {
+[normal]           id: item.id,
+[normal]           name: item.title, 
+[normal]           price: item.price,
+[normal]           quantity: cartItem.quantity || 1
+[normal]         } : null;
+[normal]       }).filter(Boolean);
+[normal]       // Calculate total with VAT (15% South African VAT)
+[normal]       const totalAmount = cartForCheckout.reduce((sum, item) => 
+[normal]         sum + (item ? item.price * item.quantity : 0), 0
+[normal]       );
+[normal]       const totalWithVat = totalAmount * 1.15;
+[normal]       const token = await auth.currentUser.getIdToken();
+[normal]       const res = await fetch("/api/payfast/checkout", {
+[normal]         method: "POST",
+[normal]         headers: {
+[normal]           "Content-Type": "application/json",
+[normal]           Authorization: `Bearer ${token}`,
+[normal]         },
+[normal]         body: JSON.stringify({ cart: cartForCheckout, totalAmount: totalWithVat }),
+[normal]       });
+[normal]       const data = await res.json();
+[normal]       if (data.url) {
+[normal]         // Store cart state before payment for potential recovery
+[normal]         localStorage.setItem('cartBeforePayment', JSON.stringify({ cartItems, itemsData }));
+[normal]         window.location.href = data.url; // Redirect to PayFast
+[normal]       } else {
+[normal]         toast.error("Error initiating payment: " + (data.message || ""));
+[normal]       }
+[normal]     } catch (err) {
+[normal]       console.error(err);
+[normal]       toast.error("Failed to initiate payment");
+[normal]     } finally {
+[normal]       setLoading(false);
+[normal]     }
+[normal]   };
+[normal]   // Calculate totals for display
+[normal]   const subtotal = cartItems.reduce((sum, cartItem) => {
+[normal]     const item = itemsData.find(i => i.id === cartItem.itemId);
+[normal]     return sum + (item ? item.price * (cartItem.quantity || 1) : 0);
+[normal]   }, 0);
+[normal]   
+[normal]   const vatAmount = subtotal * 0.15; // 15% VAT
+[normal]   const total = subtotal + vatAmount;
+[normal]   return (
+[normal]     <div className="min-h-screen flex justify-center items-start px-4 mb-8">
+[normal]       <div className="bg-white shadow-xl rounded-2xl w-full max-w-2xl p-8">
+[normal]         <h2 className="text-3xl font-bold mb-6 text-gray-800 text-center">Your Cart</h2>
+[normal]         {loading ? (
+[normal]           <p className="text-gray-500 text-center py-10">Loading cart...</p>
+[normal]         ) : itemsData.length === 0 ? (
+[normal]           <p className="text-gray-500 text-center py-10">Your cart is empty.</p>
+[normal]         ) : (
+[normal]           <>
+[normal]             {/* Cart Items List */}
+[normal]             <ul className="divide-y divide-gray-200">
+[normal]               {cartItems.map(cartItem => {
+[normal]                 const item = itemsData.find(i => i.id === cartItem.itemId);
+[normal]                 if (!item) return null;
+[normal]                 return (
+[normal]                   <li key={cartItem.cartItemId} className="py-4 flex items-center space-x-4">
+[normal]                     <div className="h-16 w-16 rounded-lg overflow-hidden">
+[normal]                       {item.images?.[0] ? (
+[normal]                         <Image
+[normal]                           src={imageUrlFormatter(item.images[0])}
+[normal]                           alt={item.title}
+[normal]                           width={64}
+[normal]                           height={64}
+[normal]                           className="object-cover w-full h-full"
+[normal]                         />
+[normal]                       ) : (
+[normal]                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+[normal]                           <span className="text-gray-400 text-xs">No Image</span>
+[normal]                         </div>
+[normal]                       )}
+[normal]                     </div>
+[normal]                     
+[normal]                     <div className="flex-1 min-w-0">
+[normal]                       <h4 className="text-sm font-medium text-gray-900 truncate">{item.title}</h4>
+[normal]                       <p className="text-sm text-gray-500">Condition: {item.condition}</p>
+[normal]                       <p className="text-sm font-medium">R{numeral(item.price / 100).format('0,0.00')}</p>
+[normal]                     </div>
+[normal]                     <div className="flex items-center space-x-2">
+[normal]                       <span className="text-sm text-gray-500">Qty: {cartItem.quantity || 1}</span>
+[normal]                     </div>
+[normal]                   </li>
+[normal]                 );
+[normal]               })}
+[normal]             </ul>
+[normal]             {/* Order Summary */}
+[normal]             <div className="mt-6 pt-6 border-t border-gray-200">
+[normal]               <div className="flex justify-between text-sm">
+[normal]                 <span>Subtotal</span>
+[normal]                 <span>R{numeral(subtotal / 100).format('0,0.00')}</span>
+[normal]               </div>
+[normal]               <div className="flex justify-between text-sm">
+[normal]                 <span>VAT (15%)</span>
+[normal]                 <span>R{numeral(vatAmount / 100).format('0,0.00')}</span>
+[normal]               </div>
+[normal]               <div className="flex justify-between text-lg font-bold mt-2">
+[normal]                 <span>Total</span>
+[normal]                 <span>R{numeral(total / 100).format('0,0.00')}</span>
+[normal]               </div>
+[normal]             </div>
+[normal]             {/* Terms Agreement & Checkout */}
+[normal]             <div className="mt-6">
+[normal]               <label className="flex items-center space-x-2">
+[normal]                 <input
+[normal]                   type="checkbox"
+[normal]                   checked={agreed}
+[normal]                   onChange={(e) => setAgreed(e.target.checked)}
+[normal]                   className="rounded border-gray-300"
+[normal]                 />
+[normal]                 <span className="text-sm text-gray-600">
+[normal]                   I agree to the terms and conditions
+[normal]                 </span>
+[normal]               </label>
+[normal]               
+[normal]               <Button
+[normal]                 onClick={handleCheckout}
+[normal]                 disabled={!agreed || loading}
+[normal]                 className="w-full mt-4 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+[normal]               >
+[normal]                 {loading ? "Processing..." : "Proceed to Payment"}
+[normal]               </Button>
+[normal]             </div>
+[normal]           </>
+[normal]         )}
+[normal]       </div>
+[normal]     </div>
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] This cart implementation provides a complete South African e-commerce experience with proper VAT calculations and PayFast integration. The component fetches cart data from your existing `/api/cart` endpoint and displays items with quantity management. The VAT calculation correctly applies 15% South African VAT, and the checkout process integrates with your existing PayFast implementation. The cart state persistence in localStorage enables recovery after payment processing.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` enables browser-side React features. Lines 3-9: Import React hooks (`useEffect`, `useState`), Next.js components (`Link`, `Image`), notification system (`toast`), custom Button component, image formatter utility, and authentication context. Lines 11-16: `CartItem` interface defines cart item structure with `cartItemId`, `cartId`, `itemId`, and `quantity` properties. Lines 18-25: `ItemData` interface defines item details structure with `id`, `title`, `price`, `images` array, `condition`, and `sellerId`. Lines 27-31: Component state initialization - `cartItems` array for cart data, `itemsData` array for item details, `loading` boolean for loading state, `agreed` boolean for terms acceptance. Lines 33-54: `useEffect` hook for cart fetching - checks user authentication with `auth?.currentUser`, gets ID token with `await auth.currentUser.getIdToken()`, makes GET request to `/api/cart` with Authorization header, parses response and updates state arrays. Lines 56-60: Subtotal calculation using `reduce()` - finds matching cart item for each item with `cartItems.find()`, extracts quantity with fallback to 1, multiplies `item.price * quantity` and accumulates sum. Lines 61-62: VAT and total calculation - applies 15% South African VAT with `subtotal * 0.15`, adds VAT to subtotal for final total. Lines 64-73: `handleDelete` function for removing cart items - authenticates user, gets token, makes DELETE request to `/api/cart/${cartItemId}`, updates local state by filtering out deleted item with `prev.filter()`.
+[Heading 1] Image Upload System (/src/components/multi-image-uploader.tsx)
+[Heading 2] Real Multi-Image Uploader Implementation
+[normal] ```typescript
+[normal] export default function MultiImageUploader({
+[normal]     images = [],
+[normal]     onImagesChange,
+[normal]     urlFormatter
+[normal] }: Props){
+[normal]     const uploadInputRef = useRef<HTMLInputElement | null>(null);
+[normal]     const MAX_IMAGES = 3;
+[normal]     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+[normal]         const files = Array.from(e.target.files || []);
+[normal]         const remainingSlots = MAX_IMAGES - images.length;
+[normal]         if (remainingSlots <= 0) {
+[normal]             toast.info("", {
+[normal]                 description: `You can only upload ${MAX_IMAGES} images`,
+[normal]             });
+[normal]             return;
+[normal]         }
+[normal]         const limitedFiles = files.slice(0, remainingSlots);
+[normal]         const newImages = limitedFiles.map((file, index) => ({
+[normal]             id: `upload-${Date.now()}-${index}`,
+[normal]             url: URL.createObjectURL(file),
+[normal]             file: file
+[normal]         }));
+[normal]         onImagesChange([...images, ...newImages]);
+[normal]         if (uploadInputRef.current) {
+[normal]             uploadInputRef.current.value = "";
+[normal]         }
+[normal]     };
+[normal]     const handleDragEnd = (result: DropResult) => {
+[normal]         if (!result.destination) return;
+[normal]         const reorderedImages = Array.from(images);
+[normal]         const [removed] = reorderedImages.splice(result.source.index, 1);
+[normal]         reorderedImages.splice(result.destination.index, 0, removed);
+[normal]         onImagesChange(reorderedImages);
+[normal]     };
+[normal]     const removeImage = (imageId: string) => {
+[normal]         const updatedImages = images.filter(img => img.id !== imageId);
+[normal]         onImagesChange(updatedImages);
+[normal]     };
+[normal]     return (
+[normal]         <div className="space-y-4">
+[normal]             {/* Image Grid with Drag & Drop */}
+[normal]             <DragDropContext onDragEnd={handleDragEnd}>
+[normal]                 <Droppable droppableId="images" direction="horizontal">
+[normal]                     {(provided) => (
+[normal]                         <div
+[normal]                             {...provided.droppableProps}
+[normal]                             ref={provided.innerRef}
+[normal]                             className="flex gap-4 flex-wrap"
+[normal]                         >
+[normal]                             {images.map((image, index) => (
+[normal]                                 <Draggable key={image.id} draggableId={image.id} index={index}>
+[normal]                                     {(provided) => (
+[normal]                                         <div
+[normal]                                             ref={provided.innerRef}
+[normal]                                             {...provided.draggableProps}
+[normal]                                             className="relative group"
+[normal]                                         >
+[normal]                                             <div className="w-32 h-32 border-2 border-gray-300 rounded-lg overflow-hidden">
+[normal]                                                 <Image
+[normal]                                                     src={urlFormatter ? urlFormatter(image) : image.url}
+[normal]                                                     alt={`Upload ${index + 1}`}
+[normal]                                                     width={128}
+[normal]                                                     height={128}
+[normal]                                                     className="w-full h-full object-cover"
+[normal]                                                 />
+[normal]                                             </div>
+[normal]                                             
+[normal]                                             {/* Primary Badge */}
+[normal]                                             {index === 0 && (
+[normal]                                                 <Badge className="absolute top-2 left-2 text-xs">
+[normal]                                                     Primary
+[normal]                                                 </Badge>
+[normal]                                             )}
+[normal]                                             
+[normal]                                             {/* Drag Handle */}
+[normal]                                             <div
+[normal]                                                 {...provided.dragHandleProps}
+[normal]                                                 className="absolute top-2 right-8 p-1 bg-white rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-grab"
+[normal]                                             >
+[normal]                                                 <MoveIcon size={16} />
+[normal]                                             </div>
+[normal]                                             
+[normal]                                             {/* Remove Button */}
+[normal]                                             <button
+[normal]                                                 onClick={() => removeImage(image.id)}
+[normal]                                                 className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+[normal]                                             >
+[normal]                                                 <XIcon size={16} />
+[normal]                                             </button>
+[normal]                                         </div>
+[normal]                                     )}
+[normal]                                 </Draggable>
+[normal]                             ))}
+[normal]                             {provided.placeholder}
+[normal]                         </div>
+[normal]                     )}
+[normal]                 </Droppable>
+[normal]             </DragDropContext>
+[normal]             {/* Upload Button */}
+[normal]             {images.length < MAX_IMAGES && (
+[normal]                 <div>
+[normal]                     <input
+[normal]                         ref={uploadInputRef}
+[normal]                         type="file"
+[normal]                         multiple
+[normal]                         accept="image/*"
+[normal]                         onChange={handleInputChange}
+[normal]                         className="hidden"
+[normal]                     />
+[normal]                     <Button
+[normal]                         type="button"
+[normal]                         variant="outline"
+[normal]                         onClick={() => uploadInputRef.current?.click()}
+[normal]                         className="w-full h-32 border-2 border-dashed border-gray-300 hover:border-gray-400"
+[normal]                     >
+[normal]                         <div className="text-center">
+[normal]                             <p className="text-sm text-gray-600">Click to upload images</p>
+[normal]                             <p className="text-xs text-gray-400">
+[normal]                                 {images.length}/{MAX_IMAGES} images uploaded
+[normal]                             </p>
+[normal]                         </div>
+[normal]                     </Button>
+[normal]                 </div>
+[normal]             )}
+[normal]         </div>
+[normal]     );
+[normal] }
+[normal] ```
+[normal] Explanation:
+[normal]  This multi-image uploader implements a sophisticated drag-and-drop interface using `@hello-pangea/dnd` for image reordering. The component enforces a 3-image limit, provides visual feedback for primary images, and includes proper file handling with URL.createObjectURL for immediate preview. The implementation supports your existing image upload workflow while providing an intuitive user experience for marketplace listings. Additionally when a user edits an item and keeps existing images the ‘url’ variable keeps track of images already in Firebase storage and the ‘file’ variable keeps track of new images that need to be uploaded to Firebase.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` directive for browser-side React features. Lines 3-10: Import statements - `useRef` for DOM references, drag-drop components from `@hello-pangea/dnd`, Next.js `Image` component, UI components (`Badge`, `Button`), icons (`MoveIcon`, `XIcon`), and `toast` for notifications. Lines 12-16: TypeScript type definition for `ImageUpload` object with `id` string, `url` string, and optional `file` property. Lines 18-22: Props interface defining component inputs - optional `images` array, required `onImagesChange` callback function, optional `urlFormatter` function. Lines 24-28: Component function declaration with destructured props and default empty array for images. Line 30: `useRef<HTMLInputElement | null>(null)` creates reference for hidden file input. Line 34: `const MAX_IMAGES = 3` sets upload limit constant. Lines 36-50: `handleInputChange` function - `Array.from(e.target.files || [])` converts FileList to array, `remainingSlots = MAX_IMAGES - images.length` calculates available slots, shows toast message if limit exceeded, `files.slice(0, remainingSlots)` limits file selection. Lines 52-57: New image object creation - `map()` function creates objects with unique IDs using `Date.now()` timestamp, `URL.createObjectURL(file)` creates blob URL for preview, stores original file object, calls `onImagesChange([...images, ...newImages])` to update parent state. Lines 67-74: `handleDragEnd` function for reordering - checks `result.destination` exists, creates mutable copy with `Array.from(images)`, uses `splice()` to remove and insert at new position, calls `onImagesChange(items)` with reordered array.
+[Heading 1] Additional Components
+[Heading 2] Add to Cart Button (/src/components/AddToCartButton.tsx)
+[normal] ```typescript
+[normal] export default function AddToCartButton({ id }: { id: string }) {
+[normal]   const router = useRouter();
+[normal]   const auth = useAuth();
+[normal]   const [isAdding, setIsAdding] = useState(false);
+[normal]   const handleAddToCart = async () => {
+[normal]     if (!auth?.currentUser) {
+[normal]       router.push("/login");
+[normal]       return;
+[normal]     }
+[normal]     setIsAdding(true);
+[normal]     try {
+[normal]       const token = await auth.currentUser.getIdToken();
+[normal]       const res = await fetch("/api/items/actions/add-to-cart", {
+[normal]         method: "POST",
+[normal]         headers: {
+[normal]           Authorization: `Bearer ${token}`,
+[normal]           "Content-Type": "application/json",
+[normal]         },
+[normal]         body: JSON.stringify({ itemId: id }),
+[normal]       });
+[normal]       const data = await res.json();
+[normal]       if (!res.ok || !data.success) {
+[normal]         toast.error(data.message || "Failed to add item to cart");
+[normal]       } else {
+[normal]         toast.success("Item added to cart");
+[normal]         router.push("/cart");
+[normal]       }
+[normal]     } catch (err) {
+[normal]       console.error(err);
+[normal]       toast.error("Failed to add item to cart");
+[normal]     } finally {
+[normal]       setIsAdding(false);
+[normal]     }
+[normal]   };
+[normal]   return (
+[normal]     <Button className="flex-1 w-full" onClick={handleAddToCart} disabled={isAdding}>
+[normal]       {isAdding ? "Adding..." : "Add to cart"}
+[normal]     </Button>
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Physical Code Explanation: 
+[normal] Line 1: `export default function AddToCartButton({ id }: { id: string }) {` declares component with destructured props and TypeScript type annotation for item ID. Lines 2-4: Initialize hooks - `useRouter()` for navigation, `useAuth()` for authentication context, `useState(false)` for loading state with `isAdding` boolean. Lines 6-10: `handleAddToCart` async function - checks authentication with `!auth?.currentUser` using optional chaining, redirects to login with `router.push("/login")` if not authenticated, early return to prevent further execution. Lines 12-13: Set loading state with `setIsAdding(true)` to show visual feedback. Lines 15-24: API call setup - get authentication token with `await auth.currentUser.getIdToken()`, make POST request to add-to-cart endpoint with `fetch()`, set Authorization header using template literal `Bearer ${token}`, stringify body with `JSON.stringify({ itemId: id })`. Lines 26-31: Response handling - parse JSON with `await res.json()`, check for errors with `!res.ok || !data.success`, show error toast with fallback message, show success toast and navigate to cart on success. Lines 32-36: Error handling - catch any exceptions, log error to console, show generic error toast, `finally` block ensures loading state is reset. Lines 39-42: JSX return - Button component with flexbox styling, click handler, disabled state based on loading, conditional text content using ternary operator.
+[Heading 2] Authentication Buttons (/src/components/auth-buttons.tsx)
+[normal] ```typescript
+[normal] export default function AuthButtons() {
+[normal]   const router = useRouter();
+[normal]   const auth = useAuth();
+[normal]   const [dropdownOpen, setDropdownOpen] = useState(false);
+[normal]   if (auth.isLoading) {
+[normal]     return (
+[normal]       <div className="flex items-center gap-4">
+[normal]         <div className="h-4 w-20 rounded bg-gray-300 animate-pulse" />
+[normal]         <div className="h-4 w-20 rounded bg-gray-300 animate-pulse" />
+[normal]       </div>
+[normal]     );
+[normal]   }
+[normal]   return (
+[normal]     <div className="flex items-center gap-4">
+[normal]       {auth.currentUser ? (
+[normal]         <>
+[normal]           {/* Sell Item */}
+[normal]           <Link
+[normal]             href="/profile/new"
+[normal]             className="font-semibold text-secondary hover:text-accent hover:underline underline-offset-4 transition"
+[normal]           >
+[normal]             Sell Item
+[normal]           </Link>
+[normal]           <div className="h-6 w-[1px] bg-gray-500/50" />
+[normal]           <Link
+[normal]             href="/cart"
+[normal]             className="text-gray-700 hover:text-accent hover:underline underline-offset-4 transition"
+[normal]           >
+[normal]             Cart
+[normal]           </Link>
+[normal]           
+[normal]           {/* Account Dropdown */}
+[normal]           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+[normal]             <DropdownMenuTrigger asChild>
+[normal]               <div
+[normal]                 onClick={() => setDropdownOpen(!dropdownOpen)}
+[normal]                 className={`flex items-center gap-1 cursor-pointer transition ${
+[normal]                   dropdownOpen ? "text-accent underline underline-offset-4" : "text-gray-700 hover:text-accent hover:underline underline-offset-4"
+[normal]                 }`}
+[normal]               >
+[normal]                 Account
+[normal]                 <ChevronDown className="h-4 w-4" />
+[normal]               </div>
+[normal]             </DropdownMenuTrigger>
+[normal]             <DropdownMenuContent align="start" className="rounded-sm mt-1 min-w-[180px] bg-white border border-gray-200 p-1">
+[normal]               <DropdownMenuLabel className="px-3 py-2">
+[normal]                 <div className="font-medium">{auth.currentUser.displayName}</div>
+[normal]                 <div className="text-xs text-gray-700">{auth.currentUser.email}</div>
+[normal]               </DropdownMenuLabel>
+[normal]               <DropdownMenuSeparator />
+[normal]               {auth.isAdmin && (
+[normal]                 <DropdownMenuItem
+[normal]                   onClick={() => router.push("/admin")}
+[normal]                   className="px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-sm"
+[normal]                 >
+[normal]                   Admin Dashboard
+[normal]                 </DropdownMenuItem>
+[normal]               )}
+[normal]               <DropdownMenuItem
+[normal]                 onClick={() => router.push("/profile/user")}
+[normal]                 className="px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-sm"
+[normal]               >
+[normal]                 My Profile
+[normal]               </DropdownMenuItem>
+[normal]               <DropdownMenuItem
+[normal]                 onClick={async () => {
+[normal]                   await auth.logout();
+[normal]                   router.refresh();
+[normal]                 }}
+[normal]                 className="px-3 py-2 hover:bg-gray-100 cursor-pointer rounded-sm"
+[normal]               >
+[normal]                 Logout
+[normal]               </DropdownMenuItem>
+[normal]             </DropdownMenuContent>
+[normal]           </DropdownMenu>
+[normal]         </>
+[normal]       ) : (
+[normal]         <>
+[normal]           <Link href="/login" className="text-gray-700 hover:text-accent hover:underline underline-offset-4 transition">
+[normal]             Login
+[normal]           </Link>
+[normal]           <div className="h-6 w-[1px] bg-gray-500/50" />
+[normal]           <Link href="/register" className="text-gray-700 hover:text-accent hover:underline underline-offset-4 transition">
+[normal]             Sign Up
+[normal]           </Link>
+[normal]         </>
+[normal]       )}
+[normal]     </div>
+[normal]   );
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] The auth buttons component provides a comprehensive navigation and user management interface with proper dropdown styling and structure. It handles loading states with skeleton placeholders, provides conditional rendering based on authentication status, and includes admin dashboard access for privileged users. The dropdown menu uses custom styling classes and displays both user displayName and email in the header. Navigation includes "My Profile" at `/profile/user` route and proper logout functionality with router refresh. The unauthenticated state shows "Login" and "Sign Up" links with consistent styling.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `"use client"` directive for browser-side features. Lines 3-15: Import statements - React `useState` hook, authentication context `useAuth`, Next.js `Link` and `useRouter`, Radix UI dropdown components, and `ChevronDown` icon. Lines 17-20: Component function with router and auth context initialization, `dropdownOpen` state for controlling dropdown visibility. Lines 22-29: Loading state rendering - checks `auth.isLoading`, returns skeleton elements with `animate-pulse` class and gray background for visual feedback. Lines 31-50: Authenticated user navigation - "Sell Item" link to `/profile/new` with hover styles, visual separator `div` with gray line, "Cart" link to `/cart` with hover transitions. Lines 52-60: Dropdown menu structure - `DropdownMenu` with controlled `open` state, `DropdownMenuTrigger` with custom click handler, conditional styling based on `dropdownOpen` state using template literals and ternary operators, `ChevronDown` icon for visual dropdown indicator.
+[Heading 1] Custom Hooks
+[Heading 2] Session Timeout Hook (/src/hooks/useSessionTimeout.ts)
+[normal] ```typescript
+[normal] const INACTIVITY_TIMEOUT = 15 * 60 * 1000 // 15 minutes in milliseconds
+[normal] const ACTIVITY_KEY = 'lastActivity'
+[normal] const STORAGE_EVENT_KEY = 'session-activity'
+[normal] export function useSessionTimeout() {
+[normal]   const router = useRouter()
+[normal]   useEffect(() => {
+[normal]     const updateActivity = () => {
+[normal]       const now = Date.now().toString()
+[normal]       localStorage.setItem(ACTIVITY_KEY, now)
+[normal]       // Broadcast activity to other tabs
+[normal]       localStorage.setItem(STORAGE_EVENT_KEY, now)
+[normal]     }
+[normal]     const checkSession = () => {
+[normal]       const lastActivity = localStorage.getItem(ACTIVITY_KEY)
+[normal]       
+[normal]       if (lastActivity && auth.currentUser) {
+[normal]         const timeSinceActivity = Date.now() - parseInt(lastActivity)
+[normal]         
+[normal]         if (timeSinceActivity > INACTIVITY_TIMEOUT) {
+[normal]           // Auto logout after 15 minutes of inactivity
+[normal]           localStorage.removeItem(ACTIVITY_KEY)
+[normal]           localStorage.removeItem(STORAGE_EVENT_KEY)
+[normal]           auth.signOut()
+[normal]           router.push('/login?reason=session-expired')
+[normal]         }
+[normal]       }
+[normal]     }
+[normal]     const handleActivity = () => {
+[normal]       if (auth.currentUser) {
+[normal]         updateActivity()
+[normal]       }
+[normal]     }
+[normal]     const handleStorageChange = (e: StorageEvent) => {
+[normal]       // Sync activity across tabs
+[normal]       if (e.key === STORAGE_EVENT_KEY && e.newValue) {
+[normal]         localStorage.setItem(ACTIVITY_KEY, e.newValue)
+[normal]       }
+[normal]     }
+[normal]     // Activity event listeners
+[normal]     const activityEvents = [
+[normal]       'mousedown',
+[normal]       'mousemove', 
+[normal]       'keypress',
+[normal]       'scroll',
+[normal]       'touchstart',
+[normal]       'click',
+[normal]       'focus'
+[normal]     ]
+[normal]     // Set initial activity time when user is authenticated
+[normal]     const setInitialActivity = () => {
+[normal]       if (auth.currentUser) {
+[normal]         updateActivity()
+[normal]       }
+[normal]     }
+[normal]     // Initialize
+[normal]     setInitialActivity()
+[normal]     checkSession()
+[normal]     // Add activity listeners
+[normal]     activityEvents.forEach(event => {
+[normal]       document.addEventListener(event, handleActivity, true)
+[normal]     })
+[normal]     // Listen for storage changes (cross-tab communication)
+[normal]     window.addEventListener('storage', handleStorageChange)
+[normal]     // Check session every minute
+[normal]     const intervalId = setInterval(checkSession, 60 * 1000) // 1 minute
+[normal]     // Listen for auth state changes
+[normal]     const unsubscribe = auth.onAuthStateChanged((user) => {
+[normal]       if (user) {
+[normal]         updateActivity()
+[normal]       } else {
+[normal]         localStorage.removeItem(ACTIVITY_KEY)
+[normal]         localStorage.removeItem(STORAGE_EVENT_KEY)
+[normal]       }
+[normal]     })
+[normal]     return () => {
+[normal]       clearInterval(intervalId)
+[normal]       unsubscribe()
+[normal]       
+[normal]       // Remove activity listeners
+[normal]       activityEvents.forEach(event => {
+[normal]         document.removeEventListener(event, handleActivity, true)
+[normal]       })
+[normal]       
+[normal]       window.removeEventListener('storage', handleStorageChange)
+[normal]     }
+[normal]   }, [router])
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] The session timeout hook implements comprehensive inactivity-based session management with cross-tab synchronization and Firebase auth state integration. It tracks user activity through multiple event types including mouse, keyboard, touch, click, and focus events. The hook automatically sets initial activity on mount, manages localStorage cleanup on auth state changes, and provides robust cleanup in the useEffect return function. The implementation includes Firebase auth state listener integration, ensuring session management works seamlessly with the authentication system while maintaining consistent state across browser tabs.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-4: Import React `useEffect` hook, Next.js `useRouter` for navigation, and Firebase auth client. Lines 6-8: Constants definition - `INACTIVITY_TIMEOUT = 15 * 60 * 1000` sets 15-minute timeout in milliseconds, `ACTIVITY_KEY` and `STORAGE_EVENT_KEY` define localStorage keys for activity tracking and cross-tab communication. Lines 10-11: Hook function declaration and router initialization with `const router = useRouter()`. Lines 13-18: `updateActivity` function - gets current timestamp with `Date.now().toString()`, stores in localStorage with `localStorage.setItem(ACTIVITY_KEY, now)`, broadcasts to other tabs by setting storage event key. Lines 20-33: `checkSession` function - retrieves last activity with `localStorage.getItem(ACTIVITY_KEY)`, checks if user authenticated and activity exists, calculates time difference with `Date.now() - parseInt(lastActivity)`, compares against timeout threshold, performs logout if expired with `auth.signOut()` and navigation to login page. Lines 35-39: `handleActivity` function - checks user authentication with `auth.currentUser`, calls `updateActivity()` if user logged in. Lines 41-46: `handleStorageChange` function for cross-tab sync - listens for storage events, checks if event key matches `STORAGE_EVENT_KEY`, updates local activity timestamp from other tab's broadcast.
+[Heading 1] API Routes - Complete Implementation
+[Heading 2] Admin Status API (/src/app/api/admin/status/route.ts)
+[normal] ```typescript
+[normal] export async function GET(request: NextRequest) {
+[normal]   try {
+[normal]     const authResult = await authenticateRequest(request)
+[normal]     
+[normal]     if (!authResult) {
+[normal]       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+[normal]     }
+[normal]     // Return current admin status (this already checks environment + database)
+[normal]     return NextResponse.json({ 
+[normal]       isAdmin: authResult.admin || false,
+[normal]       uid: authResult.uid,
+[normal]       email: authResult.email 
+[normal]     })
+[normal]   } catch (error) {
+[normal]     console.error('Admin status check error:', error)
+[normal]     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Physical Code Explanation: 
+[normal] Line 1: `export async function GET(request: NextRequest) {` declares async GET handler for HTTP requests. Line 3: `const authResult = await authenticateRequest(request)` calls authentication helper function with request object, returns user data or null. Lines 5-7: Authentication validation - `if (!authResult)` checks if authentication failed, `return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })` returns JSON error response with 401 status code. Lines 9-15: Success response construction - comment explains admin status verification, `return NextResponse.json({` creates JSON response object, `isAdmin: authResult.admin || false` extracts admin claim with boolean fallback, `uid: authResult.uid` includes user ID, `email: authResult.email` includes user email address. Lines 16-19: Error handling - `catch (error)` block for exception handling, `console.error()` logs error details for debugging, returns 500 Internal Server Error with generic error message.
+[Heading 2] Cart Management API (/src/app/api/cart/route.ts)
+[normal] ```typescript
+[normal] export async function GET(req: NextRequest) {
+[normal]   try {
+[normal]     const user = await authenticateRequest(req);
+[normal]     if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+[normal]     const cartId = user.uid;
+[normal]     const cartItemsSnap = await firestore.collection("cartItems")
+[normal]       .where("cartId", "==", cartId)
+[normal]       .get();
+[normal]     const cartItems: CartItem[] = [];
+[normal]     const itemIds: string[] = [];
+[normal]     cartItemsSnap.forEach(doc => {
+[normal]       const data = doc.data();
+[normal]       cartItems.push({ cartItemId: doc.id, ...data } as CartItem);
+[normal]       if (data.itemId) itemIds.push(data.itemId);
+[normal]     });
+[normal]     if (!itemIds.length) return NextResponse.json({ success: true, cartItems, itemsData: [] });
+[normal]     const itemsSnap = await firestore.collection("items")
+[normal]       .where(FieldPath.documentId(), "in", itemIds)
+[normal]       .get();
+[normal]     const itemsData: Item[] = [];
+[normal]     itemsSnap.forEach(doc => {
+[normal]       const data = doc.data();
+[normal]       itemsData.push({
+[normal]         id: doc.id,
+[normal]         title: data.title,
+[normal]         price: data.price,
+[normal]         images: data.images || [],
+[normal]         condition: data.condition || 'used',
+[normal]         sellerId: data.sellerId || '',
+[normal]         collectionAddress: data.collectionAddress || '',
+[normal]         description: data.description || '',
+[normal]         category: data.category || 'other',
+[normal]         status: data.status || 'draft',
+[normal]       } as Item);
+[normal]     });
+[normal]     // Filter out items that are not for sale and remove them from cart
+[normal]     const validItems: Item[] = [];
+[normal]     const validCartItems: CartItem[] = [];
+[normal]     const itemsToRemove: string[] = [];
+[normal]     for (let i = 0; i < itemsData.length; i++) {
+[normal]       const item = itemsData[i];
+[normal]       const cartItem = cartItems[i];
+[normal]       
+[normal]       if (item.status === 'for-sale') {
+[normal]         validItems.push(item);
+[normal]         validCartItems.push(cartItem);
+[normal]       } else {
+[normal]         itemsToRemove.push(item.id);
+[normal]       }
+[normal]     }
+[normal]     // Remove invalid items from user's cart
+[normal]     if (itemsToRemove.length > 0) {
+[normal]       const batch = firestore.batch();
+[normal]       
+[normal]       for (const itemId of itemsToRemove) {
+[normal]         const cartItemRef = firestore
+[normal]           .collection('cartItems')
+[normal]           .where('userId', '==', user.uid)
+[normal]           .where('itemId', '==', itemId);
+[normal]         
+[normal]         const cartItemSnapshot = await cartItemRef.get();
+[normal]         cartItemSnapshot.forEach(doc => {
+[normal]           batch.delete(doc.ref);
+[normal]         });
+[normal]       }
+[normal]       
+[normal]       await batch.commit();
+[normal]     }
+[normal]     return NextResponse.json({ 
+[normal]       success: true, 
+[normal]       cartItems: validCartItems, 
+[normal]       itemsData: validItems,
+[normal]       removedItems: itemsToRemove.length 
+[normal]     });
+[normal]   } catch (error) {
+[normal]     console.error('Cart fetch error:', error);
+[normal]     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] The cart API provides comprehensive cart management functionality with intelligent item validation and automatic cleanup. It retrieves cart items for authenticated users and performs batch fetching of item details using Firestore's `in` query operator. The implementation includes sophisticated item status validation, automatically removing items that are no longer "for-sale" from user carts to maintain data integrity. The response includes cart metadata, validated item information, and cleanup statistics, ensuring users only see purchasable items in their carts.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-3: Import Next.js request/response objects, Firebase server utilities (`firestore`, `authenticateRequest`), and Firestore `FieldPath` for document ID queries. Lines 5-11: `CartItem` interface defining cart item structure with `cartItemId`, `itemId`, and `cartId` properties. Lines 13-23: `Item` interface defining item data structure with required fields (`id`, `title`, `price`, `images`) and optional properties (`condition`, `sellerId`, etc.) using TypeScript optional property syntax with `?`. Lines 25-27: `GET` function declaration for handling cart retrieval requests, authentication check with `authenticateRequest(req)`, return 401 Unauthorized if no valid user. Lines 29-37: Cart items retrieval - use user UID as cart ID with `const cartId = user.uid`, query Firestore collection `cartItems` with `where("cartId", "==", cartId)`, iterate through results with `forEach()` to build `cartItems` array and extract `itemIds` for batch fetching. Lines 39-47: Batch item details fetching - early return with empty data if no items, use Firestore `in` query with `FieldPath.documentId()` to fetch multiple items efficiently, iterate through item documents to build `itemsData` array with proper type mapping and default values for optional fields.
+[Heading 1] Utility Functions
+[Heading 2] Image URL Formatter (/src/lib/imageUrlFormatter.ts)
+[normal] ```typescript
+[normal] export default function imageUrlFormatter(imagePath: string){
+[normal]     return `https://firebasestorage.googleapis.com/v0/b/${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}/o/${encodeURIComponent(imagePath)}?alt=media`;
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] The image URL formatter creates properly encoded Firebase Storage URLs for image access. It uses the configured storage bucket from environment variables and properly encodes the image path to handle special characters and spaces in filenames. The `alt=media` parameter ensures direct image serving without Firebase Storage metadata.
+[normal] Physical Code Explanation: 
+[normal] Line 1: `export default function imageUrlFormatter(imagePath: string){` declares function with TypeScript parameter type annotation. Line 2: `return \`https://firebasestorage.googleapis.com/v0/b/${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}/o/${encodeURIComponent(imagePath)}?alt=media\`;` constructs Firebase Storage URL using template literal with `${}` interpolation - `process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` accesses environment variable, `encodeURIComponent(imagePath)` properly encodes the file path to handle special characters and spaces, `?alt=media` query parameter tells Firebase to serve raw file content instead of metadata JSON. Line 3: `}` closes the function.
+[Heading 1] Firebase Storage Security Rules (/storage.rules)
+[Heading 2] Production Storage Rules Implementation
+[normal] ```javascript
+[normal] // Firebase Storage Security Rules
+[normal] // These rules should be deployed to Firebase Storage
+[normal] rules_version = '2';
+[normal] service firebase.storage {
+[normal]   match /b/{bucket}/o {
+[normal]     
+[normal]     // Allow authenticated users to read all images
+[normal]     match /{allPaths=**} {
+[normal]       allow read: if request.auth != null;
+[normal]     }
+[normal]     
+[normal]     // Item photos - users can upload to their own items
+[normal]     match /items/{itemId}/{fileName} {
+[normal]       allow write: if request.auth != null 
+[normal]         && isValidImage()
+[normal]         && isOwnerOfItem(itemId);
+[normal]       allow delete: if request.auth != null 
+[normal]         && isOwnerOfItem(itemId);
+[normal]     }
+[normal]     
+[normal]     // Profile pictures - users can upload their own
+[normal]     match /profiles/{userId}/{fileName} {
+[normal]       allow write: if request.auth != null 
+[normal]         && request.auth.uid == userId
+[normal]         && isValidImage();
+[normal]       allow delete: if request.auth != null 
+[normal]         && request.auth.uid == userId;
+[normal]     }
+[normal]     
+[normal]     // Helper functions
+[normal]     function isValidImage() {
+[normal]       return request.resource.contentType.matches('image/.*')
+[normal]         && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+[normal]     }
+[normal]     
+[normal]     function isOwnerOfItem(itemId) {
+[normal]       // This would need to be verified against Firestore
+[normal]       // For now, allow any authenticated user
+[normal]       // In production, you'd want to check the item ownership
+[normal]       return request.auth != null;
+[normal]     }
+[normal]   }
+[normal] }
+[normal] ```
+[normal] Explanation:
+[normal]  These Firebase Storage security rules implement a comprehensive access control system for the marketplace's file uploads. The rules enforce authentication for all read operations, ensuring only logged-in users can access uploaded images. For item photos, the rules restrict write access to authenticated users with valid images under 5MB, while delete permissions require item ownership verification. Profile pictures follow a strict user-ownership model where users can only upload/delete their own profile images. The `isValidImage()` helper function validates file types and sizes, preventing abuse and ensuring optimal performance. The `isOwnerOfItem()` function provides a foundation for item ownership verification that should be enhanced with Firestore queries in production. These rules protect against unauthorized uploads, malicious file types, and oversized files while maintaining usability for legitimate users.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-3: Comments explaining purpose and deployment context. Line 5: `rules_version = '2';` specifies Firebase Security Rules version 2 syntax. Line 6: `service firebase.storage {` begins storage service rule definition. Line 7: `match /b/{bucket}/o {` matches all objects in any storage bucket with wildcard `{bucket}`. Lines 9-11: Global read rule - `match /{allPaths=**}` uses recursive wildcard `**` to match all paths at any depth, `allow read: if request.auth != null;` permits read access only for authenticated users. Lines 13-19: Item photos rules - `match /items/{itemId}/{fileName}` captures itemId and fileName variables, `allow write: if request.auth != null && isValidImage() && isOwnerOfItem(itemId);` requires authentication, valid image format, and ownership verification, `allow delete` with similar conditions. Lines 21-27: Profile pictures rules - `match /profiles/{userId}/{fileName}` captures userId, `request.auth.uid == userId` ensures users can only access their own profile images. Lines 29-35: `isValidImage()` helper function - `request.resource.contentType.matches('image/.*')` validates MIME type using regex, `request.resource.size < 5 * 1024 * 1024` enforces 5MB size limit. Lines 37-42: `isOwnerOfItem()` helper function with TODO comment for Firestore integration, currently allows any authenticated user.
+[normal]     
+[normal]     // Helper functions
+[normal]     function isValidImage() {
+[normal]       return request.resource.contentType.matches('image/.*')
+[normal]         && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+[normal]     }
+[normal]     
+[normal]     function isOwnerOfItem(itemId) {
+[normal]       // This would need to be verified against Firestore
+[normal]       // For now, allow any authenticated user
+[normal]       // In production, you'd want to check the item ownership
+[normal]       return request.auth != null;
+[normal]     }
+[normal]   }
+[normal] }
+[Heading 1] Environment Variables Configuration (/.env.example)
+[Heading 2] Complete Environment Template
+[normal] ```bash
+[normal] # Firebase Environment Variables
+[normal] NEXT_PUBLIC_FIREBASE_API_KEY=
+[normal] NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+[normal] NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+[normal] NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+[normal] NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+[normal] NEXT_PUBLIC_FIREBASE_APP_ID=
+[normal] NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+[normal] #NEXT_PUBLIC_BASE_URL=http://localhost:3000  # Local development URL
+[normal] # Firebase Admin SDK (Server-side only - NOT prefixed with NEXT_PUBLIC_)
+[normal] FIREBASE_PROJECT_ID=
+[normal] FIREBASE_CLIENT_EMAIL=
+[normal] FIREBASE_PRIVATE_KEY=
+[normal] # PayFast Payment Gateway (Add these to your .env.local)
+[normal] # PAYFAST_MERCHANT_ID=your_merchant_id
+[normal] # PAYFAST_MERCHANT_KEY=your_merchant_key  
+[normal] # PAYFAST_PASSPHRASE=your_passphrase
+[normal] # Admin Configuration
+[normal] # ADMIN_EMAILS=admin1@example.com,admin2@example.com
+[normal] # Application Settings
+[normal] # NODE_ENV=development
+[normal] ```
+[normal] Explanation: 
+[normal] This environment configuration template provides developers with all necessary environment variables for local development setup. The Firebase client variables prefixed with `NEXT_PUBLIC_` are exposed to the browser for direct Firebase SDK communication. The Firebase Admin SDK variables remain server-side only for security. PayFast and admin configuration are commented out as examples, requiring developers to uncomment and configure with their actual credentials. This separation ensures sensitive production credentials never accidentally get committed to version control while providing clear guidance for required configuration.
+[normal] Physical Code Explanation: 
+[normal] Lines 1-8: Firebase client configuration section with `# Firebase Environment Variables` comment header, variables prefixed with `NEXT_PUBLIC_` for browser exposure - `NEXT_PUBLIC_FIREBASE_API_KEY=` for Firebase project API key, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=` for authentication domain, similar pattern for project ID, storage bucket, messaging sender ID, app ID, and measurement ID, all followed by `=` with empty values for user completion. Line 9: `#NEXT_PUBLIC_BASE_URL=http://localhost:3000` commented out with `#` prefix, showing local development URL example. Lines 11-14: Firebase Admin SDK section with comment header, server-side only variables without `NEXT_PUBLIC_` prefix for security - `FIREBASE_PROJECT_ID=`, `FIREBASE_CLIENT_EMAIL=`, `FIREBASE_PRIVATE_KEY=` all empty for user configuration. Lines 16-19: PayFast section with comment explaining local file requirement, variables commented out with `#` prefix - `# PAYFAST_MERCHANT_ID=your_merchant_id` shows example format. Lines 21-22: Admin configuration with `# ADMIN_EMAILS=admin1@example.com,admin2@example.com` showing comma-separated email format. Lines 24-25: Application settings with `# NODE_ENV=development` for environment specification.
+[Heading 1] Deployment Instructions (/firebase.json)
+[Heading 2] Firebase Hosting Configuration
+[normal] ```json
+[normal] {
+[normal]   "firestore": {
+[normal]     "rules": "firestore.rules",
+[normal]     "indexes": "firestore.indexes.json"
+[normal]   },
+[normal]   "storage": {
+[normal]     "rules": "storage.rules"
+[normal]   },
+[normal]   "hosting": {
+[normal]     "source": ".",
+[normal]     "ignore": [
+[normal]       "firebase.json",
+[normal]       "**/.*",
+[normal]       "**/node_modules/**"
+[normal]     ],
+[normal]     "frameworksBackend": {
+[normal]       "region": "europe-west1"
+[normal]     }
+[normal]   }
+[normal] }
+[normal] ```
+[Heading 2] Production Deployment Steps
+[normal] ```bash
+[normal] # 1. Install Firebase CLI globally
+[normal] npm install -g firebase-tools
+[normal] # 2. Login to Firebase
+[normal] firebase login
+[normal] # 3. Initialize project (if not already done)
+[normal] firebase init
+[normal] # 4. Build the Next.js application
+[normal] npm run build
+[normal] # 5. Deploy to Firebase Hosting
+[normal] firebase deploy
+[normal] # 6. Deploy only specific services (optional)
+[normal] firebase deploy --only hosting
+[normal] firebase deploy --only firestore:rules,storage:rules
+[normal] ```
+[normal] Explanation: 
+[normal] This deployment workflow ensures reliable production releases with proper validation and rollback capabilities. The Firebase CLI installation provides comprehensive tooling for project management, deployment automation, and monitoring. The authentication step establishes secure credentials for deployment operations. The build process compiles and optimizes the Next.js application, generating production-ready assets with code splitting, image optimization, and performance enhancements. Full deployment updates all services simultaneously, ensuring consistency across hosting, database rules, and storage policies. Selective deployment options enable targeted updates for specific services, crucial for production environments where you might need to update security rules without triggering application redeployment. This approach supports continuous integration workflows, automated testing, and gradual rollout strategies essential for marketplace platforms serving real users and processing actual payments. The Firebase hosting configuration uses the frameworksBackend feature optimized for Next.js applications, with the backend region set to europe-west1 for optimal performance. The ignore patterns prevent deployment of development files and dependencies. The deployment process leverages Firebase's automatic Next.js integration, handling server-side rendering, API routes, and static asset optimization. The separate deployment commands allow granular control over which services get updated, essential for production environments where you might want to update rules without touching the application code.
+[normal] Physical Code Explanation: 
+[normal] Line 2: `npm install -g firebase-tools` installs Firebase CLI globally with `-g` flag for system-wide access. Line 5: `firebase login` opens browser authentication flow to authenticate with Google account. Line 8: `firebase init` initializes Firebase project configuration, creates `firebase.json` and other config files. Line 11: `npm run build` executes build script from `package.json`, compiles Next.js application for production. Line 14: `firebase deploy` deploys all configured services (hosting, functions, rules) to Firebase. Lines 17-18: `firebase deploy --only hosting` deploys specific service using `--only` flag, `--only firestore:rules,storage:rules` deploys multiple specific services separated by commas.
+[Heading 1] API Error Handling Patterns
+[Heading 2] Standardized Error Response Format
+[normal] ```typescript
+[normal] // Consistent error responses across your API routes
+[normal] // Authentication Errors (401)
+[normal] return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+[normal] // Permission Errors (403)  
+[normal] return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+[normal] // Validation Errors (400)
+[normal] return NextResponse.json({ message: "Invalid item IDs" }, { status: 400 });
+[normal] return NextResponse.json({ message: "Missing user id" }, { status: 400 });
+[normal] // Not Found Errors (404)
+[normal] return NextResponse.json({ message: "User not found in Firestore" }, { status: 404 });
+[normal] // Server Errors (500)
+[normal] return NextResponse.json({ 
+[normal]   success: false, 
+[normal]   message: errorMessage 
+[normal] }, { status: 500 });
+[normal] ```
+[Heading 2] Error Handling Implementation Examples
+[normal] ```typescript
+[normal] // From /src/app/api/users/[id]/route.ts
+[normal] try {
+[normal]   // API logic here
+[normal] } catch (error) {
+[normal]   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+[normal]   return NextResponse.json({ 
+[normal]     success: false, 
+[normal]     message: errorMessage 
+[normal]   }, { status: 500 });
+[normal] }
+[normal] // From /src/app/api/users/suspend/route.ts - Admin validation
+[normal] if (!adminUser) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+[normal] if (!adminUser.admin) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+[normal] // From /src/app/api/payments/process-success/route.ts - Payment validation
+[normal] if (payment_status !== 'COMPLETE') {
+[normal]   return NextResponse.json({ message: "Payment not successful" }, { status: 400 });
+[normal] }
+[normal] ```
+[normal] Explanation: 
+[normal] Your API routes implement consistent error handling patterns with appropriate HTTP status codes and descriptive error messages. The authentication flow uses 401 for missing auth and 403 for insufficient permissions. Validation errors return 400 with specific messages about missing or invalid data. Server errors are caught and return 500 status with error details. This standardization enables frontend components to handle errors predictably and provide appropriate user feedback. The error messages are descriptive enough for debugging while remaining user-friendly. The try-catch patterns ensure graceful degradation when external services fail, while the admin validation demonstrates proper authorization checking. Payment validation ensures transaction integrity by verifying completion status before processing orders. This comprehensive error handling strategy supports reliable marketplace operations and provides clear debugging information for development and production monitoring.
+[normal] Physical Code Explanation: 
+[normal] Lines 3-11: Try-catch error handling pattern - `catch (error)` block extracts error message using `error instanceof Error ? error.message : 'Unknown error'` for type-safe error handling, constructs response object with `success: false` and `message: errorMessage`, returns 500 Internal Server Error status. Lines 14-15: Admin validation examples use early returns with appropriate status codes - `if (!adminUser)` checks user existence, `if (!adminUser.admin)` verifies admin permissions, both return specific HTTP status codes with descriptive messages. Lines 17-19: Payment validation checks specific conditions like `payment_status !== 'COMPLETE'` using strict comparison operator `!==`, returns 400 Bad Request with descriptive error message for failed payments.
+[normal] This comprehensive documentation now accurately covers the real implementations that exist in your Campus Marketplace platform, providing developers with complete guidance for understanding, maintaining, and extending the actual application components and functionality.

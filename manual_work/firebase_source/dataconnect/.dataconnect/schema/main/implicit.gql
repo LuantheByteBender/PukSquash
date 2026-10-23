@@ -1,0 +1,64 @@
+extend type Booking {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Booking", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Booking`.`coach`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  coachId: UUID @fdc_generated(from: "Booking.coach", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Booking`.`court`. It must match the value of `Court`.`id`. See `@ref` for how to customize it.
+  """
+  courtId: UUID! @fdc_generated(from: "Booking.court", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Booking`.`createdBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  createdById: UUID! @fdc_generated(from: "Booking.createdBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Booking`.`timeSlot`. It must match the value of `TimeSlot`.`id`. See `@ref` for how to customize it.
+  """
+  timeSlotId: UUID! @fdc_generated(from: "Booking.timeSlot", purpose: IMPLICIT_REF_FIELD)
+}
+extend type BookingPlayer {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "BookingPlayer", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `BookingPlayer`.`booking`. It must match the value of `Booking`.`id`. See `@ref` for how to customize it.
+  """
+  bookingId: UUID! @fdc_generated(from: "BookingPlayer.booking", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `BookingPlayer`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "BookingPlayer.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CoachAvailability {
+  """
+  ✨ Implicit foreign key field based on `CoachAvailability`.`coach`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  coachId: UUID! @fdc_generated(from: "CoachAvailability.coach", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CoachAvailability`.`timeSlot`. It must match the value of `TimeSlot`.`id`. See `@ref` for how to customize it.
+  """
+  timeSlotId: UUID! @fdc_generated(from: "CoachAvailability.timeSlot", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Court {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Court", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type TimeSlot {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "TimeSlot", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type User {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "User", purpose: IMPLICIT_KEY_FIELD)
+}

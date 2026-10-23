@@ -3,34 +3,48 @@
 namespace App\Repositories;
 
 use App\DataTransferObjects\CourtDTO;
-use App\Services\SqlConnectClient;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CourtRepository
 {
-    public function __construct(
-        private SqlConnectClient $client,
-    ) {}
+    private function dtoFromRow(object $row): CourtDTO
+    {
+        return new CourtDTO(
+            id:          (string) $row->id,
+            name:        (string) ($row->name ?? ''),
+            description: $row->description ?? null,
+            status:      (string) ($row->status ?? 'ACTIVE'),
+            createdAt:   (string) ($row->created_at ?? ''),
+            updatedAt:   (string) ($row->updated_at ?? ''),
+        );
+    }
 
     /** @return CourtDTO[] */
     public function listActive(): array
     {
-        $data = $this->client->execute('ListActiveCourts');
+        $rows = DB::table('courts')
+            ->where('status', 'ACTIVE')
+            ->orderBy('name')
+            ->get();
 
         return array_map(
-            fn (array $row) => CourtDTO::fromGraphQL($row),
-            $data['courts'] ?? [],
+            fn (object $row) => $this->dtoFromRow($row),
+            $rows->all(),
         );
     }
 
     /** @return CourtDTO[] */
     public function listAll(): array
     {
-        $data = $this->client->execute('ListAllCourts');
+        $rows = DB::table('courts')
+            ->orderBy('name')
+            ->get();
 
         return array_map(
-            fn (array $row) => CourtDTO::fromGraphQL($row),
-            $data['courts'] ?? [],
+            fn (object $row) => $this->dtoFromRow($row),
+            $rows->all(),
         );
     }
 
@@ -43,13 +57,15 @@ class CourtRepository
             return $cached;
         }
 
-        $data = $this->client->execute('GetCourt', ['id' => $id]);
+        $row = DB::table('courts')
+            ->where('id', $id)
+            ->first();
 
-        if (empty($data['court'])) {
+        if (! $row) {
             return null;
         }
 
-        $dto = CourtDTO::fromGraphQL($data['court']);
+        $dto = $this->dtoFromRow($row);
         Cache::put($key, $dto, now()->addMinutes(10));
 
         return $dto;
@@ -57,35 +73,61 @@ class CourtRepository
 
     public function create(array $params): void
     {
-        $this->client->execute('CreateCourt', $params);
+        $now = now();
+
+        DB::table('courts')->insert([
+            'id'          => $params['id'] ?? Str::uuid()->toString(),
+            'name'        => $params['name'],
+            'description' => $params['description'] ?? null,
+            'status'      => $params['status'] ?? 'ACTIVE',
+            'created_at'  => $now,
+            'updated_at'  => $now,
+        ]);
+
+        Cache::forget('availability:courts:active');
     }
 
     public function delete(string $id): void
     {
         Cache::forget('sqlconnect_court_id_' . $id);
-        $this->client->execute('DeleteCourt', ['id' => $id]);
+        DB::table('courts')->where('id', $id)->delete();
         Cache::forget('sqlconnect_court_id_' . $id);
+        Cache::forget('availability:courts:active');
     }
 
     public function updateCourt(string $id, array $params): void
     {
         Cache::forget('sqlconnect_court_id_' . $id);
-        $this->client->execute('UpdateCourt', array_merge(
-            ['id' => $id],
-            $params,
-        ));
+
+        $updates = [];
+        if (array_key_exists('name', $params)) {
+            $updates['name'] = $params['name'];
+        }
+        if (array_key_exists('description', $params)) {
+            $updates['description'] = $params['description'];
+        }
+
+        if (! empty($updates)) {
+            $updates['updated_at'] = now();
+            DB::table('courts')->where('id', $id)->update($updates);
+        }
+
         Cache::forget('sqlconnect_court_id_' . $id);
+        Cache::forget('availability:courts:active');
     }
 
     public function updateStatus(string $id, string $status): void
     {
         Cache::forget('sqlconnect_court_id_' . $id);
 
-        $this->client->execute('UpdateCourtStatus', [
-            'id'     => $id,
-            'status' => $status,
-        ]);
+        DB::table('courts')
+            ->where('id', $id)
+            ->update([
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
 
         Cache::forget('sqlconnect_court_id_' . $id);
+        Cache::forget('availability:courts:active');
     }
 }

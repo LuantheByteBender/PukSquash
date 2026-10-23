@@ -12,9 +12,16 @@ const state = reactive({ items: [] });
 let nextId = 1;
 
 function push(type, message, ttl) {
+    const normalizedMessage = String(message ?? '').trim();
+    const existing = state.items.find((item) => item.type === type && item.message === normalizedMessage);
+
+    if (existing) {
+        return existing.id;
+    }
+
     const id = nextId++;
 
-    state.items.push({ id, type, message });
+    state.items.push({ id, type, message: normalizedMessage });
 
     if (ttl !== 0) {
         setTimeout(() => dismiss(id), ttl ?? 5000);
@@ -39,5 +46,6 @@ export function useToast() {
         error: (message, ttl) => push('error', message, ttl ?? 7000),
         warn: (message, ttl) => push('warn', message, ttl ?? 7000),
         info: (message, ttl) => push('info', message, ttl),
+        loading: (message, ttl = 0) => push('loading', message, ttl),
     };
 }

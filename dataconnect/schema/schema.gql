@@ -41,6 +41,10 @@ type User @table {
   # ACTIVE | INACTIVE | SUSPENDED
   status: String! @default(value: "ACTIVE")
 
+  fundsBalanceCents: Int! @default(value: 0)
+
+  privateCoachingFeeCents: Int! @default(value: 0)
+
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
 }

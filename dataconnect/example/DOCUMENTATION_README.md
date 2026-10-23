@@ -1,25 +1,21 @@
-# Data Connect Connector Folder
+# Data Connect Connector Folder (Legacy)
 
-## Purpose and area
+## ⚠️ Status: Legacy
 
-Despite the current name `example`, this folder contains the project's active **Firebase Data Connect API operations and SDK-generation configuration**.
+Despite the name `example`, this folder contained the project's **Firebase Data Connect API operations and SDK-generation configuration**. **All data access now goes through the Laravel REST API and Eloquent models connected to Supabase PostgreSQL.** This folder is retained for reference only.
 
-## Existing files developers edit
+## Original contents
 
-- `queries.gql` defines `GetCurrentUser`, `ListCourts`, `GetCourt`, and `MyBookings`.
-- `mutations.gql` defines `UpsertUser`, `CreateCourt`, and `CreateBooking`.
-- `connector.yaml` identifies the connector and configures JavaScript SDK output in `src/dataconnect-generated`.
+- `queries.gql` defined `GetCurrentUser`, `ListCourts`, `GetCourt`, and `MyBookings`.
+- `mutations.gql` defined `UpsertUser`, `CreateCourt`, and `CreateBooking`.
+- `connector.yaml` identified the connector and configured JavaScript SDK output.
 
-These operations sit between Vue/client code and the tables in `dataconnect/schema/schema.gql`. Their `@auth` directives control who may execute them, and client generation creates typed functions from them.
+## Current approach
 
-## Example
-
-When users need to cancel their own booking, add a narrowly scoped authenticated mutation here, ensure it can only affect the caller's permitted record, then regenerate and use the client SDK.
+New API operations should be added as Laravel controller actions in `app/Http/Controllers/Api/` and routes in `routes/api.php`, using Eloquent models for data access.
 
 ## Beginner mistakes to avoid
 
-- Never weaken `@auth` merely to make a failing request work; understand the required access rule.
-- `CreateCourt` currently uses `NO_ACCESS`, indicating a privileged backend/admin operation rather than a normal client mutation.
-- Select only the fields the client needs and keep operation variables strongly typed.
-- Do not hand-edit the generated SDK after changing these files.
+- Do not add new operations here — use Laravel controllers and Eloquent instead.
+- Do not hand-edit the generated SDK in `src/dataconnect-generated`.
 

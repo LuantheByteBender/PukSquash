@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Repositories\UserRepository;
 use App\Services\FirebaseAuthService;
 use Closure;
 use Illuminate\Http\Request;
@@ -10,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 class FirebaseAuth
 {
     public function __construct(
-        private FirebaseAuthService $firebaseAuth
+        private FirebaseAuthService $firebaseAuth,
+        private UserRepository $users,
     ) {
     }
 
@@ -57,6 +59,17 @@ class FirebaseAuth
             if ($firebaseUser->emailVerified === false && ! $isMeEndpoint) {
                 return response()->json([
                     'message' => 'Email address not verified.',
+                ], 403);
+            }
+
+            $user = $this->users->findByFirebaseUid((string) $uid);
+            $request->attributes->set('user_status', $user?->status);
+
+            if ($user && in_array($user->status, ['INACTIVE', 'SUSPENDED'], true)) {
+                return response()->json([
+                    'message' => $user->status === 'SUSPENDED'
+                        ? 'Your account is suspended.'
+                        : 'Your account is inactive.',
                 ], 403);
             }
 

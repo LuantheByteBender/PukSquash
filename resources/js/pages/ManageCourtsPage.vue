@@ -35,7 +35,6 @@
         <table class="users-table">
           <thead>
             <tr>
-              <th scope="col">ID</th>
               <th scope="col">Court name</th>
               <th scope="col">Description</th>
               <th scope="col">Status</th>
@@ -45,7 +44,6 @@
 
           <tbody>
             <tr v-for="court in filteredCourts" :key="court.id">
-              <td class="muted">#{{ court.id }}</td>
               <td>
                 <strong>{{ court.name }}</strong>
               </td>
@@ -70,6 +68,7 @@
                   :disabled="isWorking"
                   @click="toggleStatus(court)"
                 >
+                  <LoadingSpinner v-if="isActionBusy(`toggle:${court.id}`)" quiet />
                   Toggle status
                 </button>
                 <button
@@ -78,13 +77,14 @@
                   :disabled="isWorking"
                   @click="deleteCourt(court.id)"
                 >
+                  <LoadingSpinner v-if="isActionBusy(`delete:${court.id}`)" quiet />
                   Delete
                 </button>
               </td>
             </tr>
 
             <tr v-if="filteredCourts.length === 0 && !isLoading">
-              <td colspan="5" class="muted empty">No courts found.</td>
+              <td colspan="4" class="muted empty">No courts found.</td>
             </tr>
           </tbody>
         </table>
@@ -119,7 +119,13 @@
               Cancel
             </button>
             <button type="submit" class="btn" :disabled="isWorking">
-              {{ isEditing ? 'Update court' : 'Save court' }}
+              <LoadingSpinner
+                v-if="isActionBusy(isEditing ? `save:${editingCourtId}` : 'save:new')"
+                :label="isEditing ? 'Updating court…' : 'Saving court…'"
+              />
+              <span v-else>
+                {{ isEditing ? 'Update court' : 'Save court' }}
+              </span>
             </button>
           </div>
         </form>
@@ -143,6 +149,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import LoadingSpinner from '../components/LoadingSpinner.vue'
 import { useToast } from '../composables/useToast.js'
 import { http } from '../services/http.js'
 
@@ -159,6 +166,7 @@ const isLoading = ref(false)
 const loadError = ref('')
 const actionError = ref('')
 const isWorking = ref(false)
+const actionKey = ref('')
 
 const confirmState = ref({
   open: false,
@@ -272,6 +280,7 @@ async function saveCourt() {
   if (isWorking.value) return
 
   isWorking.value = true
+  actionKey.value = isEditing.value ? `save:${editingCourtId.value}` : 'save:new'
 
   try {
     if (isEditing.value) {
@@ -297,6 +306,7 @@ async function saveCourt() {
     toast.error(actionError.value)
   } finally {
     isWorking.value = false
+    actionKey.value = ''
   }
 }
 
@@ -314,6 +324,7 @@ async function toggleStatus(court) {
   if (!ok) return
 
   isWorking.value = true
+  actionKey.value = `toggle:${court.id}`
 
   try {
     const updated = await http.put(`/admin/courts/${court.id}`, { status: nextStatus })
@@ -326,6 +337,7 @@ async function toggleStatus(court) {
     toast.error(actionError.value)
   } finally {
     isWorking.value = false
+    actionKey.value = ''
   }
 }
 
@@ -345,6 +357,7 @@ async function deleteCourt(id) {
   if (!ok) return
 
   isWorking.value = true
+  actionKey.value = `delete:${id}`
 
   try {
     await http.delete(`/admin/courts/${id}`)
@@ -356,7 +369,12 @@ async function deleteCourt(id) {
     toast.error(actionError.value)
   } finally {
     isWorking.value = false
+    actionKey.value = ''
   }
+}
+
+function isActionBusy(key) {
+  return isWorking.value && actionKey.value === key
 }
 
 onMounted(() => {
@@ -365,172 +383,212 @@ onMounted(() => {
 </script>
 
 <style scoped>
- .manage-courts-page {
-     display: flex;
-     flex-direction: column;
-     gap: 1.5rem;
-     padding-top: 1.5rem;
- }
- 
- .page-header {
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     gap: 1rem;
-     flex-wrap: wrap;
- }
- 
- .eyebrow {
-     margin: 0;
-     text-transform: uppercase;
-     letter-spacing: 0.08em;
-     font-size: 0.75rem;
-     font-weight: 700;
-     color: var(--ps-brand);
- }
- 
- .page-title {
-     margin: 0.25rem 0 0;
-     font-size: clamp(2rem, 4vw, 2.5rem);
-     line-height: 1.1;
- }
- 
- .table-controls {
-     align-items: flex-end;
-     margin-bottom: 1rem;
- }
- 
- .field {
-     display: flex;
-     flex-direction: column;
-     gap: 0.35rem;
-     min-width: 220px;
- }
- 
- .field.grow {
-     flex: 1;
-     min-width: 260px;
- }
- 
- .label {
-     font-size: 0.75rem;
-     font-weight: 700;
-     color: var(--ps-text-muted);
-     letter-spacing: 0.04em;
-     text-transform: uppercase;
- }
- 
- .table-wrap {
-     overflow-x: auto;
- }
- 
- .users-table {
-     width: 100%;
-     border-collapse: collapse;
-     min-width: 760px;
- }
- 
- .users-table th {
-     text-align: left;
-     font-size: 0.75rem;
-     font-weight: 700;
-     letter-spacing: 0.04em;
-     text-transform: uppercase;
-     color: var(--ps-text-muted);
-     padding: 0.75rem 0.7rem;
-     border-bottom: 1px solid var(--ps-border-soft);
- }
- 
- .users-table td {
-     padding: 0.75rem 0.7rem;
-     border-bottom: 1px solid var(--ps-border-soft);
-     vertical-align: middle;
- }
- 
- .users-table tbody tr:hover {
-     background: rgba(108, 62, 148, 0.02);
- }
- 
- .actions {
-     width: 260px;
- }
- 
- .users-table td.actions {
-     display: flex;
-     gap: 0.5rem;
-     flex-wrap: wrap;
- }
- 
- .empty {
-     padding: 1rem 0.7rem;
- }
- 
- .backdrop {
-     position: fixed;
-     inset: 0;
-     z-index: 80;
-     padding: 1rem;
-     background: rgba(24, 14, 33, 0.55);
-     display: grid;
-     place-items: center;
- }
- 
- .dialog {
-     max-width: 520px;
-     width: 100%;
-     background: var(--ps-surface);
-     border-radius: var(--ps-radius);
-     padding: 1.1rem;
-     border: 1px solid var(--ps-border-soft);
-     box-shadow: 0 10px 30px rgba(24, 14, 33, 0.25);
- }
- 
- .dialog h2 {
-     margin: 0 0 0.75rem;
-     font-size: 1.15rem;
- }
- 
- .form {
-     display: flex;
-     flex-direction: column;
-     gap: 0.85rem;
- }
- 
- .actions-row {
-     display: flex;
-     gap: 0.6rem;
-     justify-content: flex-end;
-     margin-top: 0.25rem;
-     flex-wrap: wrap;
- }
- 
- @media (max-width: 760px) {
-     .manage-courts-page {
-         gap: 1rem;
-         padding-top: 1rem;
-     }
- 
-     .page-header {
-         flex-direction: column;
-         align-items: stretch;
-     }
- 
-     .page-title {
-         font-size: clamp(1.8rem, 8vw, 2.2rem);
-     }
- 
-     .table-controls {
-         flex-direction: column;
-         align-items: stretch;
-         margin-bottom: 0.75rem;
-     }
- 
-     .field {
-         min-width: 0;
-     }
- 
-     .users-table {
-         min-width: 680px;
-     }
- }
- </style>
+.manage-courts-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    padding-top: 1.5rem;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ps-brand);
+}
+
+.page-title {
+    margin: 0.2rem 0 0;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.table-controls {
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 220px;
+}
+
+.field.grow {
+    flex: 1;
+    min-width: 260px;
+}
+
+.label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ps-text-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px;
+    border: 1px solid var(--ps-border-soft);
+    border-radius: var(--ps-radius);
+    background: var(--ps-surface);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.users-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ps-text-muted);
+    padding: 0.75rem 0.75rem;
+    border-bottom: 1px solid var(--ps-border-soft);
+    background: rgba(242, 236, 247, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.users-table td {
+    padding: 0.75rem 0.75rem;
+    border-bottom: 1px solid var(--ps-border-soft);
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.users-table tbody tr {
+    transition: background 0.12s ease;
+}
+
+.users-table tbody tr:hover {
+    background: rgba(108, 62, 148, 0.03);
+}
+
+.actions {
+    width: 260px;
+}
+
+.users-table td.actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.empty {
+    padding: 1.5rem 0.75rem;
+    text-align: center;
+}
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    padding: 1rem;
+    background: rgba(23, 18, 29, 0.55);
+    backdrop-filter: blur(4px);
+    display: grid;
+    place-items: center;
+    animation: courts-fade 0.2s ease;
+}
+
+.dialog {
+    max-width: 480px;
+    width: 100%;
+    background: var(--ps-surface-elevated, #fff);
+    border-radius: var(--ps-radius-lg, 16px);
+    padding: 1.5rem;
+    border: 1px solid var(--ps-border-soft);
+    box-shadow: var(--ps-shadow-xl);
+    animation: courts-scale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dialog h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.actions-row :deep(.loading) {
+    color: inherit;
+}
+
+.actions-row :deep(.spinner) {
+    border-color: rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+}
+
+@keyframes courts-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes courts-scale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 760px) {
+    .manage-courts-page {
+        gap: 1.25rem;
+        padding-top: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-title {
+        font-size: clamp(1.6rem, 8vw, 2rem);
+    }
+
+    .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 0.75rem;
+    }
+
+    .field {
+        min-width: 0;
+    }
+
+    .users-table {
+        min-width: 680px;
+    }
+}
+</style>

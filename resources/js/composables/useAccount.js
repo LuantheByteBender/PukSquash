@@ -36,6 +36,40 @@ export async function updateAccount(payload) {
     }
 }
 
+export async function addAccountFunds(amountCents) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+        const { http } = await import('../services/http.js');
+        const result = await http.post('/me/funds', { amount_cents: amountCents });
+        profile.value = result.user ?? profile.value;
+        return result;
+    } catch (e) {
+        error.value = e?.message ?? String(e);
+        throw e;
+    } finally {
+        loading.value = false;
+    }
+}
+
+export async function updatePrivateCoachingFee(amountCents) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+        const { http } = await import('../services/http.js');
+        const result = await http.patch('/me/private-coaching-fee', { private_coaching_fee_cents: amountCents });
+        profile.value = result.user ?? profile.value;
+        return result;
+    } catch (e) {
+        error.value = e?.message ?? String(e);
+        throw e;
+    } finally {
+        loading.value = false;
+    }
+}
+
 export function clearAccount() {
     profile.value = null;
     error.value = null;
@@ -50,6 +84,8 @@ export function useAccount() {
         error: readonly(error),
         refreshAccount,
         updateAccount,
+        addAccountFunds,
+        updatePrivateCoachingFee,
         clearAccount,
     };
 }
