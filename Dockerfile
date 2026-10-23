@@ -1,8 +1,27 @@
 
 # Stage 1: Build Vue frontend
+
+# Stage 1: Build Vue frontend
 FROM node:22-alpine AS frontend
 
 WORKDIR /app
+
+# Supabase frontend configuration
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Firebase frontend configuration
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+
+# Application name
+ARG VITE_APP_NAME
+
+COPY . .
 
 COPY . .
 
