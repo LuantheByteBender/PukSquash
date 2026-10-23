@@ -4,15 +4,19 @@
 
 This **backend security and request-pipeline** folder contains middleware. Middleware examines or changes a request before it reaches a route/controller, or adjusts a response afterward.
 
-## Existing file developers edit
+## Existing middleware
 
-`FirebaseAuth.php` reads the bearer token, verifies it through `FirebaseAuthService`, fetches the Firebase user, and stores the user's UID, email, and verification status on the Laravel request. Its `firebase.auth` alias is registered in `bootstrap/app.php` and used by `routes/api.php`.
+| File                       | Alias             | Purpose                                                                  |
+| -------------------------- | ----------------- | ------------------------------------------------------------------------ |
+| `FirebaseAuth.php`         | `firebase.auth`   | Verifies the Firebase ID token, resolves the user, and attaches it to the request |
+| `AdminMiddleware.php`      | `admin`           | Ensures the authenticated user has an admin role                         |
+| `EnsureRegisteredUser.php` | `registered`      | Ensures the user has completed registration before accessing protected routes |
 
-Additional middleware belongs here only when a rule applies across multiple endpoints, such as requiring an administrator role.
+These are registered in `bootstrap/app.php` and applied in `routes/api.php`. The middleware chain is: `firebase.auth` → `registered` → `admin` (for admin routes).
 
 ## Example
 
-Use the existing `firebase.auth` middleware on a booking route so only a caller with a valid Firebase ID token reaches the controller.
+All API routes are wrapped in `firebase.auth`. Booking, court, and coaching routes additionally require `registered`. Admin management routes add the `admin` middleware.
 
 ## Beginner mistakes to avoid
 

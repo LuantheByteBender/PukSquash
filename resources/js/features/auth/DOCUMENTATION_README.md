@@ -6,9 +6,9 @@ This **Vue frontend and Firebase** folder contains user-facing authentication op
 
 ## Existing file developers edit
 
-`authService.js` exports functions for registering a user, sending an email-verification message, logging in, and logging out. It imports the initialized authentication object from `resources/js/services/firebase.js` and is currently used by `pages/AuthTest.vue`.
+`authService.js` exports functions for registering a user, sending an email-verification message, logging in, logging out, and sending password-reset emails. It imports the initialized authentication object from `resources/js/services/firebase.js` and is used by `LoginPage.vue`, `SignUpPage.vue`, and other auth-related pages.
 
-Add related client-side authentication actions here, such as password-reset requests or observing authentication state. Backend token verification does not belong here; it is implemented by Laravel under `app/Http/Middleware` and `app/Services`.
+Backend token verification does not belong here; it is implemented by Laravel under `app/Http/Middleware` and `app/Services`.
 
 ## Example
 

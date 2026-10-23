@@ -2,21 +2,28 @@
 
 ## Purpose and area
 
-This **Laravel backend and SQL database** folder contains Eloquent models. A model represents data stored through Laravel's configured database connection and can define attributes, type conversions, and relationships.
+This **Laravel backend** folder contains Eloquent models. Each model represents a table in the Supabase PostgreSQL database and defines attributes, type conversions, and relationships.
 
-## Existing file developers edit
+## Existing models
 
-`User.php` is Laravel's starter user model and corresponds to the Laravel `users` migration. It defines assignable fields, hidden fields, and value casts.
+| Model                | Table                  | Purpose                                      |
+| -------------------- | ---------------------- | -------------------------------------------- |
+| `User`               | `users`                | Application user profile linked to Firebase UID |
+| `Court`              | `courts`               | A physical squash court (ACTIVE / INACTIVE)  |
+| `Booking`            | `bookings`             | Reservation of a court + time-slot on a date |
+| `BookingPlayer`      | `booking_players`      | Join table: player positions per booking     |
+| `TimeSlot`           | `time_slots`           | Fixed one-hour booking windows               |
+| `CoachAvailability`  | `coach_availabilities` | A coach's published availability             |
 
-Be aware that `dataconnect/schema/schema.gql` separately defines a Firebase Data Connect `User` table keyed by a Firebase UID. Before extending `User.php`, confirm whether the feature uses Laravel's SQL tables or Data Connect PostgreSQL.
+These models connect to the Supabase PostgreSQL database via Laravel's `pgsql` driver configured in `.env`.
 
 ## Example
 
-If Laravel is deliberately chosen to own a new SQL entity, add its model here and its schema migration under `database/migrations`, then define relationships on the relevant models.
+`Booking` has relationships to `Court`, `TimeSlot`, and `BookingPlayer`. Controllers query bookings through Eloquent and return data via DTOs.
 
 ## Beginner mistakes to avoid
 
-- Do not assume this `User` model automatically represents Firebase Authentication or the Data Connect `User` table.
 - Update mass-assignment rules carefully; adding sensitive fields to `$fillable` can create security problems.
-- A model change does not alter the database schema—use the appropriate migration or Data Connect schema definition too.
+- A model change does not alter the database schema — create a migration under `database/migrations` as well.
+- Keep business logic in services or controllers, not in model methods.
 

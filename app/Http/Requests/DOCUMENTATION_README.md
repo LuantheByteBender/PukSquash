@@ -2,17 +2,17 @@
 
 ## Purpose and area
 
-This existing **backend validation** folder is intended for Laravel Form Request classes. It is currently empty apart from this guide.
+This **backend validation** folder contains Laravel Form Request classes. Controllers type-hint these classes and receive already validated data.
 
-## What belongs here
+## Existing files
 
-Place classes here that define validation rules and, where appropriate, authorization checks for incoming requests. Controllers can type-hint these classes and receive already validated data. Examples might include booking times, court identifiers, or user-profile fields once those endpoints exist.
+- `PublishCoachAvailabilityRequest.php` validates coach availability publishing (date, time slot, and availability rules).
 
-Request classes connect `routes` and controllers to Laravel's validation system. Developers edit them when an endpoint's accepted input or authorization rule changes.
+Add new Form Request classes here when endpoints need structured validation for incoming data such as booking details, court management, or user-profile updates.
 
 ## Example
 
-A future `StoreBookingRequest` could require a valid court ID, parseable start and end times, and an end time after the start time before the controller attempts a booking.
+`PublishCoachAvailabilityRequest` ensures the submitted date and time-slot data is valid before `CoachAvailabilityController` processes it.
 
 ## Beginner mistakes to avoid
 

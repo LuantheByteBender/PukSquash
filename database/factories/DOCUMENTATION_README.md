@@ -18,5 +18,5 @@ A feature test can call `User::factory()->create()` to arrange a user record wit
 
 - Never use real personal data or production credentials in a factory.
 - Keep factory fields aligned with the corresponding migration and model.
-- This Laravel user factory does not create a Firebase Authentication account or a Data Connect user automatically.
+- This Laravel user factory does not create a Firebase Authentication account automatically — it only creates the database record.
 

@@ -4,17 +4,24 @@
 
 This is a **frontend** folder for reusable Vue user-interface components. A component should represent a focused piece of the interface that can be placed inside pages or other components.
 
-## Existing and expected files
+## Existing components
 
-- `LoadingSpinner.vue` is intended to show a reusable loading state.
-- `AppNavbar.vue` is intended to hold shared navigation, although it is currently empty.
-- Future files can include reusable buttons, booking cards, court cards, dialogs, and form fields.
+| Component              | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `AppNavbar.vue`        | Application-wide navigation bar with role-based menu items   |
+| `AppToast.vue`         | Toast notification display (driven by `useToast` composable) |
+| `AvailabilityGrid.vue` | Interactive court × time-slot availability grid              |
+| `BookingCard.vue`      | Card displaying a single booking's details                   |
+| `BookingDialog.vue`    | Dialog for creating or joining a booking                     |
+| `ConfirmDialog.vue`    | Reusable confirmation dialog                                 |
+| `GridLegend.vue`       | Legend explaining the availability grid cell states           |
+| `LoadingSpinner.vue`   | Reusable loading indicator                                   |
 
-Developers normally edit the `.vue` files in this folder. These components are imported by files in `pages` or by `App.vue`; they may receive data through props and report events to their parent.
+These components are imported by files in `pages/` or by `App.vue`. They receive data through props and report events to their parent.
 
 ## Example
 
-When several pages need to show the same court summary, create `CourtCard.vue` here and pass the court details into it as props.
+`AvailabilityGrid.vue` is used by `BookCourtPage.vue` to render the interactive booking grid. `BookingDialog.vue` handles the booking creation flow when a grid cell is clicked.
 
 ## Beginner mistakes to avoid
 

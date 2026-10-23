@@ -18,5 +18,5 @@ For local testing of a Laravel-managed feature, add a small predictable dataset 
 
 - Do not place real passwords, personal information, or production secrets in seed data.
 - Seeders may duplicate or overwrite data if they are not designed to be safely rerun.
-- The empty `dataconnect/seed_data.gql` file is the separate seed location for Data Connect; Laravel seeders do not automatically populate it.
+- Seeders run against the Supabase PostgreSQL database configured in `.env`; confirm you are targeting the correct environment.
 
