@@ -1,6 +1,4 @@
-
 <?php
-
 namespace App\Providers;
 
 use App\Services\SqlConnectClient;
