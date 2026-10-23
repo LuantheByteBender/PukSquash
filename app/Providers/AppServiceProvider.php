@@ -1,9 +1,11 @@
+
 <?php
 
 namespace App\Providers;
 
 use App\Services\SqlConnectClient;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Force HTTPS for generated URLs in production
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }
